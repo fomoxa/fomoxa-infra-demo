@@ -1,45 +1,49 @@
-# Hướng Dẫn Cài Đặt Phụ Thuộc & Vận Hành Cụm Fomoxa Trên Ubuntu (WSL2 / Linux)
+# Hướng Dẫn Từng Bước Cài Đặt & Vận Hành Cụm Fomoxa Trên Ubuntu / WSL2
 
-Tài liệu này hướng dẫn chi tiết cách chuẩn bị môi trường, cài đặt các công cụ phụ thuộc và vận hành toàn bộ hạ tầng game server Fomoxa + Nakama + Agones trên nền tảng **Ubuntu** (hỗ trợ cả WSL2 Ubuntu trên Windows và Ubuntu máy chủ độc lập).
-
----
-
-## 1. Yêu cầu hệ thống & Phụ thuộc
-
-| Công cụ | Phiên bản khuyến nghị | Mục đích |
-|---|---|---|
-| **Bash & curl, openssl** | Mặc định trên Ubuntu | Chạy script tự động hóa và sinh khóa mã hóa |
-| **Docker Engine / Docker Desktop** | $\ge 24.0$ | Đóng gói và chạy các container |
-| **kubectl** | $\ge 1.28$ | Điều khiển cụm Kubernetes |
-| **k3d** | $\ge 5.6$ | Chạy cụm k3s gọn nhẹ trong Docker |
-| **Helm** | $\ge 3.12$ | Cài đặt Agones Game Server Operator |
+> **Dành cho người mới clone dự án về**: Hướng dẫn này đi từ máy Ubuntu trắng (Ubuntu 22.04 / 24.04 trên WSL2 hoặc máy chủ Linux) cho đến khi toàn bộ cụm Kubernetes (Postgres + Nakama + Directory + Gateway + Backend + Agones Game Server Fleet) chạy và vượt qua toàn bộ các bài kiểm thử.
 
 ---
 
-## 2. Cài đặt phụ thuộc trên Ubuntu
+## Mục lục
+1. [Bước 1: Cài đặt công cụ phụ thuộc trên Ubuntu](#bước-1-cài-đặt-công-cụ-phụ-thuộc-trên-ubuntu)
+2. [Bước 2: Clone dự án và phân quyền](#bước-2-clone-dự-án-và-phân-quyền)
+3. [Bước 3: Vận hành cụm (Sinh khóa -> Build Image -> Khởi động K8s)](#bước-3-vận-hành-cụm-chỉ-với-3-lệnh)
+4. [Bước 4: Kiểm tra trạng thái cụm K8s](#bước-4-kiểm-tra-trạng-thái-cụm-k8s)
+5. [Bước 5: Chạy các bài kiểm thử thực tế](#bước-5-chạy-các-bài-kiểm-thử-thực-tế)
+6. [Bước 6: Dọn dẹp & Tắt cụm khi hoàn tất](#bước-6-dọn-dẹp--tắt-cụm-khi-hoàn-tất)
+7. [Xử lý các sự cố thường gặp](#xử-lý-các-sự-cố-thường-gặp)
 
-Mở terminal Ubuntu (nếu dùng WSL2, gõ `wsl -d Ubuntu`) và chạy các lệnh sau:
+---
 
-### 2.1. Cập nhật hệ thống và gói cơ bản
+## Bước 1: Cài đặt công cụ phụ thuộc trên Ubuntu
+
+Mở terminal Ubuntu của bạn và copy các lệnh dưới đây để cài đặt 4 công cụ bắt buộc: **Docker**, **kubectl**, **k3d**, **helm**, cùng các tiện ích **curl**, **git**, **openssl**.
+
+### 1.1. Cài đặt các gói cơ bản
 ```bash
 sudo apt update && sudo apt install -y curl openssl git ca-certificates
 ```
 
-### 2.2. Kiểm tra Docker
-- **Nếu dùng WSL2 kết hợp Docker Desktop**:
-  - Mở Docker Desktop trên Windows -> **Settings** -> **Resources** -> **WSL Integration** -> Bật toggle cho **Ubuntu**.
-  - Kiểm tra trong terminal Ubuntu:
-    ```bash
-    docker ps
-    ```
-- **Nếu dùng Ubuntu độc lập (Native Server)**:
+### 1.2. Đảm bảo Docker đang hoạt động
+- **Nếu chạy trên WSL2 (Windows)**:
+  1. Cài đặt [Docker Desktop trên Windows](https://www.docker.com/products/docker-desktop/).
+  2. Mở Docker Desktop -> góc phải chọn biểu tượng **Settings** (bánh răng) -> **Resources** -> **WSL Integration**.
+  3. Bật công tắc (toggle) cho bản phân phối **Ubuntu** của bạn -> Nhấn **Apply & restart**.
+  4. Kiểm tra trong terminal Ubuntu:
+     ```bash
+     docker ps
+     ```
+     *(Nếu hiển thị bảng danh sách container rỗng là đã thành công)*.
+
+- **Nếu chạy trên máy Ubuntu độc lập**:
   ```bash
   curl -fsSL https://get.docker.com | sh
   sudo usermod -aG docker $USER
   newgrp docker
+  docker ps
   ```
 
-### 2.3. Cài đặt `kubectl`
+### 1.3. Cài đặt `kubectl` (K8s CLI)
 ```bash
 if ! command -v kubectl >/dev/null 2>&1; then
     curl -LO "https://dl.k8s.io/release/$(curl -L -s https://dl.k8s.io/release/stable.txt)/bin/linux/amd64/kubectl"
@@ -49,7 +53,7 @@ fi
 kubectl version --client
 ```
 
-### 2.4. Cài đặt `k3d`
+### 1.4. Cài đặt `k3d` (Công cụ chạy K3s trong Docker)
 ```bash
 if ! command -v k3d >/dev/null 2>&1; then
     curl -s https://raw.githubusercontent.com/k3d-io/k3d/main/install.sh | bash
@@ -57,139 +61,170 @@ fi
 k3d version
 ```
 
-### 2.5. Cài đặt `Helm`
+### 1.5. Cài đặt `Helm` (Package Manager cho K8s)
 ```bash
 if ! command -v helm >/dev/null 2>&1; then
-    curl https://raw.githubusercontent.com/helm/helm/main/scripts/get-helm-3 | bash
+    curl -fsSL https://raw.githubusercontent.com/helm/helm/main/scripts/get-helm-3 | bash
 fi
 helm version --short
 ```
 
 ---
 
-## 3. Quy trình vận hành & Kiểm thử thực tế
+## Bước 2: Clone dự án và phân quyền
 
-Chuyển vào thư mục gốc của dự án trong Ubuntu:
+Chuyển tới thư mục làm việc và clone mã nguồn:
 ```bash
-# Đối với WSL2 (ổ D:\ của Windows nằm tại /mnt/d/)
+# Đối với WSL2 (truy cập thư mục trên Windows, ví dụ ổ D:\)
 cd /mnt/d/Documents/fomoxa
 
-# Cấp quyền thực thi cho các script (nếu cần)
+# Hoặc nếu clone mới:
+# git clone <url-repo-fomoxa> fomoxa && cd fomoxa
+
+# Cấp quyền thực thi cho toàn bộ bash script:
 chmod +x scripts/*.sh
 ```
 
-### Bước 1: Sinh bộ khóa bảo mật
-Tạo các khóa hex 24-byte (48 hex chars) và root key 32-byte (64 hex chars):
+---
+
+## Bước 3: Vận hành cụm (Chỉ với 3 lệnh)
+
+### 3.1. Sinh bộ khóa bảo mật
 ```bash
 ./scripts/gen-keys.sh
 ```
-> [!NOTE]
-> Các khóa được lưu tại `deploy/secrets/` và tự động được loại trừ bởi `.gitignore`, không bao giờ bị lộ lên git.
+*Lệnh này dùng `openssl` sinh ra các token bí mật cho `root`, `admin`, `backend`, `gateway`, `pod` và lưu tại `deploy/secrets/`.*
 
----
-
-### Bước 2: Đóng gói Docker Images
-Đóng gói 4 thành phần container của hệ thống:
+### 3.2. Đóng gói 4 Docker Images
 ```bash
 ./scripts/build-images.sh
 ```
-Lệnh sẽ lần lượt build:
-1. `fomoxa-server:latest` (.NET 8 Runtime non-root)
-2. `fomoxa-directory:latest` (Rust Binary trên Debian bookworm slim)
-3. `fomoxa-gateway:latest` (Rust Binary UDP Reverse Proxy)
-4. `fomoxa-backend:latest` (.NET 8 Web API + fRPC Health Probe)
+*Script sẽ tự động kiểm tra upstream `fomoxa/gateway` (tag 0.2.0), tự clone nếu chưa có, sau đó đóng gói cả 4 container: `fomoxa-server`, `fomoxa-directory`, `fomoxa-gateway`, `fomoxa-backend`.*
 
----
-
-### Bước 3: Khởi động cụm Kubernetes (k3d + Agones)
-Khởi chạy cụm k3d tên `fomoxa` và triển khai stack:
+### 3.3. Khởi động cụm Kubernetes + Agones
 ```bash
 ./scripts/k8s-up.sh
 ```
-Script sẽ tự động thực hiện:
-1. Tạo cụm k3d với các cổng ánh xạ:
-   - `7777:7777/udp` (Gateway UDP cho Game Client)
-   - `9600:9600/tcp` (Backend fRPC cho Login / Matchmaking)
-   - `7350:7350/tcp` (Nakama API)
-2. Cài đặt Agones GameServer CRD và Controller qua Helm vào namespace `agones-system`.
-3. Import 4 images vừa build vào cụm k3d.
-4. Tạo namespace `fomoxa` và Kubernetes Secrets từ `deploy/secrets/`.
-5. Áp dụng toàn bộ manifests: Postgres, Nakama, Directory, Gateway, Backend, Agones Fleet (`fomoxa-server`).
-6. Chờ toàn bộ dịch vụ chuyển sang trạng thái `Ready`.
+*Script sẽ tự động:*
+1. Tạo cụm k3d `fomoxa` ánh xạ các cổng:
+   - `7777/udp`: Gateway (kết nối Game Client).
+   - `9600/tcp`: Backend (fRPC API login & matchmaking).
+   - `7350/tcp`: Nakama API.
+2. Cài đặt Agones Game Server Operator thông qua Helm vào namespace `agones-system`.
+3. Import cả 4 images vừa build vào cụm k3d.
+4. Sinh Kubernetes Secrets từ `deploy/secrets/`.
+5. Triển khai toàn bộ hạ tầng trong `deploy/k8s/`: Postgres, Nakama, Directory, Gateway, Backend, và Agones Fleet.
+6. Chờ tất cả pods chuyển sang trạng thái `Running` / `Ready`.
 
 ---
 
-### Bước 4: Kiểm tra trạng thái cụm K8s
+## Bước 4: Kiểm tra trạng thái cụm K8s
 
-Kiểm tra các Pods trong hệ thống:
+### 4.1. Xem danh sách Pods
 ```bash
 kubectl get pods -n fomoxa
 ```
-*Kết quả kỳ vọng:*
-```
+**Kết quả chuẩn:**
+```text
 NAME                          READY   STATUS    RESTARTS   AGE
 postgres-xxx                  1/1     Running   0          2m
 nakama-xxx                    1/1     Running   0          2m
 directory-xxx                 1/1     Running   0          1m
 gateway-xxx                   1/1     Running   0          1m
 backend-xxx                   1/1     Running   0          1m
-fomoxa-server-xxx             2/2     Running   0          45s
-fomoxa-server-yyy             2/2     Running   0          45s
+fomoxa-server-xxxx-yyyy       2/2     Running   0          45s
+fomoxa-server-xxxx-zzzz       2/2     Running   0          45s
 ```
+*(Mỗi pod `fomoxa-server` có 2 containers: 1 container game server và 1 container `agones-gameserver-sidecar`).*
 
-Kiểm tra GameServers được Agones quản lý:
+### 4.2. Xem trạng thái Agones GameServers
 ```bash
 kubectl get gs -n fomoxa
 ```
-*Kết quả kỳ vọng:* Cả 2 GameServer đều ở trạng thái `Ready` (hoặc `Allocated` khi đã có phòng).
+**Kết quả chuẩn:**
+```text
+NAME                      STATE   ADDRESS      PORT   NODE           AGE
+fomoxa-server-xxxx-yyyy   Ready   10.42.0.xx   7778   k3d-fomoxa...  1m
+fomoxa-server-xxxx-zzzz   Ready   10.42.0.yy   7778   k3d-fomoxa...  1m
+```
 
 ---
 
-## 4. Chạy các bài kiểm thử tự động
+## Bước 5: Chạy các bài kiểm thử thực tế
 
-### 4.1. Kiểm thử Matchmaking Nakama cơ bản (2 clients)
+Tất cả các bài kiểm thử đều được viết sẵn thành script Bash:
+
+### 5.1. Kiểm thử Nakama Matchmaking cơ bản (2 người chơi)
 ```bash
 ./scripts/test-nakama.sh
 ```
-- Đăng nhập 2 tài khoản ảo (`ana`, `bo`).
-- Client A gọi `find_match` -> nhận `waiting`.
-- Client B gọi `find_match` -> Nakama ghép cặp -> nhận `matched` và phát `ticket`.
-- Client A poll -> nhận cùng ticket.
-- Backend xác thực `verify_ticket` -> thành công.
-- Xác thực với người lạ hoặc ticket giả mạo -> bị từ chối chính xác.
+**Tiến trình kiểm thử:**
+1. Tạo 2 người chơi ảo `ana` và `bo`.
+2. `ana` gọi `find_match` -> nhận trạng thái `waiting`.
+3. `bo` gọi `find_match` -> Nakama ghép đôi thành công -> nhận `matched` và cấp `ticket`.
+4. `ana` poll trạng thái -> nhận đúng `ticket` của trận.
+5. Backend gọi `verify_ticket` -> xác thực thành công (`ok: true`).
+6. Kiểm tra người lạ hoặc ticket giả mạo -> bị từ chối chính xác.
 
-### 4.2. Kiểm thử Matchmaking Auto Room Pool ($\ge 4$ clients - P5.5)
+### 5.2. Kiểm thử Auto Room Pool $\ge 4$ người chơi (P5.5)
 ```bash
 ./scripts/test-nakama-pool.sh
 ```
-- Khởi tạo 4 tài khoản (`ana`, `bo`, `chi`, `dung`).
-- Cặp 1 (`ana` + `bo`) tìm trận với `room: "auto"` -> tự động được cấp `arena:1`.
-- Cặp 2 (`chi` + `dung`) tìm trận với `room: "auto"` -> tự động được cấp `arena:2` (xoay vòng trong pool).
-- Xác nhận các cặp nhận phòng độc lập, không bị chồng chéo phòng.
+**Tiến trình kiểm thử:**
+1. Tạo 4 người chơi ảo (`ana`, `bo`, `chi`, `dung`) gửi yêu cầu ghép với `room: "auto"`.
+2. Cặp 1 (`ana` + `bo`) được tự động ghép và cấp phòng `arena:1`.
+3. Cặp 2 (`chi` + `dung`) được tự động ghép và cấp phòng `arena:2` (xoay vòng trong pool `arena:1..4`).
+4. Chứng minh 2 cặp nhận 2 phòng riêng biệt, không bị tranh chấp phòng.
 
-### 4.3. Kiểm thử kết nối Game Server qua Agones (P5 DoD)
+### 5.3. Kiểm thử Game Server Agones & Client Unity (P5 DoD)
 ```bash
 ./scripts/test-p5.sh
 ```
-- Kiểm tra các GameServer Agones.
-- Kết nối thông qua Unity Client (trên Windows Host) vào Gateway `127.0.0.1:7777`.
-- Xác nhận GameServer chuyển trạng thái sang `Allocated`.
+- Script kiểm tra GameServers trên K8s.
+- Nếu chạy trong WSL2 trên máy tính có Unity Client, script sẽ gọi client kết nối vào Gateway `127.0.0.1:7777`.
+- Kiểm tra GameServer chuyển trạng thái từ `Ready` sang `Allocated` khi có người chơi tham gia.
 
 ---
 
-## 5. Dọn dẹp & Tắt cụm khi hoàn tất
+## Bước 6: Dọn dẹp & Tắt cụm khi hoàn tất
 
-- **Chỉ xóa các ứng dụng (giữ lại cluster k3d)**:
-  ```bash
-  ./scripts/k8s-down.sh --keep-cluster
-  ```
+### Tùy chọn A: Xóa toàn bộ cụm k3d
+Khi không dùng nữa, xóa cụm để giải phóng RAM/CPU:
+```bash
+./scripts/k8s-down.sh
+```
 
-- **Xóa hoàn toàn cụm k3d**:
-  ```bash
-  ./scripts/k8s-down.sh
-  ```
+### Tùy chọn B: Chỉ xóa các app, giữ lại cụm k3d
+Nếu muốn giữ cụm k3d để sau này apply lại cho nhanh:
+```bash
+./scripts/k8s-down.sh --keep-cluster
+```
 
-- **Dừng nhanh các tiến trình local (nếu có)**:
+### Tùy chọn C: Dừng nhanh các tiến trình local
+Nếu bạn từng chạy cụm local ngoài K8s:
+```bash
+./scripts/stop-all.sh
+```
+
+---
+
+## Xử lý các sự cố thường gặp
+
+### 1. Lỗi: `Cannot connect to the Docker daemon`
+- **Nguyên nhân**: Docker Desktop chưa chạy hoặc chưa bật tích hợp WSL.
+- **Khắc phục**: Khởi động Docker Desktop trên Windows -> Settings -> Resources -> WSL Integration -> Bật toggle Ubuntu.
+
+### 2. Lỗi cổng bị chiếm: `failed to create cluster ... port 7777/udp already in use`
+- **Khắc phục**: Chạy lệnh dừng các tiến trình đang chiếm cổng:
   ```bash
   ./scripts/stop-all.sh
   ```
+
+### 3. Muốn build lại images khi sửa code
+Chỉ cần chạy lại:
+```bash
+./scripts/build-images.sh
+# Hoặc cập nhật thẳng vào k3d:
+k3d image import fomoxa-server:latest fomoxa-backend:latest -c fomoxa
+kubectl rollout restart deployment/backend -n fomoxa
+```

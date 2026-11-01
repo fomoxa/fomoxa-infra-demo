@@ -6,7 +6,7 @@ Hạ tầng game server nhiều người chơi phân tán (Distributed Multiplay
 
 ## Tài liệu hướng dẫn & Kế hoạch
 
-- 📖 **[Hướng dẫn cài đặt & vận hành trên Ubuntu / WSL2](docs/UBUNTU_GUIDE.md)**: Hướng dẫn cài các phụ thuộc (`docker`, `k3d`, `helm`, `kubectl`) và chạy cụm test thực tế bằng Bash scripts.
+- 📖 **[Hướng dẫn từng bước chạy trên Ubuntu / WSL2 (Zero to Running)](docs/UBUNTU_GUIDE.md)**: Hướng dẫn chi tiết bằng lệnh Bash cho người mới clone repo từ A đến Z (cài phụ thuộc, build, chạy K8s, test).
 - 📋 **[Kế hoạch phát triển (PLAN.md)](PLAN.md)**: Toàn bộ lộ trình từ P1 đến P6 (kiến trúc, quyết định kỹ thuật, DoD, và nhật ký các bước).
 - 🎮 **[Dự án Unity Game Client (MyGame/README.md)](MyGame/README.md)**: Hướng dẫn về scene Unity, cấu trúc prefab, package dependencies và chạy client.
 
@@ -45,3 +45,4 @@ powershell -ExecutionPolicy Bypass -File scripts\k8s-up.ps1
 # 4. Kiểm thử
 powershell -ExecutionPolicy Bypass -File scripts\test-p5.ps1
 ```
+
