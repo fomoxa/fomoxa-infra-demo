@@ -13,7 +13,7 @@ Tất cả bài dưới đây có kết quả đánh dấu *(thật)* đã đư�
 | 4 | [`test-real-backend.sh`](#4-backend-thật--nakama-thật) | backend thật + Nakama thật + pod thật: toàn bộ chức năng + `/metrics` | Docker, .NET 8 | ~2 phút | CI chạy bài này |
 | 5 | [Kiểm tra tĩnh](#5-kiểm-tra-tĩnh-mã-sinh-yaml-shell-lua-cấu-hình-giám-sát) | mã sinh khớp model, YAML, shell, Lua = ConfigMap, cấu hình giám sát | tuỳ | vài giây | |
 | 6 | [`test-p5.sh`](#6-test-p5-gameserver-trên-k8s--agones-cần-unity-player) | Agones: `Ready` → `Allocated`, ghép cặp 4 client | cụm K8s + `MyGame.exe` | ~1 phút | chưa chạy thật |
-| 7 | [Kịch bản thử tay trong Unity](#7-kịch-bản-thử-tay-trong-unity) | giao diện, camera, nhảy, bạn bè | Unity | 10 phút | chưa chạy thật |
+| 7 | [Kịch bản thử tay trong Unity](#7-kịch-bản-thử-tay-trong-unity) | giao diện, camera, nhảy, bạn bè | Unity | 10 phút | chủ dự án đã chạy, đạt |
 
 > Mọi bài `--selftest`/`--bot-test` đều dựng cụm giả riêng rồi tắt, vì vậy tắt cụm giả đang chạy (Ctrl+C) trước khi chạy chúng, nếu không sẽ trùng cổng.
 

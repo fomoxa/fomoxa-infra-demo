@@ -3,8 +3,8 @@
 Tài liệu này hướng dẫn mở project Unity trong repo (`MyGame/`), dựng hai scene Lobby và Game, build bản chạy Windows và kết nối vào cụm
 ([02: cụm giả](getting-started/quickstart-mock-cluster.md) hoặc [03, cụm Kubernetes](deploy/README.md)).
 
-> Chưa kiểm chứng: môi trường viết tài liệu không có Unity. Mọi thao tác trong Unity (menu, scene, giao diện, camera, nhảy, build) chưa được chạy lại;
-> phần dòng lệnh (`fomoxac`) và giao thức (đăng nhập, phòng, UDP, nhảy/đáp bục) đã kiểm chứng bằng bot và selftest ([06](testing.md)).
+> Trạng thái: chủ dự án đã chạy client trong Unity với cụm giả và chạy tốt. Tên menu và màn hình trong tài liệu được viết khi chưa mở Unity, nên một nhãn có thể lệch chút so với thực tế.
+> Phần dòng lệnh (`fomoxac`) và giao thức (đăng nhập, phòng, UDP, nhảy/đáp bục) còn được kiểm chứng bằng bot và selftest ([06](testing.md)). Nếu Unity báo lỗi biên dịch hoặc giao diện lệch so với mô tả, hãy gửi nội dung lỗi để cập nhật.
 > Nếu Unity báo lỗi biên dịch hoặc giao diện lệch so với mô tả, hãy gửi nội dung lỗi để cập nhật.
 
 | Thứ | Giá trị |

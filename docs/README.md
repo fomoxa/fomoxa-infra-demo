@@ -84,7 +84,7 @@ Each step follows one pattern: the goal, the commands, what they do and why, the
 |---|---|
 | Key and certificate generation, the mock cluster, selftest, bot test, the real backend with a real Nakama (docker compose), the Nakama test scripts, `promtool`/`amtool` | Yes. Output is labeled (real). |
 | Installing Docker, kubectl, k3d and Helm; creating the k3d cluster; installing Agones; building the two Rust images (directory, gateway); applying manifests to a cluster; tls-proxy; NetworkPolicy; FleetAutoscaler; monitoring on a cluster; UDP through k3d | No. The commands come from the repository's scripts and manifests, and output is labeled (sample). |
-| Unity (UI, scenes, camera, jumping, building the player) | No. The environment used to write these documents has no Unity. |
+| Unity (UI, scenes, camera, jumping, building the player) | Yes: the project owner ran the client against the mock cluster and it works. Menu labels were not compared one by one. |
 
 If a command in the second or third row behaves differently from what is described, check [07](troubleshooting.md) and report it so the documents can be corrected.
 

@@ -96,7 +96,7 @@ Quy ước:
 |---|---|
 | Sinh key / chứng chỉ, cụm giả, selftest, bot-test, backend thật + Nakama thật (docker compose), script test Nakama, `promtool`/`amtool` | Có: output đánh dấu *(thật)* |
 | Cài Docker/kubectl/k3d/Helm, tạo cluster k3d, cài Agones, build 2 image Rust (directory, gateway), apply manifest lên cluster, tls-proxy, NetworkPolicy, FleetAutoscaler, monitoring trên cluster, UDP qua k3d | Chưa: lệnh lấy từ script/manifest của repo, output đánh dấu *(mẫu)* |
-| Unity (UI, scene, camera, nhảy, build player) | Chưa: môi trường viết tài liệu không có Unity |
+| Unity (UI, scene, camera, nhảy, build player) | Có: chủ dự án đã chạy client với cụm giả và chạy tốt; chưa đối chiếu từng nhãn menu |
 
 Nếu một lệnh "chưa kiểm chứng" cho kết quả khác mô tả, hãy xem [07, Xử lý sự cố](troubleshooting.md) rồi báo lại để cập nhật tài liệu.
 

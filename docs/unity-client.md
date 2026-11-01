@@ -2,7 +2,7 @@
 
 This document covers opening the Unity project in `MyGame/`, building the two scenes (Lobby and Game), producing a Windows build, and connecting it to a cluster: the [mock cluster](getting-started/quickstart-mock-cluster.md) or the [Kubernetes cluster](deploy/README.md).
 
-Not verified: the environment used to write these documents has no Unity. Nothing done inside Unity (menus, scenes, UI, camera, jumping, building) was re-run. The command-line parts (`fomoxac`) and the protocol (login, rooms, UDP, jumping and landing on platforms) were checked with the bot and the selftest ([06](testing.md)). If Unity reports a compile error or the UI differs from what is described, send the error so the documents can be fixed.
+Status: the project owner ran the client in Unity against the mock cluster and it works. The wording of individual menus and screens was written without Unity open, so a label may differ slightly from what you see. The command-line parts (`fomoxac`) and the protocol (login, rooms, UDP, jumping and landing on platforms) were also checked with the bot and the selftest ([06](testing.md)). If Unity reports a compile error or the UI differs from what is described, send the error so the documents can be fixed.
 
 | Item | Value |
 |---|---|

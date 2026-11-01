@@ -12,7 +12,7 @@ The repository's tests: what each one checks, how to run it (manual commands and
 | 4 | [Real backend with real Nakama](#4-real-backend-with-real-nakama) | the real backend, a real Nakama and real pods: every feature plus `/metrics` | Docker, .NET 8 | about 2 min | CI runs this one |
 | 5 | [Static checks](#5-static-checks-generated-code-yaml-shell-lua-monitoring-config) | generated code matches models, YAML, shell, Lua equals the ConfigMap, monitoring config | varies | seconds | |
 | 6 | [`test-p5.sh`](#6-test-p5-gameservers-on-kubernetes-and-agones-needs-the-unity-player) | Agones: `Ready` to `Allocated`, four clients paired | a K8s cluster and `MyGame.exe` | about 1 min | not run for real |
-| 7 | [Manual Unity script](#7-manual-script-in-unity) | UI, camera, jumping, friends | Unity | 10 min | not run for real |
+| 7 | [Manual Unity script](#7-manual-script-in-unity) | UI, camera, jumping, friends | Unity | 10 min | run by the project owner, passed |
 
 The `--selftest` and `--bot-test` modes each build their own mock cluster and then stop it. Stop any running mock cluster (Ctrl+C) before running them, or the ports collide.
 
