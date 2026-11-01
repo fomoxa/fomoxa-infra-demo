@@ -2,7 +2,7 @@
 #
 # Lý do: console server (MyGame\Server~) biên dịch *source* của package chứ không
 # tham chiếu DLL. Đường dẫn thật nằm ở MyGame\Library\PackageCache\com.fomoxa.*@<hash>
-# — có hash, không commit được, và bị .gitignore. server-deps\ là bản vendor cố định
+# - có hash, không commit được, và bị .gitignore. server-deps\ là bản vendor cố định
 # để `dotnet build` và Docker build không phụ thuộc máy đang có PackageCache gì.
 #
 # Chạy lại mỗi khi đổi version package trong MyGame\Packages\manifest.json:
@@ -22,7 +22,7 @@ function Find-Package([string]$name) {
 
     $cache = Join-Path $myGame "Library/PackageCache"
     if (-not (Test-Path $cache)) {
-        throw "khong co $cache — mo project Unity mot lan de package duoc resolve"
+        throw "khong co $cache - mo project Unity mot lan de package duoc resolve"
     }
 
     $found = Get-ChildItem $cache -Directory |
@@ -78,7 +78,7 @@ $manifest = Join-Path $target "README.md"
 # server-deps
 
 Bản vendor của phần source 2 package Fomoxa mà `MyGame\Server~` biên dịch.
-**Sinh tự động** bằng `scripts\sync-server-deps.ps1` — đừng sửa tay.
+**Sinh tự động** bằng `scripts\sync-server-deps.ps1` - đừng sửa tay.
 
 | Package | Version | Nguồn |
 |---|---|---|

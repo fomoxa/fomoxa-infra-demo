@@ -8,7 +8,7 @@
 
 ## Mục lục
 
-1. [Giới thiệu — Game demo sẽ làm gì](#1-giới-thiệu)
+1. [Giới thiệu - Game demo sẽ làm gì](#1-giới-thiệu)
 2. [Yêu cầu môi trường](#2-yêu-cầu-môi-trường)
 3. [Cài đặt package Fomoxa](#3-cài-đặt-package-fomoxa)
 4. [Tạo project và cấu hình FomoxaSettings](#4-tạo-project-và-cấu-hình-fomoxasettings)
@@ -46,7 +46,7 @@ Model (C#) → fomoxac (codegen) → NetAdapter → NetworkBehaviour → Network
 | Thứ | Phiên bản / Ghi chú |
 |-----|---------------------|
 | Unity | **6000.x** (Unity 6), Windows 64-bit |
-| .NET SDK | **8.0+** — cần cho `fomoxac` codegen |
+| .NET SDK | **8.0+** - cần cho `fomoxac` codegen |
 | Git | Trong PATH (để UPM tải package từ GitHub) |
 | Rust / Cargo | **Không cần** (chỉ dùng nếu build console server) |
 
@@ -73,16 +73,16 @@ Nếu `git` chưa có trong PATH, tải tại https://git-scm.com/download/win v
 ### Mục tiêu bước này
 Thêm 2 package Fomoxa vào project Unity qua UPM (Unity Package Manager) bằng cách chỉnh file `manifest.json`.
 
-### Bước 3.1 — Tạo Unity project mới
+### Bước 3.1 - Tạo Unity project mới
 
 1. Mở **Unity Hub**.
 2. Click **New project**.
 3. Chọn template **3D (URP)** (Universal Render Pipeline).
 4. Đặt tên: `MyGame`.
 5. Chọn Unity **6000.x**.
-6. Click **Create project** — đợi Unity khởi tạo xong.
+6. Click **Create project** - đợi Unity khởi tạo xong.
 
-### Bước 3.2 — Chỉnh manifest.json
+### Bước 3.2 - Chỉnh manifest.json
 
 Đóng Unity lại trước khi sửa file này.
 
@@ -105,7 +105,7 @@ Thêm 2 dòng vào đầu block `"dependencies"`:
 
 > **Quan trọng**: File `manifest.json` phải được lưu dưới dạng **UTF-8 không có BOM**. VS Code mặc định lưu đúng. Nếu dùng Notepad, kiểm tra encoding ở góc dưới phải khi lưu.
 
-### Bước 3.3 — Mở lại Unity, đợi resolve
+### Bước 3.3 - Mở lại Unity, đợi resolve
 
 Mở lại Unity. Ở góc dưới phải sẽ thấy:
 
@@ -117,7 +117,7 @@ Resolving packages...
 
 ### Kết quả mong đợi
 
-Vào **Window > Package Manager**, filter "In Project" — thấy:
+Vào **Window > Package Manager**, filter "In Project" - thấy:
 - `Fomoxa Networking` (0.2.0)
 - `Fomoxa Rpc` (0.1.0)
 
@@ -135,9 +135,9 @@ Vào **Window > Package Manager**, filter "In Project" — thấy:
 ## 4. Tạo project và cấu hình FomoxaSettings
 
 ### Mục tiêu bước này
-Tạo cấu trúc thư mục chuẩn và cấu hình `FomoxaSettings` — file config trung tâm báo cho `fomoxac` biết Models ở đâu và output Generated ở đâu.
+Tạo cấu trúc thư mục chuẩn và cấu hình `FomoxaSettings` - file config trung tâm báo cho `fomoxac` biết Models ở đâu và output Generated ở đâu.
 
-### Bước 4.1 — Tạo cấu trúc thư mục
+### Bước 4.1 - Tạo cấu trúc thư mục
 
 Trong Unity Editor, mở **Project** panel. Tạo các folder sau trong `Assets/`:
 
@@ -153,11 +153,11 @@ Assets/
 
 Cách tạo: Trong Project panel, chuột phải vào `Assets` → **Create > Folder**, đặt tên lần lượt.
 
-### Bước 4.2 — Tạo FomoxaSettings asset
+### Bước 4.2 - Tạo FomoxaSettings asset
 
 1. Trong menu Unity: **Tools > Fomoxa > Create Settings**.
 2. Một file `FomoxaSettings.asset` xuất hiện ở `Assets/`.
-3. Click chọn file đó — nhìn vào **Inspector**.
+3. Click chọn file đó - nhìn vào **Inspector**.
 
 Điền các trường sau:
 
@@ -180,7 +180,7 @@ Inspector của `FomoxaSettings.asset` hiển thị đúng đường dẫn đã 
 ### Mục tiêu bước này
 Định nghĩa kiểu dữ liệu `MoveInput` (input di chuyển của player), sau đó chạy `fomoxac` để sinh ra `MoveInputNetAdapter.cs` và `MoveInputNetCodec.cs`.
 
-### Bước 5.1 — Tạo file Model
+### Bước 5.1 - Tạo file Model
 
 Trong Project panel, chuột phải vào `Assets/Network/Models/` → **Create > C# Script**. Đặt tên: `MoveInput`.
 
@@ -212,18 +212,18 @@ namespace MyGame.Network.Models
 - `[Codec("net")]` = sinh codec cho namespace "net".
 - Chỉ dùng `X` và `Z` (mặt phẳng ngang), `Y` cố định = 1f ở phía Apply.
 
-### Bước 5.2 — Đợi Unity compile
+### Bước 5.2 - Đợi Unity compile
 
-Sau khi lưu file, nhìn góc dưới phải Unity — thấy vòng xoay nhỏ ("Compiling..."). Đợi hết.
+Sau khi lưu file, nhìn góc dưới phải Unity - thấy vòng xoay nhỏ ("Compiling..."). Đợi hết.
 
-### Bước 5.3 — Chạy Generate (fomoxac)
+### Bước 5.3 - Chạy Generate (fomoxac)
 
 Vào menu: **Tools > Fomoxa > Generate**
 
 Hoặc nếu không thấy menu đó, mở Terminal (hoặc PowerShell) tại thư mục project:
 
 ```powershell
-# Windows PowerShell — chạy từ thư mục MyGame/
+# Windows PowerShell - chạy từ thư mục MyGame/
 dotnet tool run fomoxac --models Assets/Network/Models --output Assets/Network/Generated --namespace Generated
 ```
 
@@ -232,7 +232,7 @@ dotnet tool run fomoxac --models Assets/Network/Models --output Assets/Network/G
 > dotnet tool restore
 > ```
 
-### Bước 5.4 — Kiểm tra file được sinh ra
+### Bước 5.4 - Kiểm tra file được sinh ra
 
 Sau khi Generate xong, trong `Assets/Network/Generated/` phải có tối thiểu 2 file mới:
 
@@ -242,7 +242,7 @@ Assets/Network/Generated/
 └── MoveInputNetCodec.cs      ← encode/decode binary
 ```
 
-Click vào `MoveInputNetAdapter.cs` — nội dung đầu file sẽ có comment:
+Click vào `MoveInputNetAdapter.cs` - nội dung đầu file sẽ có comment:
 
 ```
 // Generated by com.fomoxa.networking from a fomoxac codec. Edit the model, not this file.
@@ -270,7 +270,7 @@ Console không có lỗi. Trong `Generated/` có file `MoveInputNetAdapter.cs` v
 ### Mục tiêu bước này
 Tạo scene `Game.unity` với đầy đủ cấu trúc: sàn, ánh sáng, camera, GameObject `Network Manager` có gắn `NetworkManager` + `EncryptedUdpNetworkTransport`.
 
-### Cách nhanh nhất — Dùng DemoScene builder (nếu project là clone từ repo)
+### Cách nhanh nhất - Dùng DemoScene builder (nếu project là clone từ repo)
 
 Nếu bạn đang dùng project MyGame từ repo Fomoxa, chạy:
 
@@ -289,40 +289,40 @@ Lệnh này tự động:
 
 ---
 
-### Cách thủ công — Tạo từ đầu (nếu project mới hoàn toàn)
+### Cách thủ công - Tạo từ đầu (nếu project mới hoàn toàn)
 
-### Bước 6.1 — Tạo scene mới
+### Bước 6.1 - Tạo scene mới
 
 **File > New Scene** → chọn **Empty** → Save As `Assets/Scenes/Game.unity`.
 
-### Bước 6.2 — Tạo sàn (Floor)
+### Bước 6.2 - Tạo sàn (Floor)
 
 1. **GameObject > 3D Object > Plane**.
 2. Đổi tên: `Floor`.
 3. Trong Inspector, Transform:
-   - Scale: `(5, 1, 5)` — tạo sàn 50×50 đơn vị.
+   - Scale: `(5, 1, 5)` - tạo sàn 50×50 đơn vị.
 
-### Bước 6.3 — Tạo ánh sáng
+### Bước 6.3 - Tạo ánh sáng
 
 1. **GameObject > Light > Directional Light**.
 2. Transform Rotation: `(50, -30, 0)`.
 3. Intensity: `1.2`.
 
-### Bước 6.4 — Cấu hình Camera
+### Bước 6.4 - Cấu hình Camera
 
 1. Chọn `Main Camera` trong Hierarchy.
 2. Transform Position: `(0, 14, -14)`.
 3. Transform Rotation: `(35, 0, 0)`.
-4. Thêm component `PlayerCamera` (nếu đã có script này — xem Bước 7.4).
+4. Thêm component `PlayerCamera` (nếu đã có script này - xem Bước 7.4).
 
-### Bước 6.5 — Tạo Network Manager GameObject
+### Bước 6.5 - Tạo Network Manager GameObject
 
 1. **GameObject > Create Empty** → đặt tên: `Network Manager`.
 2. Thêm các component theo thứ tự:
    - Click **Add Component** → tìm `Network Manager` → chọn.
    - Click **Add Component** → tìm `Encrypted Udp Network Transport` → chọn.
 
-### Bước 6.6 — Gán Transport vào NetworkManager
+### Bước 6.6 - Gán Transport vào NetworkManager
 
 > **Quan trọng**: `NetworkManager` có trường `Transport` (SerializedField riêng). Phải gán thủ công.
 
@@ -355,13 +355,13 @@ Không có lỗi đỏ trong Console.
 ### Mục tiêu bước này
 Tạo Prefab `Player.prefab` với đúng thứ tự component: `NetworkObject` → `NetworkTransform` → `Player`. Thứ tự **rất quan trọng**, sai thứ tự sẽ gây lỗi lúc runtime.
 
-### Bước 7.1 — Tạo Capsule trong scene
+### Bước 7.1 - Tạo Capsule trong scene
 
 1. **GameObject > 3D Object > Capsule**.
 2. Đổi tên: `Player`.
 3. Transform Position: `(0, 1, 0)`.
 
-### Bước 7.2 — Thêm component theo đúng thứ tự
+### Bước 7.2 - Thêm component theo đúng thứ tự
 
 Chọn `Player` GameObject → Inspector:
 
@@ -371,14 +371,14 @@ Chọn `Player` GameObject → Inspector:
 
 > **Lưu ý**: Nếu thêm sai thứ tự, dùng nút ⋮ (three dots) trên component → **Move Up / Move Down** để sắp xếp lại.
 
-### Bước 7.3 — Lưu thành Prefab
+### Bước 7.3 - Lưu thành Prefab
 
 1. Kéo GameObject `Player` từ Hierarchy vào folder `Assets/Prefabs/` trong Project panel.
 2. Unity hỏi **"Create Prefab Variant?" hay "Original Prefab?"** → chọn **Original Prefab**.
 3. Một file `Player.prefab` xuất hiện trong `Assets/Prefabs/`.
 4. Xóa GameObject `Player` khỏi scene (chỉ giữ lại Prefab).
 
-### Bước 7.4 — Tạo script PlayerCamera (theo dõi player chủ)
+### Bước 7.4 - Tạo script PlayerCamera (theo dõi player chủ)
 
 Tạo file `Assets/Network/PlayerCamera.cs`:
 
@@ -444,7 +444,7 @@ File `Assets/Prefabs/Player.prefab` tồn tại. Mở prefab, thấy 3 component
 ### Mục tiêu bước này
 Tạo 2 script: `Player.cs` (xử lý input + movement) và `Launcher.cs` (khởi động server/client, spawn player).
 
-### Bước 8.1 — Tạo script Player.cs
+### Bước 8.1 - Tạo script Player.cs
 
 Tạo file `Assets/Network/Player.cs`:
 
@@ -491,14 +491,14 @@ namespace MyGame.Network
             input.Use(MoveInputNetAdapter.Instance, Gather, Apply);
         }
 
-        // Chạy trên client — đọc bàn phím, ghi vào input
+        // Chạy trên client - đọc bàn phím, ghi vào input
         private void Gather(MoveInput input)
         {
             input.X = Input.GetAxisRaw("Horizontal"); // A/D hoặc ←/→
             input.Z = Input.GetAxisRaw("Vertical");   // W/S hoặc ↑/↓
         }
 
-        // Chạy trên cả server lẫn client — tính vị trí mới
+        // Chạy trên cả server lẫn client - tính vị trí mới
         private void Apply(MoveInput input, InputContext context)
         {
             if (manager == null) return;
@@ -511,7 +511,7 @@ namespace MyGame.Network
                 transform.rotation = Quaternion.LookRotation(direction, Vector3.up);
             }
 
-            // Tính vị trí mới — dùng TickDelta thay vì Time.deltaTime
+            // Tính vị trí mới - dùng TickDelta thay vì Time.deltaTime
             // TickDelta = thời gian 1 network tick (cố định, không phụ thuộc framerate)
             Vector3 next = transform.position + direction * speed * (float)manager.TimeManager.TickDelta;
             next.x = Mathf.Clamp(next.x, -bounds, bounds);
@@ -528,13 +528,13 @@ namespace MyGame.Network
 | Điều | Chi tiết |
 |------|----------|
 | `NetworkBehaviour` | Base class thay vì `MonoBehaviour`, cung cấp `OnStartServer`, `OnStartClient`, `OnRegisterInput` |
-| `OnRegisterInput` | Override bắt buộc để đăng ký input type — Fomoxa tự gọi |
-| `MoveInputNetAdapter.Instance` | Singleton sinh ra bởi fomoxac — mã hóa/giải mã `MoveInput` qua mạng |
-| `manager.TimeManager.TickDelta` | `double` — thời gian một tick network. Dùng cái này thay `Time.deltaTime` để movement sync đúng |
+| `OnRegisterInput` | Override bắt buộc để đăng ký input type - Fomoxa tự gọi |
+| `MoveInputNetAdapter.Instance` | Singleton sinh ra bởi fomoxac - mã hóa/giải mã `MoveInput` qua mạng |
+| `manager.TimeManager.TickDelta` | `double` - thời gian một tick network. Dùng cái này thay `Time.deltaTime` để movement sync đúng |
 | `Gather` → chỉ client | Đọc keyboard |
 | `Apply` → server + client | Tính toán vị trí, cả hai bên đều chạy (client-side prediction) |
 
-### Bước 8.2 — Tạo script Launcher.cs
+### Bước 8.2 - Tạo script Launcher.cs
 
 Tạo file `Assets/Network/Launcher.cs`:
 
@@ -565,7 +565,7 @@ namespace MyGame.Network
             manager.ServerManager.OnRemoteConnectionState += OnRemoteConnectionState;
             manager.ClientManager.OnClientConnectionState += OnClientConnectionState;
 
-            // Đọc command line args — cho phép chạy server/client từ terminal
+            // Đọc command line args - cho phép chạy server/client từ terminal
             string[] args = Environment.GetCommandLineArgs();
 
             if (Array.IndexOf(args, "-host") >= 0)
@@ -665,7 +665,7 @@ namespace MyGame.Network
             // Instantiate prefab trên server
             NetworkObject player = UnityEngine.Object.Instantiate(playerPrefab, position, Quaternion.identity);
 
-            // Spawn lên mạng — gán owner = peer vừa kết nối
+            // Spawn lên mạng - gán owner = peer vừa kết nối
             manager.ServerManager.Spawn(player, args.PeerId);
         }
 
@@ -686,7 +686,7 @@ namespace MyGame.Network
 }
 ```
 
-### Bước 8.3 — Gắn Launcher vào scene
+### Bước 8.3 - Gắn Launcher vào scene
 
 1. Chọn GameObject `Network Manager` trong Hierarchy.
 2. **Add Component** → `Launcher`.
@@ -698,16 +698,16 @@ namespace MyGame.Network
 
 ### Kết quả mong đợi
 
-Console không có lỗi đỏ. Nhìn `Network Manager` trong Inspector — Launcher có đủ references.
+Console không có lỗi đỏ. Nhìn `Network Manager` trong Inspector - Launcher có đủ references.
 
 ---
 
 ## 9. Chạy Server + 2 Client
 
 ### Mục tiêu bước này
-Chạy 3 process: 1 Host (server + client 1) và 1 Client độc lập — thấy 2 capsule xuất hiện và di chuyển theo nhau.
+Chạy 3 process: 1 Host (server + client 1) và 1 Client độc lập - thấy 2 capsule xuất hiện và di chuyển theo nhau.
 
-### Cách A — Host mode trong Editor (đơn giản nhất, chỉ 1 client)
+### Cách A - Host mode trong Editor (đơn giản nhất, chỉ 1 client)
 
 1. Nhấn **Play** trong Unity Editor.
 2. Click nút **"Host (Server + Player trong 1)"** trên màn hình.
@@ -720,9 +720,9 @@ Với cách này chỉ có 1 player. Để test 2 player, cần Cách B.
 
 ---
 
-### Cách B — Build player và chạy 2 process riêng
+### Cách B - Build player và chạy 2 process riêng
 
-#### Bước 9.1 — Build Windows Player
+#### Bước 9.1 - Build Windows Player
 
 Vào menu: **Tools > Demo > Build Windows Player**
 
@@ -730,7 +730,7 @@ Hoặc dùng **File > Build Settings** → chọn scene `Game` → **Build** →
 
 Đợi build xong (1–5 phút). Thấy log: `[Demo] player build: Succeeded`.
 
-#### Bước 9.2 — Chạy Server (Host)
+#### Bước 9.2 - Chạy Server (Host)
 
 Mở PowerShell:
 
@@ -759,7 +759,7 @@ Rồi:
 
 Một cửa sổ game hiện ra. Capsule xanh xuất hiện ở giữa sân.
 
-#### Bước 9.3 — Theo dõi log server
+#### Bước 9.3 - Theo dõi log server
 
 Mở PowerShell thứ 2:
 
@@ -775,7 +775,7 @@ Thấy dòng:
 [Player] spawn on client id=1 owner=1 mine=True pos=(0.0, 1.0, 3.0)
 ```
 
-#### Bước 9.4 — Chạy Client 2
+#### Bước 9.4 - Chạy Client 2
 
 Mở PowerShell thứ 3:
 
@@ -849,15 +849,15 @@ peer 2: Started
 ### Kiểm tra trực quan
 
 1. Mở cả 2 cửa sổ game cạnh nhau.
-2. Dùng WASD trong cửa sổ Host — capsule di chuyển ở CẢ HAI cửa sổ.
-3. Click vào cửa sổ Client 2, dùng WASD — capsule kia cũng di chuyển.
+2. Dùng WASD trong cửa sổ Host - capsule di chuyển ở CẢ HAI cửa sổ.
+3. Click vào cửa sổ Client 2, dùng WASD - capsule kia cũng di chuyển.
 4. Hai capsule có màu giống nhau nhưng vị trí khác nhau.
 
 ---
 
 ## 11. Troubleshooting thường gặp
 
-### 11.1 — `SchemaConflict` hoặc `MessageId conflict`
+### 11.1 - `SchemaConflict` hoặc `MessageId conflict`
 
 **Triệu chứng**: Console in `SchemaConflict` hoặc client disconnect ngay khi kết nối.
 
@@ -872,7 +872,7 @@ Remove-Item Assets/Network/Generated/*.cs
 
 ---
 
-### 11.2 — `Assembly name collision: Fomoxa.Unity`
+### 11.2 - `Assembly name collision: Fomoxa.Unity`
 
 **Triệu chứng**: Lỗi compile `Multiple assemblies with the same name: Fomoxa.Unity`.
 
@@ -882,7 +882,7 @@ Remove-Item Assets/Network/Generated/*.cs
 
 ---
 
-### 11.3 — Client kết nối được nhưng không thấy player của nhau
+### 11.3 - Client kết nối được nhưng không thấy player của nhau
 
 **Triệu chứng**: 2 client chạy nhưng mỗi cửa sổ chỉ thấy capsule của mình.
 
@@ -892,11 +892,11 @@ Remove-Item Assets/Network/Generated/*.cs
 
 **Cách sửa**:
 1. Chạy **Tools > Demo > Rebuild Scene** để trigger `FomoxaPrefabStep.RunForProject()`.
-2. Kiểm tra console sau đó — không được có lỗi `[Demo] prefab:`.
+2. Kiểm tra console sau đó - không được có lỗi `[Demo] prefab:`.
 
 ---
 
-### 11.4 — `peer X: TimedOut` — client disconnect ngay lập tức
+### 11.4 - `peer X: TimedOut` - client disconnect ngay lập tức
 
 **Nguyên nhân**: Encryption key không khớp giữa server và client.
 
@@ -904,11 +904,11 @@ Remove-Item Assets/Network/Generated/*.cs
 
 **Trong Pod mode** (dùng `EncryptedUdpNetworkTransport`): Key phải được cấp từ `DirectoryPod` sau khi register. Đây là flow backend phức tạp hơn, xem `docs/UBUNTU_GUIDE.md`.
 
-**Cách sửa tạm thời khi test local**: Không gán `EncryptedUdpNetworkTransport` vào `Launcher.encryptedTransport` — khi trường đó là null, `EnsureTokens()` trả về `true` mà không cần token thực.
+**Cách sửa tạm thời khi test local**: Không gán `EncryptedUdpNetworkTransport` vào `Launcher.encryptedTransport` - khi trường đó là null, `EnsureTokens()` trả về `true` mà không cần token thực.
 
 ---
 
-### 11.5 — `CS0103: The name 'MoveInputNetAdapter' does not exist`
+### 11.5 - `CS0103: The name 'MoveInputNetAdapter' does not exist`
 
 **Nguyên nhân**: File `MoveInputNetAdapter.cs` chưa được generate hoặc chưa compile.
 
@@ -919,18 +919,18 @@ Remove-Item Assets/Network/Generated/*.cs
 
 ---
 
-### 11.6 — Unity freeze khi chạy Generate
+### 11.6 - Unity freeze khi chạy Generate
 
 **Nguyên nhân**: `fomoxac` process bị treo hoặc đường dẫn trong `FomoxaSettings` sai.
 
 **Cách sửa**:
-1. Kiểm tra `FomoxaSettings.asset` — Models Path và Generated Path đúng chưa.
+1. Kiểm tra `FomoxaSettings.asset` - Models Path và Generated Path đúng chưa.
 2. Mở Task Manager → tìm process `fomoxac` → Kill nếu còn chạy.
 3. Chạy lại Generate.
 
 ---
 
-### 11.7 — BOM trong manifest.json
+### 11.7 - BOM trong manifest.json
 
 **Triệu chứng**: UPM báo lỗi JSON parse dù nhìn file trông bình thường.
 
@@ -943,9 +943,9 @@ Remove-Item Assets/Network/Generated/*.cs
 ## 12. Bài tập nhỏ: Tự thêm RPC
 
 ### Mục tiêu
-Thêm một **teleport button** — khi nhấn phím `T`, player của bạn nhảy về vị trí trung tâm sân (0, 1, 0). Dùng RPC để gửi lệnh từ client lên server.
+Thêm một **teleport button** - khi nhấn phím `T`, player của bạn nhảy về vị trí trung tâm sân (0, 1, 0). Dùng RPC để gửi lệnh từ client lên server.
 
-### Bước 12.1 — Tạo model TeleportRequest
+### Bước 12.1 - Tạo model TeleportRequest
 
 Tạo file `Assets/Network/Models/TeleportRequest.cs`:
 
@@ -958,23 +958,23 @@ namespace MyGame.Network.Models
     [Codec("net")]
     public class TeleportRequest
     {
-        // Không có field — chỉ là signal "hãy teleport tôi về center"
+        // Không có field - chỉ là signal "hãy teleport tôi về center"
     }
 }
 ```
 
-### Bước 12.2 — Generate lại
+### Bước 12.2 - Generate lại
 
 **Tools > Fomoxa > Generate** → đợi compile.
 
 Kiểm tra: `Assets/Network/Generated/TeleportRequestNetAdapter.cs` xuất hiện.
 
-### Bước 12.3 — Thêm RPC vào Player.cs
+### Bước 12.3 - Thêm RPC vào Player.cs
 
 Mở `Player.cs`, thêm vào cuối class (trước dấu `}`):
 
 ```csharp
-        // Gọi từ client — client nhấn T
+        // Gọi từ client - client nhấn T
         // Server nhận, xử lý teleport
         protected override void OnRegisterRpc(NetworkRpc rpc)
         {
@@ -991,7 +991,7 @@ Mở `Player.cs`, thêm vào cuối class (trước dấu `}`):
             }
         }
 
-        // Chạy trên SERVER — xử lý lệnh teleport
+        // Chạy trên SERVER - xử lý lệnh teleport
         private void HandleTeleport(TeleportRequest request, RpcContext context)
         {
             Debug.Log($"[Player] teleporting id={NetworkObject.ObjectId} to center");
@@ -1001,7 +1001,7 @@ Mở `Player.cs`, thêm vào cuối class (trước dấu `}`):
 
 > **Lưu ý**: `rpc.Client<T>(handler)` nghĩa là "RPC gửi từ client, server xử lý". Fomoxa có cả `rpc.Server<T>()` cho chiều ngược lại.
 
-### Bước 12.4 — Thêm `using` cần thiết
+### Bước 12.4 - Thêm `using` cần thiết
 
 Đầu file `Player.cs`, thêm:
 
@@ -1011,7 +1011,7 @@ using MyGame.Network.Models;
 
 (nếu chưa có)
 
-### Bước 12.5 — Test
+### Bước 12.5 - Test
 
 1. Build lại: **Tools > Demo > Build Windows Player**.
 2. Chạy Host + Client như Bước 9.
@@ -1041,7 +1041,7 @@ Tôi đã chạy thành công khi:
 - [ ] Dùng WASD di chuyển được capsule.
 - [ ] Chạy build `.exe` với `-client` → thấy log `[Client] Started`.
 - [ ] Log server in `peer X: Started` khi client 2 kết nối.
-- [ ] Cả 2 cửa sổ game thấy **2 capsule** — mỗi cái điều khiển được của mình, thấy cái kia di chuyển.
+- [ ] Cả 2 cửa sổ game thấy **2 capsule** - mỗi cái điều khiển được của mình, thấy cái kia di chuyển.
 - [ ] *(Nâng cao)* Nhấn `T` → thấy capsule teleport về center trong cả 2 cửa sổ.
 
 ---
@@ -1058,4 +1058,5 @@ Tôi đã chạy thành công khi:
 
 ---
 
-*Tài liệu này được viết dựa trên codebase thực tế tại commit `ccb59ca`. API có thể thay đổi — luôn kiểm tra `Assets/Network/` để xem code mẫu mới nhất.*
+*Tài liệu này được viết dựa trên codebase thực tế tại commit `ccb59ca`. API có thể thay đổi - luôn kiểm tra `Assets/Network/` để xem code mẫu mới nhất.*
+

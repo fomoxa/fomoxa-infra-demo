@@ -1,7 +1,7 @@
 # Hướng Dẫn Triển Khai Hạ Tầng Fomoxa trên Ubuntu / WSL2
 
 > **Dành cho ai**: Người mới clone dự án về, chưa biết Kubernetes, muốn hiểu từng bước thực sự làm gì.  
-> **Mục tiêu**: Sau guide này bạn có một cụm Kubernetes cục bộ (k3d) chạy đầy đủ: Postgres + Nakama + Directory + Gateway + Backend + Agones Fleet — và đã verify hoạt động qua các bài test thực tế.  
+> **Mục tiêu**: Sau guide này bạn có một cụm Kubernetes cục bộ (k3d) chạy đầy đủ: Postgres + Nakama + Directory + Gateway + Backend + Agones Fleet - và đã verify hoạt động qua các bài test thực tế.  
 > **Hệ điều hành**: Ubuntu 22.04 / 24.04 (WSL2 trên Windows hoặc máy Linux thuần).
 
 ---
@@ -68,7 +68,7 @@
 
 ### k3d là gì?
 
-k3d chạy **k3s** (Kubernetes nhẹ) bên trong Docker container. Mọi thứ — control plane, worker node, load balancer — đều là container trên máy bạn. Không cần cloud, không cần VM riêng.
+k3d chạy **k3s** (Kubernetes nhẹ) bên trong Docker container. Mọi thứ - control plane, worker node, load balancer - đều là container trên máy bạn. Không cần cloud, không cần VM riêng.
 
 ---
 
@@ -87,7 +87,7 @@ k3d chạy **k3s** (Kubernetes nhẹ) bên trong Docker container. Mọi thứ �
 
 ## 3. Cài Docker
 
-> **Quan trọng — WSL2 vs Ubuntu thuần là hai engine khác nhau.**
+> **Quan trọng - WSL2 vs Ubuntu thuần là hai engine khác nhau.**
 >
 > - **WSL2 trên Windows**: Docker chạy trên Windows host qua Docker Desktop. WSL2 dùng Docker qua socket chia sẻ. **Không** cài Docker trong WSL2 khi đã có Docker Desktop.
 > - **Ubuntu thuần (bare metal / VM)**: Cài Docker Engine trực tiếp vào Linux.
@@ -176,7 +176,7 @@ docker run --rm hello-world
 
 ## 4. Cài kubectl, k3d, helm
 
-### Bước 4.1 — Cài các gói cơ bản
+### Bước 4.1 - Cài các gói cơ bản
 
 ```bash
 sudo apt update && sudo apt install -y curl openssl git ca-certificates
@@ -186,7 +186,7 @@ sudo apt update && sudo apt install -y curl openssl git ca-certificates
 
 ---
 
-### Bước 4.2 — Cài kubectl
+### Bước 4.2 - Cài kubectl
 
 `kubectl` là CLI để giao tiếp với Kubernetes cluster. Mọi lệnh `kubectl get`, `kubectl apply`, `kubectl logs` đều dùng tool này.
 
@@ -216,7 +216,7 @@ Kustomize Version: v5.x.x
 
 ---
 
-### Bước 4.3 — Cài k3d
+### Bước 4.3 - Cài k3d
 
 k3d là wrapper tạo/quản lý cluster k3s (Kubernetes nhẹ) trong Docker. Toàn bộ cluster chạy như container trên máy bạn.
 
@@ -238,7 +238,7 @@ k3s version v1.30.x+k3s1
 
 ---
 
-### Bước 4.4 — Cài Helm
+### Bước 4.4 - Cài Helm
 
 Helm là package manager cho Kubernetes. Dùng để cài Agones (game server framework) bằng một lệnh thay vì apply hàng chục YAML file thủ công.
 
@@ -269,12 +269,12 @@ echo "helm:    $(helm version --short)"
 
 ## 5. Clone repo & cấu trúc thư mục
 
-### Bước 5.1 — Clone hoặc trỏ đến repo
+### Bước 5.1 - Clone hoặc trỏ đến repo
 
 **Nếu dùng WSL2** và repo đã có trên Windows (ví dụ `D:\Documents\fomoxa`):
 
 ```bash
-# Trỏ vào thư mục trên Windows — WSL2 mount ổ đĩa Windows vào /mnt/
+# Trỏ vào thư mục trên Windows - WSL2 mount ổ đĩa Windows vào /mnt/
 cd /mnt/d/Documents/fomoxa
 ```
 
@@ -285,7 +285,7 @@ git clone <url-repo-fomoxa> ~/fomoxa
 cd ~/fomoxa
 ```
 
-**Bước 5.2 — Cấp quyền thực thi cho các script**
+**Bước 5.2 - Cấp quyền thực thi cho các script**
 
 ```bash
 chmod +x scripts/*.sh
@@ -293,7 +293,7 @@ chmod +x scripts/*.sh
 
 **Lệnh này làm gì**: Các file `.sh` trong `scripts/` mặc định không có quyền execute. Lệnh này cấp quyền để chạy trực tiếp bằng `./scripts/xxx.sh`.
 
-### Bước 5.3 — Hiểu cấu trúc thư mục quan trọng
+### Bước 5.3 - Hiểu cấu trúc thư mục quan trọng
 
 ```
 fomoxa/
@@ -307,7 +307,7 @@ fomoxa/
 │   │   ├── backend.yaml        ← fRPC backend (Deployment + Service)
 │   │   ├── fleet.yaml          ← Agones Fleet (game server pool)
 │   │   └── ingress.yaml        ← (tùy chọn) ingress rules
-│   ├── secrets/                ← KHÔNG commit — git-ignored
+│   ├── secrets/                ← KHÔNG commit - git-ignored
 │   │   ├── directory/
 │   │   │   ├── root            ← hex string 64 ký tự
 │   │   │   ├── admin           ← hex string 48 ký tự
@@ -347,20 +347,20 @@ Directory service dùng các khóa này để xác thực các thành phần tro
 - `pod`: game server pod dùng để đăng ký với directory
 - `admin`, `backend-pod`: dùng cho các thao tác quản trị và deploy
 
-**Những file này là secret — đã được git-ignore. Không bao giờ commit vào repo.**
+**Những file này là secret - đã được git-ignore. Không bao giờ commit vào repo.**
 
-### Bước 6.1 — Tạo thư mục secrets
+### Bước 6.1 - Tạo thư mục secrets
 
 ```bash
 # Đứng từ thư mục gốc repo
 mkdir -p deploy/secrets/directory
 ```
 
-### Bước 6.2 — Sinh từng khóa bằng openssl
+### Bước 6.2 - Sinh từng khóa bằng openssl
 
 ```bash
 # openssl rand -hex N sinh N byte ngẫu nhiên dạng hex (2N ký tự)
-# tr -d '\n' xóa ký tự xuống dòng cuối — quan trọng, nếu có \n sẽ lỗi khi đọc
+# tr -d '\n' xóa ký tự xuống dòng cuối - quan trọng, nếu có \n sẽ lỗi khi đọc
 
 # root key: 32 bytes = 64 ký tự hex
 openssl rand -hex 32 | tr -d '\n' > deploy/secrets/directory/root
@@ -381,7 +381,7 @@ openssl rand -hex 24 | tr -d '\n' > deploy/secrets/directory/pod
 openssl rand -hex 24 | tr -d '\n' > deploy/secrets/backend-pod
 ```
 
-### Bước 6.3 — Kiểm tra file được tạo đúng
+### Bước 6.3 - Kiểm tra file được tạo đúng
 
 ```bash
 ls -la deploy/secrets/directory/
@@ -398,7 +398,7 @@ xxd deploy/secrets/directory/root | tail -1
 # Phải kết thúc bằng hex chars, không phải "0a" (= newline)
 ```
 
-> **Hoặc chạy gọn**: `./scripts/gen-keys.sh` — script làm đúng các lệnh trên với kiểm tra "đã tồn tại thì bỏ qua".
+> **Hoặc chạy gọn**: `./scripts/gen-keys.sh` - script làm đúng các lệnh trên với kiểm tra "đã tồn tại thì bỏ qua".
 
 ---
 
@@ -410,14 +410,14 @@ xxd deploy/secrets/directory/root | tail -1
 
 k3d tạo một container `k3d-fomoxa-serverlb` đóng vai trò LoadBalancer. Container này forward traffic từ máy host vào cluster. Phải khai báo port mapping ngay lúc khởi tạo để container này biết lắng nghe cổng nào.
 
-### Bước 7.1 — Kiểm tra cluster có tồn tại chưa
+### Bước 7.1 - Kiểm tra cluster có tồn tại chưa
 
 ```bash
 k3d cluster list
 # Nếu thấy "fomoxa" trong danh sách → cluster đã tồn tại, bỏ qua Bước 7.2
 ```
 
-### Bước 7.2 — Tạo cluster với port mapping
+### Bước 7.2 - Tạo cluster với port mapping
 
 ```bash
 k3d cluster create fomoxa \
@@ -431,10 +431,10 @@ k3d cluster create fomoxa \
 
 | Flag | Ý nghĩa |
 |------|---------|
-| `fomoxa` | Tên cluster — kubectl context sẽ là `k3d-fomoxa` |
+| `fomoxa` | Tên cluster - kubectl context sẽ là `k3d-fomoxa` |
 | `--port "7777:7777/udp@loadbalancer"` | Map UDP port 7777 host → 7777 trong cluster (gateway game traffic) |
 | `--port "9600:9600@loadbalancer"` | Map TCP port 9600 host → 9600 trong cluster (backend fRPC) |
-| `--port "7350:7350@loadbalancer"` | Map TCP port 7350 host → 7350 trong cluster (Nakama API — dùng cho test) |
+| `--port "7350:7350@loadbalancer"` | Map TCP port 7350 host → 7350 trong cluster (Nakama API - dùng cho test) |
 | `--wait` | Đợi cho đến khi node sẵn sàng |
 
 **Tại sao UDP phải khai báo `/udp`?** Docker mặc định map TCP. UDP cần khai báo tường minh, nếu thiếu thì game client sẽ không gửi được packets đến gateway.
@@ -450,7 +450,7 @@ INFO[0020] Cluster 'fomoxa' created successfully!
 INFO[0020] You can now use it with: kubectl cluster-info
 ```
 
-### Bước 7.3 — Chuyển kubectl context sang cluster mới
+### Bước 7.3 - Chuyển kubectl context sang cluster mới
 
 ```bash
 kubectl config use-context k3d-fomoxa
@@ -462,7 +462,7 @@ kubectl config current-context
 
 **Tại sao bước này quan trọng?** Nếu có nhiều cluster (ví dụ đang dùng minikube), lệnh `kubectl` sẽ nói chuyện với cluster sai nếu không chuyển context.
 
-### Bước 7.4 — Kiểm tra cluster hoạt động
+### Bước 7.4 - Kiểm tra cluster hoạt động
 
 ```bash
 kubectl cluster-info
@@ -482,9 +482,9 @@ kubectl get nodes
 
 ### Agones là gì?
 
-Agones là Kubernetes operator (từ Google) quản lý **game server lifecycle**. Nó thêm các Custom Resource Definition (CRD) như `Fleet`, `GameServer`, `GameServerAllocation` vào Kubernetes — cho phép cluster tự động spawn, health-check, và drain game server pods.
+Agones là Kubernetes operator (từ Google) quản lý **game server lifecycle**. Nó thêm các Custom Resource Definition (CRD) như `Fleet`, `GameServer`, `GameServerAllocation` vào Kubernetes - cho phép cluster tự động spawn, health-check, và drain game server pods.
 
-### Bước 8.1 — Thêm Helm repo của Agones
+### Bước 8.1 - Thêm Helm repo của Agones
 
 ```bash
 helm repo add agones https://agones.dev/chart/helm
@@ -498,7 +498,7 @@ helm repo update agones
 
 **Lệnh này làm gì**: Tải danh sách charts mới nhất từ repo vừa thêm.
 
-### Bước 8.2 — Cài Agones vào namespace agones-system
+### Bước 8.2 - Cài Agones vào namespace agones-system
 
 ```bash
 helm install agones agones/agones \
@@ -518,7 +518,7 @@ helm install agones agones/agones \
 | `--create-namespace` | Tự tạo namespace nếu chưa có |
 | `--set "agones.ping.http.expose=false"` | Tắt endpoint ping HTTP (không cần cho local dev) |
 | `--wait` | Đợi tất cả pod Agones Ready trước khi return |
-| `--timeout 3m` | Timeout 3 phút — Agones kéo nhiều image, có thể chậm |
+| `--timeout 3m` | Timeout 3 phút - Agones kéo nhiều image, có thể chậm |
 
 **Kết quả mong đợi** (1–3 phút):
 
@@ -529,7 +529,7 @@ NAMESPACE: agones-system
 STATUS: deployed
 ```
 
-### Bước 8.3 — Xác nhận Agones đang chạy
+### Bước 8.3 - Xác nhận Agones đang chạy
 
 ```bash
 kubectl get pods -n agones-system
@@ -561,9 +561,9 @@ kubectl get crd | grep agones
 
 k3d chạy Kubernetes trong Docker container. Container đó không chia sẻ Docker image cache với host. Nếu chỉ build image trên host, Kubernetes trong container không thể tìm thấy image đó. Phải dùng `k3d image import` để copy image từ host vào trong container.
 
-Đây là lý do manifest dùng `imagePullPolicy: IfNotPresent` — không kéo từ registry, dùng image đã import.
+Đây là lý do manifest dùng `imagePullPolicy: IfNotPresent` - không kéo từ registry, dùng image đã import.
 
-### Bước 9.1 — Clone gateway source (nếu chưa có)
+### Bước 9.1 - Clone gateway source (nếu chưa có)
 
 Gateway là binary closed-source từ Fomoxa team, được build từ source:
 
@@ -577,9 +577,9 @@ git clone --depth 1 -b 0.2.0 https://github.com/fomoxa/gateway.git gateway
 
 **Lệnh này làm gì**: Clone repo gateway ở tag `0.2.0` (shallow clone, chỉ lấy commit mới nhất). Thư mục `gateway/` được git-ignore nên không commit vào repo này.
 
-### Bước 9.2 — Build image fomoxa-server
+### Bước 9.2 - Build image fomoxa-server
 
-`fomoxa-server` là game server C# — nhận UDP packets từ clients qua gateway.
+`fomoxa-server` là game server C# - nhận UDP packets từ clients qua gateway.
 
 ```bash
 docker build -f deploy/Dockerfile.server -t fomoxa-server:latest .
@@ -593,7 +593,7 @@ Successfully built <hash>
 Successfully tagged fomoxa-server:latest
 ```
 
-### Bước 9.3 — Build image fomoxa-directory
+### Bước 9.3 - Build image fomoxa-directory
 
 Directory service quản lý đăng ký và định tuyến game server pods.
 
@@ -601,7 +601,7 @@ Directory service quản lý đăng ký và định tuyến game server pods.
 docker build -f deploy/Dockerfile.directory -t fomoxa-directory:latest .
 ```
 
-### Bước 9.4 — Build image fomoxa-gateway
+### Bước 9.4 - Build image fomoxa-gateway
 
 Gateway nhận UDP packets từ client, giải mã connect token, route đến đúng game server pod.
 
@@ -609,9 +609,9 @@ Gateway nhận UDP packets từ client, giải mã connect token, route đến �
 docker build -f deploy/Dockerfile.gateway -t fomoxa-gateway:latest .
 ```
 
-### Bước 9.5 — Build image fomoxa-backend
+### Bước 9.5 - Build image fomoxa-backend
 
-Backend là fRPC server C# — xử lý login, matchmaking, phát connect tokens.
+Backend là fRPC server C# - xử lý login, matchmaking, phát connect tokens.
 
 ```bash
 docker build -f MyGame.Backend/Dockerfile -t fomoxa-backend:latest MyGame.Backend
@@ -619,7 +619,7 @@ docker build -f MyGame.Backend/Dockerfile -t fomoxa-backend:latest MyGame.Backen
 
 **Lưu ý**: Context là `MyGame.Backend` (không phải `.`) vì Dockerfile của backend chỉ cần source trong thư mục đó.
 
-### Bước 9.6 — Kiểm tra images đã build
+### Bước 9.6 - Kiểm tra images đã build
 
 ```bash
 docker images | grep fomoxa
@@ -635,7 +635,7 @@ fomoxa-gateway       latest    ghi789...      1 minute ago   ???
 fomoxa-backend       latest    jkl012...      1 minute ago   ???
 ```
 
-### Bước 9.7 — Import tất cả images vào k3d
+### Bước 9.7 - Import tất cả images vào k3d
 
 ```bash
 k3d image import \
@@ -664,13 +664,13 @@ INFO[0060] Successfully imported image(s) into cluster 'fomoxa'!
 
 ## 10. Tạo Kubernetes Secrets & apply manifests
 
-### Bước 10.1 — Tạo namespace fomoxa
+### Bước 10.1 - Tạo namespace fomoxa
 
 ```bash
 kubectl apply -f deploy/k8s/namespace.yaml
 ```
 
-**Lệnh này làm gì**: Tạo namespace `fomoxa` trong cluster nếu chưa có. Namespace là "phòng" cách ly — mọi resource của Fomoxa app đều sống trong đây.
+**Lệnh này làm gì**: Tạo namespace `fomoxa` trong cluster nếu chưa có. Namespace là "phòng" cách ly - mọi resource của Fomoxa app đều sống trong đây.
 
 **Kiểm tra**:
 ```bash
@@ -679,7 +679,7 @@ kubectl get namespace fomoxa
 # fomoxa   Active   5s
 ```
 
-### Bước 10.2 — Tạo Kubernetes Secrets từ file
+### Bước 10.2 - Tạo Kubernetes Secrets từ file
 
 Bước này chuyển các file hex trong `deploy/secrets/` thành Kubernetes Secret objects. Các Deployment sau này mount secret này vào container dưới dạng file.
 
@@ -697,7 +697,7 @@ kubectl create secret generic fomoxa-directory-keys \
 
 **Giải thích**:
 - `--from-file=KEY=PATH`: đọc nội dung file `PATH`, lưu vào secret với key là `KEY`
-- `--dry-run=client -o yaml | kubectl apply -f -`: thay vì `create` (lỗi nếu đã tồn tại), dùng pattern này để idempotent — chạy lại không báo lỗi
+- `--dry-run=client -o yaml | kubectl apply -f -`: thay vì `create` (lỗi nếu đã tồn tại), dùng pattern này để idempotent - chạy lại không báo lỗi
 
 ```bash
 # Secret 2: fomoxa-backend-keys (backend service dùng)
@@ -726,9 +726,9 @@ kubectl get secrets -n fomoxa
 # fomoxa-pod-key           Opaque   1      5s
 ```
 
-> **Hoặc chạy gọn**: `./scripts/gen-k8s-secrets.sh fomoxa` — script làm đúng 3 lệnh trên.
+> **Hoặc chạy gọn**: `./scripts/gen-k8s-secrets.sh fomoxa` - script làm đúng 3 lệnh trên.
 
-### Bước 10.3 — Apply manifest Postgres
+### Bước 10.3 - Apply manifest Postgres
 
 ```bash
 kubectl apply -f deploy/k8s/postgres.yaml
@@ -743,7 +743,7 @@ kubectl rollout status deployment/postgres -n fomoxa --timeout=90s
 # Kết quả mong đợi: deployment "postgres" successfully rolled out
 ```
 
-### Bước 10.4 — Apply manifest Nakama
+### Bước 10.4 - Apply manifest Nakama
 
 ```bash
 kubectl apply -f deploy/k8s/nakama.yaml
@@ -755,13 +755,13 @@ kubectl apply -f deploy/k8s/nakama.yaml
   - initContainer `migrate`: chạy database migration trước khi Nakama start
 - Service `nakama`: expose port 7350 (API) và 7351 (console) trong cluster
 
-**Đợi Nakama sẵn sàng** (có thể mất 60–120 giây lần đầu — kéo image):
+**Đợi Nakama sẵn sàng** (có thể mất 60–120 giây lần đầu - kéo image):
 
 ```bash
 kubectl rollout status deployment/nakama -n fomoxa --timeout=120s
 ```
 
-### Bước 10.5 — Apply manifest Directory
+### Bước 10.5 - Apply manifest Directory
 
 ```bash
 kubectl apply -f deploy/k8s/directory.yaml
@@ -770,13 +770,13 @@ kubectl apply -f deploy/k8s/directory.yaml
 **Lệnh này tạo**:
 - ConfigMap `directory-config`: chứa `directory.toml` (cấu hình service)
 - Deployment `directory`: service discovery binary
-- Service `directory`: expose port 9500 (API) và 9501 (admin) — chỉ trong cluster
+- Service `directory`: expose port 9500 (API) và 9501 (admin) - chỉ trong cluster
 
 ```bash
 kubectl rollout status deployment/directory -n fomoxa --timeout=60s
 ```
 
-### Bước 10.6 — Apply manifest Gateway
+### Bước 10.6 - Apply manifest Gateway
 
 ```bash
 kubectl apply -f deploy/k8s/gateway.yaml
@@ -785,13 +785,13 @@ kubectl apply -f deploy/k8s/gateway.yaml
 **Lệnh này tạo**:
 - ConfigMap `gateway-config`: chứa `gateway.toml`
 - Deployment `gateway`: UDP gateway binary
-- Service `gateway` (type: LoadBalancer): expose UDP port 7777 — k3d forward ra host port 7777
+- Service `gateway` (type: LoadBalancer): expose UDP port 7777 - k3d forward ra host port 7777
 
 ```bash
 kubectl rollout status deployment/gateway -n fomoxa --timeout=60s
 ```
 
-### Bước 10.7 — Apply manifest Backend
+### Bước 10.7 - Apply manifest Backend
 
 ```bash
 kubectl apply -f deploy/k8s/backend.yaml
@@ -799,14 +799,14 @@ kubectl apply -f deploy/k8s/backend.yaml
 
 **Lệnh này tạo**:
 - Deployment `backend`: C# fRPC server
-  - readinessProbe và livenessProbe dùng `fomoxa-rpc-health.dll` — health check TCP 9600
-- Service `backend` (type: LoadBalancer): expose TCP port 9600 — k3d forward ra host port 9600
+  - readinessProbe và livenessProbe dùng `fomoxa-rpc-health.dll` - health check TCP 9600
+- Service `backend` (type: LoadBalancer): expose TCP port 9600 - k3d forward ra host port 9600
 
 ```bash
 kubectl rollout status deployment/backend -n fomoxa --timeout=60s
 ```
 
-### Bước 10.8 — Apply Agones Fleet (game server pool)
+### Bước 10.8 - Apply Agones Fleet (game server pool)
 
 ```bash
 kubectl apply -f deploy/k8s/fleet.yaml
@@ -814,9 +814,9 @@ kubectl apply -f deploy/k8s/fleet.yaml
 
 **Lệnh này tạo**: Fleet `fomoxa-server` với `replicas: 2`. Agones sẽ tự tạo 2 GameServer pods (mỗi pod có 2 container: `fomoxa-server` + `agones-gameserver-sidecar`).
 
-**Khác với Deployment thông thường**: Không dùng `rollout status` — thay vào đó xem trạng thái GameServer (Bước 11).
+**Khác với Deployment thông thường**: Không dùng `rollout status` - thay vào đó xem trạng thái GameServer (Bước 11).
 
-### Bước 10.9 — Apply ingress (tùy chọn)
+### Bước 10.9 - Apply ingress (tùy chọn)
 
 ```bash
 # Chỉ cần nếu file tồn tại
@@ -829,7 +829,7 @@ fi
 
 ## 11. Kiểm tra trạng thái pods / GameServers
 
-### Bước 11.1 — Xem tất cả pods trong namespace fomoxa
+### Bước 11.1 - Xem tất cả pods trong namespace fomoxa
 
 ```bash
 kubectl get pods -n fomoxa
@@ -864,7 +864,7 @@ kubectl describe pod <tên-pod> -n fomoxa
 kubectl describe pod backend-xxxxxxxxx-xxxxx -n fomoxa
 ```
 
-### Bước 11.2 — Xem trạng thái Agones GameServers
+### Bước 11.2 - Xem trạng thái Agones GameServers
 
 ```bash
 kubectl get gameservers -n fomoxa
@@ -886,12 +886,12 @@ fomoxa-server-xxxx-zzzz    Ready   10.42.0.y    7778   k3d-fomoxa-server-0   2m
 |-------|---------|
 | `Starting` | Pod đang khởi động, chưa đăng ký với Agones sidecar |
 | `Ready` | Pod đã khởi động, đã báo ready với Agones, **sẵn sàng nhận player** |
-| `Allocated` | Có player đang chơi trên pod này — directory đã assign cho session |
+| `Allocated` | Có player đang chơi trên pod này - directory đã assign cho session |
 | `Shutdown` | Pod đang drain (chờ hết player rồi terminate) |
 
 > **Quan trọng**: Game server pod phải ở trạng thái **Ready** trước khi nó có thể đăng ký với directory service để nhận phòng (`arena:1`, `arena:2`, ...). Code trong `AgonesLifecycle.cs` gọi `sdk.Ready()` → Agones chuyển state sang `Ready` → rồi mới gọi register với directory.
 
-### Bước 11.3 — Xem Fleet status
+### Bước 11.3 - Xem Fleet status
 
 ```bash
 kubectl get fleets -n fomoxa
@@ -913,7 +913,7 @@ fomoxa-server    Packed       2         2         0           2       5m
 
 ## 12. Cấu hình quan trọng
 
-### 12.1 — public_address trong directory.toml
+### 12.1 - public_address trong directory.toml
 
 File: `deploy/k8s/directory.yaml` (phần ConfigMap)
 
@@ -921,12 +921,12 @@ File: `deploy/k8s/directory.yaml` (phần ConfigMap)
 public_address = "127.0.0.1:7777"
 ```
 
-**Đây là địa chỉ client thấy** — địa chỉ Gateway mà Directory sẽ trả về cho client khi tìm được game server.
+**Đây là địa chỉ client thấy** - địa chỉ Gateway mà Directory sẽ trả về cho client khi tìm được game server.
 
 **Tại sao không dùng DNS nội bộ cluster (`gateway.fomoxa.svc.cluster.local`)?**
 Client chạy bên ngoài cluster. Client không giải được DNS nội bộ cluster. Directory phải trả về địa chỉ client có thể reach.
 
-- **Môi trường local (k3d)**: `127.0.0.1:7777` — k3d forward port 7777 từ host vào cluster
+- **Môi trường local (k3d)**: `127.0.0.1:7777` - k3d forward port 7777 từ host vào cluster
 - **Môi trường cloud**: IP hoặc hostname public của LoadBalancer/ingress
 - **Môi trường staging**: IP của máy chủ Linux
 
@@ -936,7 +936,7 @@ Client chạy bên ngoài cluster. Client không giải được DNS nội bộ 
 public_address = "203.0.113.42:7777"   # IP public của server
 ```
 
-### 12.2 — drain_seconds và terminationGracePeriodSeconds
+### 12.2 - drain_seconds và terminationGracePeriodSeconds
 
 Trong `directory.toml`:
 ```toml
@@ -957,7 +957,7 @@ terminationGracePeriodSeconds: 360
 
 Nếu `terminationGracePeriodSeconds` ≤ `drain_seconds`, Kubernetes sẽ SIGKILL pod trước khi drain xong → player bị disconnect đột ngột.
 
-### 12.3 — Cấu hình version
+### 12.3 - Cấu hình version
 
 Trong `fleet.yaml`:
 ```yaml
@@ -973,7 +973,7 @@ filter = "pod.version == client.version"
 
 Directory chỉ assign player vào pod có cùng version. Khi build Unity client, version phải khớp với `FOMOXA_VERSION` trong fleet. Nếu khác version, client không được assign pod → không connect được game.
 
-### 12.4 — Cấu hình gateway.toml
+### 12.4 - Cấu hình gateway.toml
 
 ```toml
 listen = "0.0.0.0:7777"          # Lắng nghe UDP trên mọi interface
@@ -990,7 +990,7 @@ gateway = { file = "/secrets/directory/gateway" }   # Xác thực với director
 
 ## 13. Test end-to-end
 
-### Bước 13.1 — Test Nakama matchmaking (curl thủ công)
+### Bước 13.1 - Test Nakama matchmaking (curl thủ công)
 
 Test này không cần script, chỉ dùng `curl`:
 
@@ -1083,11 +1083,11 @@ echo "Poll A: $POLL_A"
 # Kết quả mong đợi: {"status":"matched",...,"ticket":"<cùng UUID với MATCH_B>"}
 ```
 
-> **Hoặc chạy gọn**: `./scripts/test-nakama.sh` — script làm đúng 7 bước trên với assertions tự động.
+> **Hoặc chạy gọn**: `./scripts/test-nakama.sh` - script làm đúng 7 bước trên với assertions tự động.
 
 ---
 
-### Bước 13.2 — Kiểm tra GameServer thủ công
+### Bước 13.2 - Kiểm tra GameServer thủ công
 
 ```bash
 # Xem tất cả GameServers và địa chỉ
@@ -1108,7 +1108,7 @@ kubectl logs -n fomoxa <tên-pod-fomoxa-server> -c fomoxa-server --tail=30
 # [Pod] holds arena:1
 ```
 
-### Bước 13.3 — Test auto room pool (4 người chơi)
+### Bước 13.3 - Test auto room pool (4 người chơi)
 
 ```bash
 # Kiểm tra kết quả pool routing thủ công:
@@ -1121,7 +1121,7 @@ curl -s -X POST "$NAKAMA/v2/rpc/reset_match?unwrap" \
     -d '{"room":"auto"}'
 ```
 
-> **Hoặc chạy gọn**: `./scripts/test-nakama-pool.sh` — test đầy đủ với 4 người chơi, xác nhận 2 cặp nhận 2 phòng khác nhau.
+> **Hoặc chạy gọn**: `./scripts/test-nakama-pool.sh` - test đầy đủ với 4 người chơi, xác nhận 2 cặp nhận 2 phòng khác nhau.
 
 ---
 
@@ -1162,7 +1162,7 @@ kubectl get gs -n fomoxa
 ### Restart một service
 
 ```bash
-# Restart deployment (rolling restart — không downtime)
+# Restart deployment (rolling restart - không downtime)
 kubectl rollout restart deployment/backend -n fomoxa
 kubectl rollout restart deployment/gateway -n fomoxa
 kubectl rollout restart deployment/directory -n fomoxa
@@ -1196,7 +1196,7 @@ Drain = báo cho pod "không nhận player mới, chờ hết player hiện tạ
 # Xem GameServer Allocated
 kubectl get gs -n fomoxa
 
-# Xóa một GameServer cụ thể — Agones sẽ drain (không SIGKILL ngay)
+# Xóa một GameServer cụ thể - Agones sẽ drain (không SIGKILL ngay)
 kubectl delete gs <gameserver-name> -n fomoxa
 
 # Fleet sẽ tự tạo pod mới để duy trì replicas
@@ -1214,7 +1214,7 @@ kubectl get events -n fomoxa --sort-by='.lastTimestamp' | tail -20
 
 ## 15. Dọn dẹp
 
-### Tùy chọn A — Chỉ xóa app, giữ cluster k3d
+### Tùy chọn A - Chỉ xóa app, giữ cluster k3d
 
 Xóa toàn bộ namespace `fomoxa` (app + secrets + config), nhưng giữ cluster k3d và Agones:
 
@@ -1226,7 +1226,7 @@ kubectl delete namespace fomoxa --ignore-not-found=true
 
 > **Hoặc gọn**: `./scripts/k8s-down.sh --keep-cluster`
 
-### Tùy chọn B — Xóa toàn bộ cluster k3d
+### Tùy chọn B - Xóa toàn bộ cluster k3d
 
 ```bash
 k3d cluster delete fomoxa
@@ -1234,11 +1234,11 @@ k3d cluster delete fomoxa
 
 **Kết quả**: Xóa hoàn toàn cluster, bao gồm Agones, tất cả namespaces, tất cả volumes. Lần sau phải làm lại từ Bước 7 (tạo cluster).
 
-Docker images vẫn còn trên host — không cần build lại.
+Docker images vẫn còn trên host - không cần build lại.
 
 > **Hoặc gọn**: `./scripts/k8s-down.sh`
 
-### Tùy chọn C — Xóa cả Docker images
+### Tùy chọn C - Xóa cả Docker images
 
 ```bash
 docker rmi fomoxa-server:latest fomoxa-directory:latest fomoxa-gateway:latest fomoxa-backend:latest
@@ -1248,14 +1248,14 @@ docker rmi fomoxa-server:latest fomoxa-directory:latest fomoxa-gateway:latest fo
 
 ## 16. Troubleshooting chi tiết
 
-### 16.1 — `Cannot connect to the Docker daemon`
+### 16.1 - `Cannot connect to the Docker daemon`
 
 **Triệu chứng**:
 ```
 docker: Cannot connect to the Docker daemon at unix:///var/run/docker.sock.
 ```
 
-**Nguyên nhân A — WSL2**: Docker Desktop chưa chạy hoặc WSL Integration chưa bật.
+**Nguyên nhân A - WSL2**: Docker Desktop chưa chạy hoặc WSL Integration chưa bật.
 ```bash
 # Kiểm tra
 ls /var/run/docker.sock
@@ -1263,13 +1263,13 @@ ls /var/run/docker.sock
 ```
 **Cách sửa**: Mở Docker Desktop trên Windows → Settings → Resources → WSL Integration → bật Ubuntu → Apply & Restart.
 
-**Nguyên nhân B — Linux thuần**: Docker daemon chưa start.
+**Nguyên nhân B - Linux thuần**: Docker daemon chưa start.
 ```bash
 sudo systemctl start docker
 sudo systemctl status docker
 ```
 
-**Nguyên nhân C — Permission**: User chưa trong group docker.
+**Nguyên nhân C - Permission**: User chưa trong group docker.
 ```bash
 groups $USER | grep docker
 # Nếu không thấy "docker": sudo usermod -aG docker $USER && newgrp docker
@@ -1277,7 +1277,7 @@ groups $USER | grep docker
 
 ---
 
-### 16.2 — Port đã bị chiếm khi tạo cluster
+### 16.2 - Port đã bị chiếm khi tạo cluster
 
 **Triệu chứng**:
 ```
@@ -1305,7 +1305,7 @@ k3d cluster delete fomoxa
 
 ---
 
-### 16.3 — Pod ở trạng thái `CrashLoopBackOff`
+### 16.3 - Pod ở trạng thái `CrashLoopBackOff`
 
 **Xem log để tìm lỗi**:
 ```bash
@@ -1328,7 +1328,7 @@ kubectl describe pod <pod-name> -n fomoxa | grep -A 20 Events
 
 ---
 
-### 16.4 — GameServer mãi ở trạng thái `Starting`, không lên `Ready`
+### 16.4 - GameServer mãi ở trạng thái `Starting`, không lên `Ready`
 
 **Xem log container fomoxa-server**:
 ```bash
@@ -1344,13 +1344,13 @@ kubectl logs -n fomoxa <gameserver-pod-name> -c agones-gameserver-sidecar
 
 | Vấn đề | Dấu hiệu | Cách sửa |
 |---------|----------|----------|
-| Game server không gọi `sdk.Ready()` | Agones sidecar log "waiting for SDK Ready" | Kiểm tra `AgonesLifecycle.cs` — `Ready()` có được gọi không |
+| Game server không gọi `sdk.Ready()` | Agones sidecar log "waiting for SDK Ready" | Kiểm tra `AgonesLifecycle.cs` - `Ready()` có được gọi không |
 | Directory không respond | `dial tcp directory:9500: connection refused` | `kubectl rollout status deployment/directory -n fomoxa` |
 | Pod key sai | `unauthorized` trong log | Tạo lại secrets và apply lại `fomoxa-pod-key` |
 
 ---
 
-### 16.5 — Nakama trả về lỗi `lua runtime error`
+### 16.5 - Nakama trả về lỗi `lua runtime error`
 
 **Xem log Nakama**:
 ```bash
@@ -1374,7 +1374,7 @@ kubectl rollout restart deployment/nakama -n fomoxa
 
 ---
 
-### 16.6 — `kubectl` trỏ sai cluster
+### 16.6 - `kubectl` trỏ sai cluster
 
 **Triệu chứng**: Lệnh kubectl báo lỗi lạ hoặc resource không tìm thấy.
 
@@ -1392,7 +1392,7 @@ kubectl config use-context k3d-fomoxa
 
 ---
 
-### 16.7 — `k3d image import` chậm hoặc bị treo
+### 16.7 - `k3d image import` chậm hoặc bị treo
 
 **Nguyên nhân**: Image quá lớn, hoặc Docker daemon bận.
 
@@ -1406,7 +1406,7 @@ k3d image import fomoxa-backend:latest -c fomoxa
 
 ---
 
-### 16.8 — Nakama matchmaking: player A xong B nhưng không matched
+### 16.8 - Nakama matchmaking: player A xong B nhưng không matched
 
 **Nguyên nhân thường gặp**: Queue còn dữ liệu từ lần test trước.
 

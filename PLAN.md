@@ -51,7 +51,7 @@ Agones chạy trên **Docker Desktop engine**, gọi từ PowerShell trên Windo
 và `backend`.
 
 `specification` + `implementation-guide` chỉ là tài liệu khái niệm, không
-build/runtime nào đọc — fomoxac và codec sinh sẵn đã là bản thực thi của wire format.
+build/runtime nào đọc - fomoxac và codec sinh sẵn đã là bản thực thi của wire format.
 
 Backend tái tạo bằng template NuGet (đã kiểm chứng `0.1.0` có trên nuget.org):
 
@@ -73,7 +73,7 @@ Bỏ qua (không cần): `rust`, `go`, `typescript`, `c`, `interop`, `fomoxa-cod
 | **9500** TCP | `fomoxa-directory` service | backend + pod + gateway nối vào |
 | **9501** TCP | `fomoxa-directory` admin | `Drain`, đọc trạng thái pod |
 | **7777/udp** | `fomoxa-gateway` listen | client gửi datagram vào đây |
-| **7778/udp** | Pod (game) | **tránh 7777** — gateway đã chiếm; pod dùng 7778 |
+| **7778/udp** | Pod (game) | **tránh 7777** - gateway đã chiếm; pod dùng 7778 |
 | 9600 TCP | Fomoxa backend (players) | |
 | 9601 WS | Fomoxa backend (WebGL) | bỏ nếu không cần WebGL |
 | 9602 TCP | Fomoxa backend (pods) | `TransferPlayer` |
@@ -138,7 +138,7 @@ Cần: `EnableDefaultCompileItems=false`, `TargetFramework=net8.0`, `LangVersion
 
 ## 4. Các phase
 
-### P1 — Game cơ bản, chưa hạ tầng (1–2 ngày) ⭐
+### P1 - Game cơ bản, chưa hạ tầng (1–2 ngày) ⭐
 
 Mục tiêu: **2 client spawn, đi lại, nhìn thấy nhau.**
 
@@ -154,7 +154,7 @@ Mục tiêu: **2 client spawn, đi lại, nhìn thấy nhau.**
 
 ---
 
-### P2 — Directory + Backend (1–2 ngày) ✅ XONG
+### P2 - Directory + Backend (1–2 ngày) ✅ XONG
 
 - `cargo build --release -p fomoxa-directory -p fomoxa-gateway` trong `gateway/` (20 s, `target/release/*.exe`).
 - Sinh keys (`scripts/gen-keys.ps1`), chạy directory với `deploy/directory.toml`.
@@ -188,7 +188,7 @@ client: Started
 
 ---
 
-### P3 — Gateway (1–2 ngày) ✅ XONG
+### P3 - Gateway (1–2 ngày) ✅ XONG
 
 - Chạy gateway với `deploy/gateway.toml` (UDP 7777, `pod_bind = 0.0.0.0:0`).
 - Directory thêm `public_address = "127.0.0.1:7777"` → ticket trỏ gateway.
@@ -206,18 +206,18 @@ POD peer 1: Started / peer 2: Started
 GW  (stderr) clients on UDP 0.0.0.0:7777, pods from UDP 0.0.0.0:57535, directory at 127.0.0.1:9500
 ```
 
-- `pod_bind` lấy cổng ngẫu nhiên (57535) — đây là cổng gateway dùng để nói chuyện với pod.
+- `pod_bind` lấy cổng ngẫu nhiên (57535) - đây là cổng gateway dùng để nói chuyện với pod.
 - Pod chạy `BehindGateway = true` mà client vẫn vào được ⇒ datagram đi qua gateway có envelope
   20 byte; nếu thiếu envelope, listener của pod từ chối ngay.
 - Gateway không cần biết trước pod: nó nhận bảng pod từ directory rồi route theo 4 byte id
   trong session id.
 
 **Bẫy**: `BehindGateway` là cấu hình của **listener phía server**. Host mode (không gateway)
-phải đặt `false`, nếu không client local không vào được — `Launcher.StartHost` làm việc này.
+phải đặt `false`, nếu không client local không vào được - `Launcher.StartHost` làm việc này.
 
 ---
 
-### P4 — Nakama (1–2 ngày) ✅ XONG
+### P4 - Nakama (1–2 ngày) ✅ XONG
 
 - `deploy/compose.yaml`: Postgres 15 + Nakama 3.41.0, cổng 7350/7351, console `admin/admin`.
 - Module Lua `deploy/nakama/modules/main.lua` (mount vào `/nakama/data/modules`):
@@ -269,7 +269,7 @@ ticket bịa bị từ chối.
 
 ---
 
-### P5 — Agones (4–5 ngày) 🚧
+### P5 - Agones (4–5 ngày) 🚧
 
 Mục tiêu: game server chạy như `GameServer` của Agones, tự register với directory, giữ room,
 `Allocated` khi có room, và rời fleet sau khi drain.
@@ -315,7 +315,7 @@ Phương án chọn cho P5 (không sửa Rust): **pool cố định** `arena:1 �
 pod đó. Nakama vẫn trả `roomKey` client yêu cầu nên test bằng 2 key tường minh.
 
 **Nợ kỹ thuật ghi lại**: module Lua tự chọn room trống trong pool (để nhiều client cùng lúc
-không dồn vào 1 room) — làm ở P5.5, kèm test ≥4 client.
+không dồn vào 1 room) - làm ở P5.5, kèm test ≥4 client.
 
 #### Các bước (thứ tự commit)
 
@@ -331,7 +331,7 @@ không dồn vào 1 room) — làm ở P5.5, kèm test ≥4 client.
 **Bước 1 là cửa ải**: console server chạy local mà 2 client Unity không thấy nhau di chuyển thì
 dừng lại sửa, không đi tiếp. Phần Agones/K8s phía sau chỉ là đóng gói.
 
-##### Bước 1 — đã xong (đo thực tế)
+##### Bước 1 - đã xong (đo thực tế)
 
 `dotnet build MyGame/Server~/MyGame.Server.csproj` → **0 warning, 0 error**, `MyGame.Server.exe`
 chạy được, `scripts\test-console-server.ps1` pass:
@@ -359,10 +359,10 @@ Ghi chú đã gặp và cách xử lý:
   stop/start listener.
 - **150 cảnh báo CS8632** từ source vendor (`string?` không bật `#nullable`) → `NoWarn CS8632`
   trong csproj, không sửa file vendor.
-- **Cấu hình theo dòng lệnh**: `PodConfig` đọc `--key=value` trước, rồi env, rồi mặc định — để
+- **Cấu hình theo dòng lệnh**: `PodConfig` đọc `--key=value` trước, rồi env, rồi mặc định - để
   `start-cluster.ps1` chạy nhiều pod local, còn K8s chỉ cần env.
 
-##### Bước 2 — đã xong
+##### Bước 2 - đã xong
 
 - Thêm `AgonesSDK` 1.61.0 vào `MyGame/Server~/MyGame.Server.csproj`.
 - Tạo `AgonesLifecycle.cs`:
@@ -375,7 +375,7 @@ Ghi chú đã gặp và cách xử lý:
 - `PodConfig.cs`: tự động nhận diện `AGONES_SDK_GRPC_PORT` hoặc tham số `--agones=true/false` / env `FOMOXA_AGONES`.
 - Build `MyGame.Server.csproj` đạt **0 warning, 0 error**.
 
-##### Bước 3 — đã xong
+##### Bước 3 - đã xong
 
 - `deploy/Dockerfile.server`: multi-stage build cho `MyGame.Server` trên `mcr.microsoft.com/dotnet/sdk:8.0` và runtime `runtime:8.0`, non-root user `app`, expose 7778/udp.
 - `deploy/Dockerfile.directory`: multi-stage build cho `fomoxa-directory` trên `rust:1.88-bookworm` và runtime `debian:bookworm-slim`, expose 9500 (service) và 9501 (admin).
@@ -383,7 +383,7 @@ Ghi chú đã gặp và cách xử lý:
 - `.dockerignore`: lọc bỏ các file rác, `.git`, cache Unity, và secrets.
 - `scripts/build-images.ps1`: script tiện ích tự động đóng gói cả 4 images (`fomoxa-server`, `fomoxa-directory`, `fomoxa-gateway`, `fomoxa-backend`).
 
-##### Bước 4 — đã xong
+##### Bước 4 - đã xong
 
 - `deploy/k8s/namespace.yaml`: namespace `fomoxa`.
 - `deploy/k8s/postgres.yaml`: PVC 1Gi + Deployment `postgres:15` + Service ClusterIP 5432.
@@ -395,13 +395,13 @@ Ghi chú đã gặp và cách xử lý:
 - `MyGame/Server~/PodConfig.cs` & `Program.cs`: thêm hỗ trợ `--claim-one` (`FOMOXA_CLAIM_ONE`) để pod trong Fleet tự nhận 1 room trống trong pool.
 - `scripts/gen-k8s-secrets.ps1`: script tự động sinh K8s secrets `fomoxa-directory-keys`, `fomoxa-backend-keys`, `fomoxa-pod-key`.
 
-##### Bước 5 — đã xong
+##### Bước 5 - đã xong
 
 - `scripts/k8s-up.ps1`: tự động kiểm tra công cụ (`docker`, `kubectl`, `k3d`, `helm`), tạo cụm k3d `fomoxa` map ports 7777/udp, 9600/tcp, cài Agones via Helm, import images, sinh secrets và apply toàn bộ manifests.
 - `scripts/k8s-down.ps1`: script tắt và dọn dẹp cụm k3d `fomoxa` (hoặc chỉ dọn namespace `fomoxa`).
 - `scripts/test-p5.ps1`: script kiểm tra toàn diện DoD P5: kiểm tra trạng thái GameServers, cho 2 Unity clients join 2 room độc lập (`arena:1` và `arena:2`) qua gateway 127.0.0.1:7777, kiểm chứng spawn và Agones state chuyển sang `Allocated`, hỗ trợ flag `-TestScale` kiểm tra scale Fleet 2 -> 3.
 
-##### Bước 6 — đã xong
+##### Bước 6 - đã xong
 
 - Cập nhật `PLAN.md`: hoàn thiện trạng thái P5, ghi lại kết quả 6 bước, DoD và layout k8s.
 - Cập nhật `MyGame/README.md`: bổ sung hướng dẫn chi tiết về cách đóng gói image, tạo cụm k3d + Agones, chạy kiểm chứng DoD P5 và dọn dẹp cụm.
@@ -461,7 +461,7 @@ pod-2 `Shutdown` → Fleet tạo pod thay thế.
 
 ---
 
-### P5.5 — Tối ưu Matchmaking Room Pool ✅
+### P5.5 - Tối ưu Matchmaking Room Pool ✅
 
 - `deploy/nakama/modules/main.lua` & `deploy/k8s/nakama.yaml`:
   - Thêm hỗ trợ room `"auto"` / rỗng: người chơi vào hàng đợi chung `pool:auto`.
@@ -474,7 +474,7 @@ pod-2 `Shutdown` → Fleet tạo pod thay thế.
 
 ---
 
-### P6 — Hardening ✅
+### P6 - Hardening ✅
 
 - **TLS / Ingress**: `deploy/k8s/ingress.yaml` cấu hình Ingress với `limit-connections: 50` và `limit-rps: 20` cho WebSocket (`/ws` -> 9601) và TCP (`/` -> 9600).
 - **fRPC Health Probe**: `deploy/k8s/backend.yaml` đổi `tcpSocket` sang `exec` probe bằng tool `fomoxa-rpc-health` (`dotnet /app/health/fomoxa-rpc-health.dll 127.0.0.1:9600`).
@@ -493,21 +493,21 @@ pod-2 `Shutdown` → Fleet tạo pod thay thế.
 D:\Documents\fomoxa\
 ├─ PLAN.md                     ← file này
 ├─ gateway\                    (clone, ignore) → target/release/fomoxa-directory.exe
-├─ unity-docs\                 (clone, ignore) — docs offline
+├─ unity-docs\                 (clone, ignore) - docs offline
 ├─ MyGame\                     ← Unity project (P1, P2)
 │  ├─ Assets\Network\Models\        model net (MoveInput) + Backend (rpc)
 │  ├─ Assets\Network\Rpc\Services.cs  bản copy từ backend (để sinh fRPC client)
 │  ├─ Assets\Network\Generated\     codec fomoxac + codec rpc
-│  ├─ Server~\                      (P5) console server .NET 8 — image game server
+│  ├─ Server~\                      (P5) console server .NET 8 - image game server
 │  └─ Builds\MyGame.exe             build dùng làm client
 ├─ server-deps\                (P5) vendor source 2 package Fomoxa (sinh bằng script)
 ├─ MyGame.Backend\             ← backend (template fomoxa-backend, P2)
 ├─ deploy\
 │  ├─ directory.toml
 │  ├─ gateway.toml             (P3)
-│  ├─ compose.yaml             (P4 — Postgres + Nakama)
-│  ├─ nakama\modules\main.lua  (P4 — matchmaking 2 người)
-│  ├─ k8s\                     (P5 — manifest + config bản K8s)
+│  ├─ compose.yaml             (P4 - Postgres + Nakama)
+│  ├─ nakama\modules\main.lua  (P4 - matchmaking 2 người)
+│  ├─ k8s\                     (P5 - manifest + config bản K8s)
 │  └─ secrets\                 ← sinh bởi gen-keys.ps1, KHÔNG commit
 └─ scripts\
    ├─ gen-keys.ps1
@@ -566,7 +566,7 @@ P5 đã chốt phạm vi (xem mục 4). Bước 1, 2 và 3 đã xong:
 5. ✅ **3 Dockerfile**: `deploy/Dockerfile.server`, `deploy/Dockerfile.directory`, `deploy/Dockerfile.gateway`,
    kèm `.dockerignore` và script tiện ích `scripts/build-images.ps1`.
 
-Tiếp theo là **bước 4 — `deploy/k8s/`: manifest + `directory.toml`/`gateway.toml` bản K8s + script sinh Secret**:
+Tiếp theo là **bước 4 - `deploy/k8s/`: manifest + `directory.toml`/`gateway.toml` bản K8s + script sinh Secret**:
 - Tạo thư mục `deploy/k8s/`.
 - File cấu hình cho K8s: `directory.k8s.toml`, `gateway.k8s.toml`.
 - Script sinh Secret K8s từ `deploy/secrets/`.

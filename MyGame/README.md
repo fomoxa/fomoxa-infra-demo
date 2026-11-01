@@ -1,11 +1,11 @@
-# MyGame — demo Fomoxa: sàn + di chuyển + thấy nhau
+# MyGame - demo Fomoxa: sàn + di chuyển + thấy nhau
 
 Demo nhỏ nhất chứng minh tầng mạng Fomoxa chạy được: một sàn, vài cột mốc, mỗi
 người chơi là một capsule, di chuyển bằng WASD/mũi tên và **thấy nhau di chuyển**.
 
 - Server authoritative: client chỉ gửi input, server mới là bên di chuyển.
 - Input đi qua hệ thống input của Fomoxa (`NetworkInput.Use`), không dự đoán
-  (không reconcile) nên client thấy vị trí của chính mình sau một vòng mạng —
+  (không reconcile) nên client thấy vị trí của chính mình sau một vòng mạng -
   chấp nhận được cho demo, và chính vì thế log chứng minh rõ dữ liệu là từ server.
 - Vị trí đồng bộ bằng `NetworkTransform` (position + rotation).
 - Không có asset ngoài: sàn/cột/capsule đều là primitive.
@@ -16,7 +16,7 @@ người chơi là một capsule, di chuyển bằng WASD/mũi tên và **thấy
 MyGame/
   Assets/
     Network/
-      Models/MoveInput.cs        model input (X, Z) — fomoxac sinh codec
+      Models/MoveInput.cs        model input (X, Z) - fomoxac sinh codec
       Models/Backend/            bản copy model của backend (rpc) để sinh client
       Rpc/Services.cs            bản copy Services.cs của backend (interface fRPC)
       Generated/                 do fomoxac + fRPC sinh, ĐỪNG sửa tay
@@ -28,7 +28,7 @@ MyGame/
     FomoxaSettings.asset         Models = Assets/Network/Models, Generated = Assets/Network/Generated
     Scenes/Game.unity            scene đã dựng sẵn
     Prefabs/Player.prefab        capsule + NetworkObject + NetworkTransform + Player
-  Server~/                     (P5) console server .NET 8 — pod không cần Unity
+  Server~/                     (P5) console server .NET 8 - pod không cần Unity
     MyGame.Server.csproj       build từ ../server-deps (source vendor)
     Program.cs                 vòng lặp frame + DirectoryPod + spawn theo peer
     PlayerEntity.cs            StandaloneEntity: PlayerTransform + Player (khớp prefab)
@@ -96,7 +96,7 @@ cd D:\Documents\fomoxa
 powershell -NoProfile -File scripts\start-cluster.ps1
 ```
 
-Chạy 2 client — mỗi client tự đăng nhập backend, lấy ticket rồi vào pod:
+Chạy 2 client - mỗi client tự đăng nhập backend, lấy ticket rồi vào pod:
 
 ```powershell
 powershell -NoProfile -File scripts\run-client.ps1 -Name ana
@@ -116,7 +116,7 @@ Ai chạy ở đâu:
 | Nakama + Postgres | 7350 / 7351, 5432 | ghép 2 người, phát & verify ticket (tuỳ chọn) |
 | pod (`MyGame.exe -pod`) | UDP 7778 | giữ room `arena:1`, chạy game |
 | pod (`MyGame.Server.exe`) | UDP 7778 | như trên, nhưng không cần Unity (mặc định từ P5) |
-| client | — | login → join → nối gateway bằng grant (encrypted UDP) |
+| client | - | login → join → nối gateway bằng grant (encrypted UDP) |
 
 Luồng: client → backend (fRPC/TCP) → directory (allocate) → ticket {address, port,
 grant} → client nối **gateway :7777** bằng grant; gateway bọc datagram trong
@@ -125,7 +125,7 @@ directory biết room nằm ở pod nào, còn gateway học bảng pod từ dir
 
 ## Console server (P5)
 
-Từ P5, pod mặc định là `MyGame/Server~` — bản .NET 8 của server, **không cần Unity**,
+Từ P5, pod mặc định là `MyGame/Server~` - bản .NET 8 của server, **không cần Unity**,
 để đóng image Linux cho Agones. Nó khớp prefab `Player.prefab` từng behaviour
 (`PlayerTransform` rồi `Player`, `syncPosition/Rotation` bật, `syncScale` tắt,
 ngưỡng `0.01 / 0.1 / 0.01`), nên client Unity join vào không cần sửa gì.
@@ -184,7 +184,7 @@ powershell -NoProfile -ExecutionPolicy Bypass -File scripts\test-console-server.
 ## Chạy nhanh trong Editor (không cần cụm)
 
 1. Mở project bằng Unity **6000.5.7f1**, mở `Assets/Scenes/Game.unity`.
-2. Bấm **Play**, rồi bấm **Host (local server + player)** — server + client trong
+2. Bấm **Play**, rồi bấm **Host (local server + player)** - server + client trong
    cùng tiến trình, tự sinh token, không cần backend/directory.
 3. Chạy `Builds\MyGame.exe` **khi cụm đã chạy** (xem trên) để thấy 2 người thật.
 4. Trong cụm, nút **Join room arena:1 via backend** làm đúng việc client headless
@@ -250,7 +250,7 @@ Build player:
 
 ## Đã kiểm chứng
 
-**P1 — host + client (UDP thường):**
+**P1 - host + client (UDP thường):**
 
 ```
 HOST    [Player] spawn on server id=1 owner=1
@@ -261,7 +261,7 @@ HOST    [Player] spawn on client id=2 owner=2 mine=False   <- host thấy player
 HOST    [Pos] id=2 pos=(2.28, 1.00, 12.82)                 <- và thấy nó di chuyển
 ```
 
-**P2 — directory + backend + pod (encrypted UDP), 2 client headless:**
+**P2 - directory + backend + pod (encrypted UDP), 2 client headless:**
 
 ```
 ANA   [Join] logged in as ana
@@ -276,10 +276,10 @@ POD   peer 3: Started / peer 4: Started
 POD   peer 1: Stopped Timeout                              <- thư viện tự despawn object của peer
 ```
 
-Client không bật prediction, nên vị trí của chính nó chỉ đổi khi server gửi —
+Client không bật prediction, nên vị trí của chính nó chỉ đổi khi server gửi -
 đó là bằng chứng dữ liệu đã đi đúng vòng client → server → client.
 
-**P3 — thêm gateway, ticket trỏ 7777, pod vẫn 7778:**
+**P3 - thêm gateway, ticket trỏ 7777, pod vẫn 7778:**
 
 ```
 ANA   [Join] room arena:1 -> 127.0.0.1:7777, grant 217 bytes
@@ -292,7 +292,7 @@ GW    clients on UDP 0.0.0.0:7777, pods from UDP 0.0.0.0:57535, directory at 127
 Pod chạy `BehindGateway = true` mà client vẫn vào được, nghĩa là datagram tới pod
 đúng là có envelope 20 byte do gateway thêm vào (thiếu envelope thì listener từ chối).
 
-**P4 — thêm Nakama matchmaking (device auth + ticket):**
+**P4 - thêm Nakama matchmaking (device auth + ticket):**
 
 ```
 ANA   [Join] logged in as ana -> room arena:1 -> 127.0.0.1:7777, grant 250 bytes
@@ -305,7 +305,7 @@ BE    [Nakama] authenticated fomoxa-device-ana as 761d6e7a...
 
 `test-nakama.ps1` xác nhận: 2 user nhận cùng ticket, user ngoài và ticket bịa bị từ chối.
 
-**P5 bước 1 — pod là console server (`MyGame.Server.exe`), client vẫn là Unity:**
+**P5 bước 1 - pod là console server (`MyGame.Server.exe`), client vẫn là Unity:**
 
 ```
 POD   [Pod] registering pod-1 (127.0.0.1:7778, version 1.0) at 127.0.0.1:9500
@@ -382,7 +382,7 @@ powershell -ExecutionPolicy Bypass -File scripts\k8s-down.ps1
 - `Packages/manifest.json` phải là UTF-8 **không BOM**; PowerShell 5.1 ghi BOM
   làm Unity báo `JSON parse error ... char 65279`.
 - Model dùng `float` (wire type `f32`) để sau này **console server** (P2) compile
-  được ngoài Unity — model chứa `UnityEngine.Vector3` sẽ không build được ở đó.
+  được ngoài Unity - model chứa `UnityEngine.Vector3` sẽ không build được ở đó.
 - Thứ tự component trên prefab phải là `NetworkObject` → `NetworkTransform` →
   `Player`; console server sau này phải khai báo behaviour cùng thứ tự.
 - `NetworkManager` tự thêm `UdpNetworkTransport` nếu chưa gán. Ở P2 scene gán sẵn

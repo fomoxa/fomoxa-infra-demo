@@ -8,7 +8,7 @@ namespace MyGame.Server
     /// <summary>
     /// Listener UDP mã hoá của pod, nhưng ticket key chỉ có sau khi directory register.
     /// Vì <see cref="EncryptedUdpTransportFactory"/> là bất biến, factory này giữ
-    /// token hiện tại và dựng factory thật mỗi lần <see cref="CreateListener"/> —
+    /// token hiện tại và dựng factory thật mỗi lần <see cref="CreateListener"/> -
     /// đúng cách <c>EncryptedUdpNetworkTransport</c> làm ở phía Unity.
     /// </summary>
     internal sealed class PodTransport : ITransportFactory

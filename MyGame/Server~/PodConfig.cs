@@ -13,7 +13,7 @@ namespace MyGame.Server
 
     /// <summary>
     /// Cấu hình của một pod. Thứ tự ưu tiên: tham số dòng lệnh (`--port=7778`),
-    /// rồi biến môi trường, rồi mặc định — để cùng một image chạy được ở local
+    /// rồi biến môi trường, rồi mặc định - để cùng một image chạy được ở local
     /// (nhiều pod, mỗi pod một tham số) và trong K8s (Agones đặt POD_IP/PORT).
     /// </summary>
     internal sealed class PodConfig
