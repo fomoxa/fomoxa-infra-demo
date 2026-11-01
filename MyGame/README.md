@@ -28,6 +28,19 @@ MyGame/
   Builds/MyGame.exe              bản build Windows dùng để test 2 người
 ```
 
+## Package
+
+`Packages/manifest.json` lấy package trực tiếp từ GitHub, không dùng đường dẫn local:
+
+```json
+"com.fomoxa.networking": "https://github.com/fomoxa/com.fomoxa.networking.git#0.2.0",
+"com.fomoxa.rpc": "https://github.com/fomoxa/com.fomoxa.rpc.git#0.1.0"
+```
+
+Unity clone về `Library/PackageCache/` và ghim đúng commit trong
+`Packages/packages-lock.json`. Máy cần có `git` trong PATH (máy này có 2.52.0).
+Đổi version chỉ cần sửa tag sau dấu `#` rồi để Unity resolve lại.
+
 ## Chạy 2 người (cách nhanh nhất)
 
 1. Mở project bằng Unity **6000.5.7f1**, mở `Assets/Scenes/Game.unity`.
