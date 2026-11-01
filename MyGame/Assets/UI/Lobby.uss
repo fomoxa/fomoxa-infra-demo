@@ -1,0 +1,207 @@
+/* Giao diện sảnh (UI Toolkit). Chỉnh màu ở đây, không cần sửa code. */
+.root {
+    flex-grow: 1;
+    align-items: flex-start;
+    justify-content: flex-start;
+    padding: 16px;
+}
+
+.card {
+    width: 440px;
+    max-height: 100%;
+    padding: 18px;
+    background-color: rgba(18, 22, 32, 0.92);
+    border-radius: 12px;
+    border-width: 1px;
+    border-color: rgba(120, 140, 200, 0.35);
+}
+
+.title {
+    font-size: 26px;
+    -unity-font-style: bold;
+    color: rgb(235, 240, 255);
+    margin-bottom: 10px;
+}
+
+.subtitle {
+    font-size: 16px;
+    -unity-font-style: bold;
+    color: rgb(210, 220, 245);
+    margin-bottom: 8px;
+}
+
+.hint {
+    font-size: 12px;
+    color: rgb(150, 160, 185);
+    white-space: normal;
+    margin-top: 4px;
+    margin-bottom: 6px;
+}
+
+.panel {
+    margin-bottom: 8px;
+}
+
+.row {
+    flex-direction: row;
+    align-items: center;
+}
+
+.header {
+    margin-bottom: 6px;
+}
+
+.welcome {
+    flex-grow: 1;
+    font-size: 15px;
+    color: rgb(225, 232, 250);
+}
+
+/* --- ô nhập --- */
+.field {
+    margin: 3px 0;
+}
+
+.field > Label {
+    min-width: 70px;
+    color: rgb(190, 200, 225);
+}
+
+.field TextElement {
+    color: rgb(240, 244, 255);
+}
+
+.field #unity-text-input {
+    background-color: rgb(32, 38, 54);
+    border-radius: 6px;
+    border-width: 1px;
+    border-color: rgb(70, 82, 115);
+    padding: 4px 8px;
+}
+
+.field:focus #unity-text-input {
+    border-color: rgb(110, 150, 255);
+}
+
+/* --- nút --- */
+.button {
+    height: 34px;
+    margin: 4px 0;
+    padding: 0 12px;
+    color: rgb(235, 240, 255);
+    background-color: rgb(52, 62, 92);
+    border-radius: 8px;
+    border-width: 0;
+    -unity-font-style: bold;
+}
+
+.button:hover {
+    background-color: rgb(68, 82, 122);
+}
+
+.button:active {
+    background-color: rgb(40, 48, 74);
+}
+
+.button:disabled {
+    opacity: 0.45;
+}
+
+.button.primary {
+    background-color: rgb(58, 110, 230);
+}
+
+.button.primary:hover {
+    background-color: rgb(78, 128, 245);
+}
+
+.button.danger {
+    background-color: rgb(170, 58, 62);
+}
+
+.button.danger:hover {
+    background-color: rgb(195, 76, 80);
+}
+
+.button.small {
+    height: 28px;
+    margin: 2px 0 2px 6px;
+    font-size: 12px;
+}
+
+/* --- danh sách phòng --- */
+.room-list {
+    max-height: 260px;
+    margin-top: 4px;
+}
+
+.room-row {
+    flex-direction: row;
+    align-items: center;
+    height: 40px;
+    margin: 3px 0;
+    padding: 0 12px;
+    background-color: rgb(36, 44, 66);
+    border-radius: 8px;
+    border-width: 0;
+    -unity-text-align: middle-left;
+}
+
+.room-row:hover {
+    background-color: rgb(52, 64, 98);
+}
+
+.room-row:disabled {
+    opacity: 0.45;
+}
+
+.room-name {
+    flex-grow: 1;
+    font-size: 14px;
+    color: rgb(235, 240, 255);
+}
+
+.room-count {
+    font-size: 13px;
+    color: rgb(170, 182, 210);
+    margin-right: 10px;
+}
+
+.room-chip {
+    min-width: 92px;
+    padding: 2px 8px;
+    border-radius: 10px;
+    font-size: 11px;
+    -unity-text-align: middle-center;
+    color: rgb(15, 20, 30);
+}
+
+.chip-open {
+    background-color: rgb(110, 214, 140);
+}
+
+.chip-waiting {
+    background-color: rgb(244, 196, 90);
+}
+
+.chip-full {
+    background-color: rgb(226, 112, 112);
+}
+
+/* --- trạng thái --- */
+.status {
+    font-size: 12px;
+    white-space: normal;
+    color: rgb(190, 200, 225);
+    margin-top: 4px;
+    min-height: 16px;
+}
+
+.status.error {
+    color: rgb(255, 120, 120);
+}
+
+.dev {
+    margin-top: 10px;
+    color: rgb(150, 160, 185);
+}

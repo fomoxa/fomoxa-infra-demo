@@ -1,0 +1,43 @@
+<ui:UXML xmlns:ui="UnityEngine.UIElements" editor-extension-mode="False">
+    <Style src="Lobby.uss" />
+    <ui:VisualElement name="root" class="root">
+        <ui:VisualElement name="card" class="card">
+            <ui:Label text="MyGame" class="title" />
+
+            <!-- 1. Đăng nhập -->
+            <ui:VisualElement name="login-panel" class="panel">
+                <ui:Label text="Đăng nhập / Đăng ký" class="subtitle" />
+                <ui:TextField name="name-field" label="Tên" max-length="24" class="field" />
+                <ui:TextField name="password-field" label="Mật khẩu" password="true" max-length="64" class="field" />
+                <ui:Label text="Tên mới sẽ tự tạo tài khoản với mật khẩu này (tối thiểu 8 ký tự)." class="hint" />
+                <ui:Button name="login-button" text="Đăng nhập / Đăng ký" class="button primary" />
+            </ui:VisualElement>
+
+            <!-- 2. Sảnh: danh sách phòng -->
+            <ui:VisualElement name="lobby-panel" class="panel">
+                <ui:VisualElement class="row header">
+                    <ui:Label name="welcome" text="Xin chào" class="welcome" />
+                    <ui:Button name="refresh-button" text="Làm mới" class="button small" />
+                    <ui:Button name="logout-button" text="Đăng xuất" class="button small" />
+                </ui:VisualElement>
+                <ui:Label text="Chọn phòng (mỗi phòng cần 2 người để ghép trận)" class="hint" />
+                <ui:ScrollView name="room-list" class="room-list" />
+                <ui:Label name="empty-rooms" text="Chưa có dữ liệu phòng - bấm Làm mới" class="hint" />
+            </ui:VisualElement>
+
+            <!-- 3. Đang trong phòng -->
+            <ui:VisualElement name="game-panel" class="panel">
+                <ui:Label name="game-info" text="" class="subtitle" />
+                <ui:Label text="Di chuyển: WASD / phím mũi tên" class="hint" />
+                <ui:Button name="leave-button" text="Thoát phòng (về sảnh)" class="button danger" />
+            </ui:VisualElement>
+
+            <ui:Label name="status" text="" class="status" />
+
+            <ui:Foldout name="dev-tools" text="Công cụ dev" value="false" class="dev">
+                <ui:Button name="host-button" text="Host (server cục bộ + người chơi)" class="button small" />
+                <ui:Button name="pod-button" text="Start pod (đăng ký với directory)" class="button small" />
+            </ui:Foldout>
+        </ui:VisualElement>
+    </ui:VisualElement>
+</ui:UXML>

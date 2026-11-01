@@ -98,6 +98,9 @@ namespace MyGame.Network
         /// <summary>Danh sách phòng từ lần RefreshRooms gần nhất.</summary>
         public System.Collections.Generic.IReadOnlyList<RoomInfo> Rooms => rooms;
 
+        /// <summary>Tăng mỗi khi danh sách phòng đổi, để UI biết cần dựng lại.</summary>
+        public int RoomsVersion { get; private set; }
+
         private string loggedInAs;
         private readonly System.Collections.Generic.List<RoomInfo> rooms = new System.Collections.Generic.List<RoomInfo>();
 
@@ -136,6 +139,7 @@ namespace MyGame.Network
             connection = null;
             loggedInAs = null;
             rooms.Clear();
+            RoomsVersion++;
             SetStatus("Đã đăng xuất");
         }
 
@@ -265,6 +269,7 @@ namespace MyGame.Network
             RoomList list = await new LobbyClient(connection).ListRoomsAsync(new ListRoomsRequest(), CallOptions.Within(TimeSpan.FromSeconds(10)));
             rooms.Clear();
             rooms.AddRange(list.Rooms);
+            RoomsVersion++;
             Debug.Log($"[Lobby] {rooms.Count} phòng");
         }
 

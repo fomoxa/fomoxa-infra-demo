@@ -75,8 +75,36 @@ namespace MyGame.Network
             pod?.Dispose();
         }
 
+        // --- API cho LobbyScreen (UI Toolkit) ---
+
+        public bool ClientRunning => manager != null && manager.ClientManager.State != ConnectionState.Stopped;
+
+        public bool ServerRunning => manager != null && manager.ServerManager.State != ServerState.Stopped;
+
+        /// <summary>Phòng người chơi vừa chọn trong sảnh (rỗng nếu chưa chọn).</summary>
+        public string CurrentRoom => lobbyRoom;
+
+        public void SelectRoom(string room) => lobbyRoom = room;
+
+        public void BeginHost() => StartHost();
+
+        public void BeginPod() => StartPod(Environment.GetCommandLineArgs());
+
+        /// <summary>Thoát phòng / dừng server; <see cref="OnClientConnectionState"/> đưa người chơi về sảnh.</summary>
+        public void LeaveRoom()
+        {
+            manager.ClientManager.StopConnection();
+            manager.ServerManager.StopConnection();
+        }
+
         private void OnGUI()
         {
+            // Đã có LobbyScreen (UI Toolkit) thì không vẽ IMGUI cũ nữa.
+            if (LobbyScreen.Active)
+            {
+                return;
+            }
+
             GUILayout.BeginArea(new Rect(10f, 10f, 460f, 460f));
             DrawControls();
             GUILayout.EndArea();
@@ -350,6 +378,11 @@ namespace MyGame.Network
         private void OnClientConnectionState(ConnectionStateArgs args)
         {
             Debug.Log($"client: {args.State} {args.Reason}");
+
+            if (args.State == ConnectionState.Started && joiner != null && joiner.LoggedIn)
+            {
+                joiner.SetNotice($"Đã vào phòng {lobbyRoom}");
+            }
 
             // Rời phòng (hoặc bị ngắt): quay về sảnh và tải lại danh sách phòng.
             if (args.State == ConnectionState.Stopped && joiner != null && joiner.LoggedIn)

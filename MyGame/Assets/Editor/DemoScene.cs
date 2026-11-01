@@ -48,6 +48,8 @@ public static class DemoScene
             launcher.encryptedTransport = encrypted;
             launcher.joiner = joiner;
 
+            LobbyUiSetup.AddTo(launcher, joiner);
+
             AssetDatabase.SaveAssets();
             AssetDatabase.Refresh();
 

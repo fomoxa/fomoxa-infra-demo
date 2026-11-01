@@ -37,6 +37,23 @@ MyGame/
   Builds/MyGame.exe              bản build dùng làm pod và client
 ```
 
+## Giao diện sảnh (UI Toolkit)
+
+Sảnh (đăng nhập, danh sách phòng, thoát phòng) dựng từ asset, không vẽ bằng code:
+
+```
+Assets/UI/Lobby.uxml           bố cục (ô nhập, nút, danh sách phòng)
+Assets/UI/Lobby.uss            màu sắc, kích thước, hiệu ứng hover
+Assets/UI/LobbyTheme.tss       theme mặc định của UI Toolkit
+Assets/UI/LobbyPanelSettings.asset   tạo tự động khi gắn UI vào scene
+Assets/Network/LobbyScreen.cs  nối UI với RoomJoiner / Launcher
+Assets/Editor/LobbyUiSetup.cs  menu Tools/Demo/Add Lobby UI
+```
+
+Gắn vào scene hiện có: menu **Tools → Demo → Add Lobby UI** (hoặc **Rebuild Scene**, đã gọi sẵn). Có `LobbyScreen` trong scene thì
+`Launcher` tự tắt giao diện IMGUI cũ; chưa gắn thì vẫn dùng IMGUI làm dự phòng. Sửa giao diện: mở `Lobby.uxml` bằng UI Builder
+hoặc chỉnh `Lobby.uss`, không cần đụng code.
+
 ## Package
 
 `Packages/manifest.json` lấy package trực tiếp từ GitHub, không dùng đường dẫn local:
