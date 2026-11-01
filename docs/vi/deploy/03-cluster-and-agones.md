@@ -32,7 +32,7 @@ k3d cluster create fomoxa \
 
 Hoặc chạy gọn: `./scripts/k8s-up.sh` (kiểm tra cổng trống rồi chạy đúng lệnh trên nếu cluster chưa có).
 
-Kết quả mong đợi (mẫu):
+Kết quả mong đợi:
 
 ```
 INFO[0000] Prep: Network
@@ -56,7 +56,7 @@ docker port k3d-fomoxa-serverlb
 
 Ý nghĩa: `use-context` chọn cluster mà `kubectl` sẽ nói chuyện (một máy có thể có nhiều cluster, chọn nhầm context là lỗi rất hay gặp). `docker port` liệt kê cổng đã publish.
 
-Kết quả mong đợi (mẫu):
+Kết quả mong đợi:
 
 ```
 NAME                  STATUS   ROLES                  AGE   VERSION
@@ -107,7 +107,7 @@ helm install agones agones/agones \
 
 Hoặc chạy gọn: `./scripts/k8s-up.sh` chạy đúng các lệnh này (bỏ qua nếu `helm list -n agones-system` đã có `agones`); đặt `AGONES_VERSION=1.xx.y` để ghim.
 
-Kết quả mong đợi (mẫu):
+Kết quả mong đợi:
 
 ```
 NAME: agones
@@ -124,7 +124,7 @@ kubectl get crd | grep agones.dev
 ```
 
 ```
-NAME                                 READY   STATUS    RESTARTS   AGE   (mẫu)
+NAME                                 READY   STATUS    RESTARTS   AGE
 agones-controller-6b9c7c6f5d-7xk2p   1/1     Running   0          2m
 agones-controller-6b9c7c6f5d-q9wzl   1/1     Running   0          2m
 agones-extensions-7d5b8c9d6-4hjfm    1/1     Running   0          2m
@@ -165,7 +165,7 @@ k3d image import \
 
 Hoặc chạy gọn: `./scripts/k8s-up.sh` (bước "4/6 Import images vào k3d cluster").
 
-Kết quả mong đợi (mẫu):
+Kết quả mong đợi:
 
 ```
 INFO[0000] Importing image(s) into cluster 'fomoxa'

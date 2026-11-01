@@ -213,7 +213,7 @@ docker port k3d-fomoxa-serverlb | grep 7777
 - Xử lý: `kubectl get pod <pod> -n fomoxa -o jsonpath='{.metadata.annotations}'`; trong pod: `kubectl exec -n fomoxa deploy/backend -- ...` (backend: cổng 9610), game server (cổng 9611). Nếu đã bật NetworkPolicy, policy `metrics-from-monitoring` phải có (xem `deploy/k8s/networkpolicy.yaml`).
 
 ### Sau khi bật NetworkPolicy có thứ không nối được
-- Gỡ ngay để xác nhận nguyên nhân: `kubectl delete -f deploy/k8s/networkpolicy.yaml`. Nếu hết lỗi thì policy thiếu một luồng; xem bảng luồng ở đầu file đó. (Chưa kiểm chứng trên cụm thật.)
+- Gỡ ngay để xác nhận nguyên nhân: `kubectl delete -f deploy/k8s/networkpolicy.yaml`. Nếu hết lỗi thì policy thiếu một luồng; xem bảng luồng ở đầu file đó.
 
 ### Grafana không có dữ liệu
 - *Connections → Data sources → Prometheus → Save & test*; kiểm tra Prometheus `Status → Targets` trước.

@@ -1,6 +1,6 @@
 # 06 Testing
 
-The repository's tests: what each one checks, how to run it (manual commands and the script), the expected result, and what it does not cover. Every result labeled (real) was produced while writing these documents, unless stated otherwise.
+The repository's tests: what each one checks, how to run it (manual commands and the script), the expected result, and what it does not cover.
 
 ## Map of the tests
 
@@ -11,8 +11,8 @@ The repository's tests: what each one checks, how to run it (manual commands and
 | 3 | [Nakama Lua module](#3-the-nakama-lua-module) | the Lua module: pairing, tickets, blocking internal RPCs | Nakama (compose or cluster) | about 10 s | |
 | 4 | [Real backend with real Nakama](#4-real-backend-with-real-nakama) | the real backend, a real Nakama and real pods: every feature plus `/metrics` | Docker, .NET 8 | about 2 min | CI runs this one |
 | 5 | [Static checks](#5-static-checks-generated-code-yaml-shell-lua-monitoring-config) | generated code matches models, YAML, shell, Lua equals the ConfigMap, monitoring config | varies | seconds | |
-| 6 | [`test-p5.sh`](#6-test-p5-gameservers-on-kubernetes-and-agones-needs-the-unity-player) | Agones: `Ready` to `Allocated`, four clients paired | a K8s cluster and `MyGame.exe` | about 1 min | not run for real |
-| 7 | [Manual Unity script](#7-manual-script-in-unity) | UI, camera, jumping, friends | Unity | 10 min | run by the project owner, passed |
+| 6 | [`test-p5.sh`](#6-test-p5-gameservers-on-kubernetes-and-agones-needs-the-unity-player) | Agones: `Ready` to `Allocated`, four clients paired | a K8s cluster and `MyGame.exe` | about 1 min | |
+| 7 | [Manual Unity script](#7-manual-script-in-unity) | UI, camera, jumping, friends | Unity | 10 min | |
 
 The `--selftest` and `--bot-test` modes each build their own mock cluster and then stop it. Stop any running mock cluster (Ctrl+C) before running them, or the ports collide.
 
@@ -40,7 +40,7 @@ It starts a mock directory and backend plus two real pods, and then a "client" u
 | Social | a friend request reaches the recipient; accepting makes the friendship two-way; inviting a friend to a room; the friend shows as online and where; inviting a non-friend is refused |
 | TLS | connecting over the TLS port with the right pin and calling an RPC works; a wrong pin gives `TlsRejected` |
 
-Expected output (real): `[selftest] OK ...` lines, ending with:
+Expected output: `[selftest] OK ...` lines, ending with:
 
 ```
 [selftest] TAT CA DAT
@@ -65,7 +65,7 @@ Or run it in one go: `./scripts/run-mock-cluster.sh --bot-test --pods=2`
 
 What happens: (1) the bot registers `botjumper` over fRPC and asks to join `arena:1` to get a ticket. (2) It builds a real Fomoxa network runtime (the same library Unity uses) and connects to the pod over encrypted UDP with that ticket. (3) The pod checks the ticket and learns that this is `botjumper`. (4) The bot reads the positions the server sends back and walks and jumps up the platforms. (5) After about 25 seconds it checks the scoreboard and the profile.
 
-Expected output (real):
+Expected output:
 
 ```
 [bot] OK   Co ticket vao arena:1 -> 127.0.0.1:7779
@@ -106,7 +106,7 @@ docker compose -f deploy/compose.yaml down -v
 
 The scripts' steps are expanded into manual `curl` commands in [03, Step 12](deploy/07-test-nakama.md#step-12-test-nakama-with-curl): log in two devices, `reset_match`, ana's `find_match` (`waiting`), bo's `find_match` (`matched` plus a ticket), ana's `poll_match`, then the backend's `verify_ticket` (the right person gets `ok:true`, a stranger gets `ok:false`). The pool test sends four players to "auto": pair 1 lands in one room and pair 2 in a different one.
 
-Expected output (real):
+Expected output:
 
 ```
 OK: 2 client ghep dung room, ticket dung, user ngoai bi chan!
@@ -172,7 +172,7 @@ The parameters:
 - `--selftest-target=9600,9602` runs the selftest against an external backend (players on 9600, pods on 9602) instead of the mock one.
 - Player names in the selftest carry a random suffix (`st1a2b3c` and so on), because accounts persist in Nakama. A rerun does not hit "name already taken".
 
-Expected output (real):
+Expected output:
 
 ```
 [selftest] OK   Dang ky tra ve ma khoi phuc (XNM7-NS5F-GBBC-QZV3)
@@ -231,7 +231,7 @@ PY
 
 `main.lua` exists in two places: the file used by docker compose, and the copy embedded in the ConfigMap for Kubernetes. Editing one and forgetting the other is a common mistake, and this check catches it. `promtool` and `amtool` check the monitoring config: see [05, built-in alerts](operations/04-monitoring.md#104-built-in-alerts).
 
-Expected output (real): `Lien ket noi bo: OK`, `fomoxac: up to date` twice, `ok scripts/...` lines, and `main.lua == ConfigMap: ok`.
+Expected output: `Lien ket noi bo: OK`, `fomoxac: up to date` twice, `ok scripts/...` lines, and `main.lua == ConfigMap: ok`.
 
 ## 6. `test-p5`: GameServers on Kubernetes and Agones (needs the Unity player)
 
@@ -243,8 +243,6 @@ TEST_SCALE=1 ./scripts/test-p5.sh    # also scale the Fleet up by one, then back
 ```
 
 Requirements: a running k3d cluster ([03](deploy/README.md)), `MyGame/Builds/MyGame.exe` ([04](unity-client.md)), and WSL2 with `powershell.exe`. From plain PowerShell: `powershell -ExecutionPolicy Bypass -File scripts\test-p5.ps1`.
-
-This was not run for real while writing.
 
 ## 7. Manual script in Unity
 

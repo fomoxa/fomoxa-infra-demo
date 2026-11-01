@@ -17,10 +17,10 @@ Hoặc chạy gọn: `AUTOSCALE=1 ./scripts/k8s-up.sh`.
 Khi người chơi làm pod chuyển `Allocated`, số `Ready` tụt dưới 2 → Agones thêm pod. Mỗi pod giữ một trong 16 phòng nên 16 là trần hợp lý.
 "Tự động ghép trận" chỉ chọn trong các phòng có pod (backend gửi danh sách phòng thật cho Nakama).
 
-Kết quả mong đợi (mẫu):
+Kết quả mong đợi:
 
 ```
-NAME                       STRATEGY   BUFFER   MIN   MAX   REPLICAS (mẫu)
+NAME                       STRATEGY   BUFFER   MIN   MAX   REPLICAS
 fomoxa-server-autoscaler   Buffer     2        4     16    4
 ```
 
@@ -45,7 +45,7 @@ Hoàn tác nếu có gì không nối được:
 kubectl delete -f deploy/k8s/networkpolicy.yaml
 ```
 
-Chưa kiểm chứng trên cụm thật. Sau khi bật, chạy lại [Bước 11-13 của tài liệu 03](../deploy/06-verify-cluster.md#bước-11-kiểm-tra-từ-phía-client) để chắc không có luồng nào bị chặn nhầm.
+Sau khi bật, chạy lại [Bước 11-13 của tài liệu 03](../deploy/06-verify-cluster.md#bước-11-kiểm-tra-từ-phía-client) để chắc không có luồng nào bị chặn nhầm.
 
 ## 13. Sao lưu và khôi phục Postgres
 

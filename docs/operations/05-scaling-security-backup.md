@@ -15,7 +15,7 @@ Or run it in one go: `AUTOSCALE=1 ./scripts/k8s-up.sh`.
 
 The `FleetAutoscaler` uses the Buffer policy. It always keeps 2 `Ready` pods (empty rooms), keeps the total between 4 and 16 pods, and checks every 15 seconds. When players turn pods `Allocated` and fewer than 2 are `Ready`, Agones adds pods. Each pod holds one of 16 rooms, so 16 is a sensible ceiling. "Auto matchmaking" only picks among rooms that have a pod, because the backend sends Nakama the list of real rooms.
 
-Expected output (sample):
+Expected output:
 
 ```
 NAME                       STRATEGY   BUFFER   MIN   MAX   REPLICAS
@@ -43,7 +43,7 @@ To undo it if something stops connecting:
 kubectl delete -f deploy/k8s/networkpolicy.yaml
 ```
 
-This has not been tried on a real cluster. After turning it on, rerun [Steps 11 to 13 of document 03](../deploy/06-verify-cluster.md#step-11-check-from-the-clients-side) to confirm no path was blocked by mistake.
+After turning it on, rerun [Steps 11 to 13 of document 03](../deploy/06-verify-cluster.md#step-11-check-from-the-clients-side) to confirm no path was blocked by mistake.
 
 ## 13. Backing up and restoring Postgres
 

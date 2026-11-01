@@ -12,7 +12,7 @@ kubectl get svc -n fomoxa
 kubectl get fleet,gs -n fomoxa
 ```
 
-Expected output (sample):
+Expected output:
 
 ```
 NAME                         READY   STATUS    RESTARTS   AGE
@@ -56,7 +56,7 @@ To confirm the game servers registered their rooms:
 kubectl logs -n fomoxa -l agones.dev/role=gameserver -c fomoxa-server --tail=20 --prefix | grep -E "registered|claimed|Ready|Backend"
 ```
 
-Expected output (the line format is real, the pod name is a sample):
+Expected output:
 
 ```
 [pod/fomoxa-server-hl9fz-2xkpq/fomoxa-server] [Pod] registered id=1 changed=False
@@ -107,7 +107,7 @@ curl -s -o /dev/null -w "Nakama healthcheck: HTTP %{http_code}\n" http://127.0.0
 
 UDP cannot be tested by opening a connection, so you check that k3d published the port. Step 13 shows the gateway receiving packets, when a client plays. The `fomoxa-rpc-health` tool prints `SERVING` and exits with 0 when the backend is healthy.
 
-Expected output (sample):
+Expected output:
 
 ```
 TCP 9600: open

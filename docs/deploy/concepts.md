@@ -4,7 +4,7 @@ Up to the index: [03-DEPLOY-KUBERNETES](README.md) · Next: [01-prepare-and-keys
 
 This page explains the concepts you meet in the later steps. Each one comes with a command that shows it in your cluster once it is built (steps 9 and 10). If you already know Kubernetes, skip to [01](01-prepare-and-keys.md).
 
-Output marked (sample) is built from the manifests, not captured from a running cluster. Real pod names carry random suffixes that will differ.
+Output marked is built from the manifests, not captured from a running cluster. Real pod names carry random suffixes that will differ.
 
 ## The big picture
 
@@ -28,7 +28,7 @@ A namespace is a drawer for grouping resources. The demo uses two: `fomoxa` (you
 kubectl get namespaces
 ```
 
-Expected output (sample):
+Expected output:
 
 ```
 NAME              STATUS   AGE
@@ -105,7 +105,7 @@ Port 9602 (pods reporting to the backend) has its own `ClusterIP` Service, `back
 kubectl get svc -n fomoxa
 ```
 
-Expected output (sample):
+Expected output:
 
 ```
 NAME             TYPE           CLUSTER-IP     EXTERNAL-IP   PORT(S)
@@ -162,7 +162,7 @@ A container loses its data when the pod is deleted. To keep data (a database), t
 kubectl get pvc -n fomoxa
 ```
 
-Expected output (sample):
+Expected output:
 
 ```
 NAME            STATUS   VOLUME                                     CAPACITY   ACCESS MODES   STORAGECLASS

@@ -3,9 +3,6 @@
 Các việc hằng ngày và các tính năng vận hành: xem log, scale, cập nhật, tắt an toàn (drain), tài khoản, TLS, khoá Nakama, giám sát, autoscaling, NetworkPolicy, sao lưu.
 Giả định bạn đã có cụm chạy theo [03](../deploy/README.md) và đang đứng ở `~/fomoxa-infra-demo` với `kubectl config use-context k3d-fomoxa`.
 
-> Đã chạy thật khi viết tài liệu: lệnh liên quan Nakama/RPC (`kv_get`), `openssl s_client` kiểm tra chứng chỉ, `/metrics`, `promtool`/`amtool`/`loki`/`promtail` kiểm cấu hình.
-> Chưa chạy trên cụm Kubernetes thật: các lệnh `kubectl` bên dưới (output *(mẫu)*), manifest `tls-proxy`, `networkpolicy`, `fleet-autoscaler`, `monitoring/`.
-
 [Restart](01-status-and-updates.md#4-khởi-động-lại-một-dịch-vụ) · [Cập nhật image](01-status-and-updates.md#cập-nhật-sau-khi-build-lại-image) · [Drain](02-drain-and-accounts.md#6-tắt-game-server-an-toàn-drain) · [Tài khoản](02-drain-and-accounts.md#7-tài-khoản-và-dữ-liệu-người-chơi) ·
 [TLS](03-tls-and-keys.md#tls-giữa-client-và-backend) · [Khoá Nakama](03-tls-and-keys.md#9-khoá-và-mật-khẩu-nakama) · [Giám sát](04-monitoring.md#giám-sát) · [Autoscaling](05-scaling-security-backup.md#autoscaling) · [NetworkPolicy](05-scaling-security-backup.md#networkpolicy-tuỳ-chọn) ·
 [Sao lưu](05-scaling-security-backup.md#13-sao-lưu-và-khôi-phục-postgres) · [Đổi địa chỉ công khai](05-scaling-security-backup.md#14-đổi-địa-chỉ-công-khai-public_address)

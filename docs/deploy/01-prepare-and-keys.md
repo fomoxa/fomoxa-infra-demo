@@ -21,7 +21,7 @@ ss -ltnu | grep -E ':(7777|9600|9643|7350)\b' || echo "Nothing is listening"
 
 k3d forwards four ports of your machine into the cluster. If one is taken, `k3d cluster create` fails partway through.
 
-Expected output (sample):
+Expected output:
 
 ```
 Docker 27.3.1 - OK
@@ -81,7 +81,7 @@ openssl x509 -in deploy/secrets/tls/tls.crt -outform DER | openssl dgst -sha256 
 
 Or run it in one go: `./scripts/gen-keys.sh` writes the 12 keys above, and `./scripts/gen-tls-cert.sh` writes the certificate and prints the pin. Neither overwrites an existing file unless you pass `-f`.
 
-Expected output (real, from `gen-keys.sh` and `gen-tls-cert.sh`):
+Expected output (from `gen-keys.sh` and `gen-tls-cert.sh`):
 
 ```
 === Sinh keys cho Fomoxa ===

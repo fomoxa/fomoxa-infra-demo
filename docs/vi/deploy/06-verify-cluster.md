@@ -14,7 +14,7 @@ kubectl get svc -n fomoxa
 kubectl get fleet,gs -n fomoxa
 ```
 
-Kết quả mong đợi (mẫu):
+Kết quả mong đợi:
 
 ```
 NAME                         READY   STATUS    RESTARTS   AGE
@@ -111,7 +111,7 @@ curl -s -o /dev/null -w "Nakama healthcheck: HTTP %{http_code}\n" http://127.0.0
 Ý nghĩa: UDP không có "bắt tay" nên không thể kiểm tra bằng cách nối thử; ta kiểm tra cổng đã được k3d publish, còn việc gateway nhận gói tin thật sự được chứng minh ở Bước 13 (client chơi được).
 Công cụ `fomoxa-rpc-health` in `SERVING` và thoát mã 0 khi backend khoẻ.
 
-Kết quả mong đợi (mẫu):
+Kết quả mong đợi:
 
 ```
 TCP 9600: mở

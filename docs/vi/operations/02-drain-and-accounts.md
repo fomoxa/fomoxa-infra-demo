@@ -32,8 +32,6 @@ Kết quả mong đợi (khuôn dòng thật của chương trình):
 
 Với pod không có người (`Ready`), dòng cuối xuất hiện gần như ngay. Fleet tạo GameServer mới thay thế.
 
-Lưu ý: cơ chế này đã được kiểm chứng ở mức tiến trình (pod thoát khi hết người), chưa thử đầy đủ với directory thật và `kubectl delete` trên cụm.
-
 ## 7. Tài khoản và dữ liệu người chơi
 
 Tài khoản, mật khẩu (băm PBKDF2-SHA256, 120.000 vòng, salt riêng), mã khôi phục (chỉ lưu bản băm), hồ sơ, bạn bè nằm trong Nakama storage

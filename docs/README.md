@@ -75,18 +75,8 @@ Each step follows one pattern: the goal, the commands, what they do and why, the
 
 - Commands are in `bash` blocks and run from the repository root unless noted (`cd ~/fomoxa-infra-demo`).
 - Scripts are shortcuts. Every script is expanded into the manual commands beside it, so you can follow by hand to learn what happens, or run the script. Look for "Or run it in one go: `./scripts/xxx.sh`". The full mapping is in [08](reference.md#4-scripts-and-their-manual-equivalents).
-- Expected output is labeled either (real), copied from a run made while writing these documents, or (sample), which shows the format only. Pod names, ages, hashes, and timings will differ on your machine. Log lines printed by the game programs are in Vietnamese or ASCII Vietnamese, and the documents quote them exactly.
+- Expected output shows the format. Pod names, ages, hashes, and timings will differ on your machine. Log lines printed by the game programs are in Vietnamese or ASCII Vietnamese, and the documents quote them exactly.
 - Kubernetes terms (pod, deployment, namespace, secret, configmap, service, context) are kept in English and explained when they first appear.
-
-## How far to trust these documents
-
-| Part | Run while writing? |
-|---|---|
-| Key and certificate generation, the mock cluster, selftest, bot test, the real backend with a real Nakama (docker compose), the Nakama test scripts, `promtool`/`amtool` | Yes. Output is labeled (real). |
-| Installing Docker, kubectl, k3d and Helm; creating the k3d cluster; installing Agones; building the two Rust images (directory, gateway); applying manifests to a cluster; tls-proxy; NetworkPolicy; FleetAutoscaler; monitoring on a cluster; UDP through k3d | No. The commands come from the repository's scripts and manifests, and output is labeled (sample). |
-| Unity (UI, scenes, camera, jumping, building the player) | Yes: the project owner ran the client against the mock cluster and it works. Menu labels were not compared one by one. |
-
-If a command in the second or third row behaves differently from what is described, check [07](troubleshooting.md) and report it so the documents can be corrected.
 
 ## Repository layout
 

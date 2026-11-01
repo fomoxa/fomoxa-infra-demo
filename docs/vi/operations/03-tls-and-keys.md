@@ -14,7 +14,7 @@ openssl s_client -connect 127.0.0.1:9643 -servername fomoxa.local </dev/null 2>/
     | openssl x509 -noout -fingerprint -sha256 -subject
 ```
 
-Kết quả mong đợi (thật, chạy với đầu cuối TLS của cụm giả):
+Kết quả mong đợi (chạy với đầu cuối TLS của cụm giả):
 
 ```
 sha256 Fingerprint=C5:B5:02:A6:03:68:15:A3:9E:6E:60:AC:21:39:86:51:BF:FB:9A:D4:FF:19:BD:D5:C6:39:7D:9F:F7:4C:51:67

@@ -66,7 +66,7 @@ kubectl apply -f deploy/monitoring/20-alertmanager.yaml
 kubectl rollout restart deployment/alertmanager -n monitoring
 ```
 
-Kiểm tra cấu hình trước khi áp dụng (đã chạy thật khi viết tài liệu; cần Docker):
+Kiểm tra cấu hình trước khi áp dụng (cần Docker):
 
 ```bash
 # trích cấu hình ra file rồi kiểm bằng công cụ chính thức
@@ -81,7 +81,7 @@ PY
 docker run --rm --entrypoint promtool -v /tmp/prom:/tmp/prom prom/prometheus:v2.55.1 check config /tmp/prom/prometheus.yml
 ```
 
-Kết quả mong đợi (thật):
+Kết quả mong đợi:
 
 ```
 Checking /tmp/prom/prometheus.yml

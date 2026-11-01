@@ -4,7 +4,7 @@ Lên đầu tài liệu: [03-TRIEN-KHAI-K8S](README.md) · Tiếp: [01-chuan-bi-
 
 Phần này giải thích ngắn các khái niệm bạn sẽ gặp ở các bước sau. Mỗi khái niệm có một lệnh để tự nhìn thấy nó trong cụm sau khi dựng xong (bước 9 và 10). Nếu bạn đã quen Kubernetes, bỏ qua và sang [01](01-prepare-and-keys.md).
 
-Quy ước: kết quả ghi *(mẫu)* là ví dụ dựng từ manifest, không phải bản chụp từ một cụm đã chạy; tên pod thật sẽ có đuôi ngẫu nhiên khác.
+Quy ước: kết quả ghi là ví dụ dựng từ manifest, không phải bản chụp từ một cụm đã chạy; tên pod thật sẽ có đuôi ngẫu nhiên khác.
 
 ## Bức tranh chung
 
@@ -28,7 +28,7 @@ Namespace là "ngăn kéo" để gom tài nguyên. Demo dùng hai ngăn: `fomoxa
 kubectl get namespaces
 ```
 
-Kết quả mong đợi (mẫu):
+Kết quả mong đợi:
 
 ```
 NAME              STATUS   AGE
@@ -105,7 +105,7 @@ Lý do cổng 9602 (pod báo cáo về backend) nằm ở Service `backend-pods`
 kubectl get svc -n fomoxa
 ```
 
-Kết quả mong đợi (mẫu):
+Kết quả mong đợi:
 
 ```
 NAME             TYPE           CLUSTER-IP     EXTERNAL-IP   PORT(S)
@@ -162,7 +162,7 @@ Container mất dữ liệu khi pod bị xoá. Muốn giữ (cơ sở dữ liệ
 kubectl get pvc -n fomoxa
 ```
 
-Kết quả mong đợi (mẫu):
+Kết quả mong đợi:
 
 ```
 NAME            STATUS   VOLUME                                     CAPACITY   ACCESS MODES   STORAGECLASS

@@ -204,7 +204,7 @@ Twenty-two lines. A `Buffer` policy keeps 2 spare `Ready` pods, with a minimum o
 
 132 lines. The first policy, `default-deny-ingress`, blocks all traffic going into pods in the namespace. The later policies open each needed path (for example `postgres-from-nakama` lets only `nakama` pods reach port 5432). The paths opened are client to gateway (UDP 7777) to pod (UDP 7778); client to backend (9600, 9601); backend to directory (9500) and nakama (7350); gateway and pods to directory (9500); pods to backend (9602).
 
-k3s ships with a NetworkPolicy enforcer (kube-router), but this file has not been tried on a real cluster. If something stops connecting, remove it with `kubectl delete -f deploy/k8s/networkpolicy.yaml`. Turn it on with `APPLY_NETPOL=1`. The full flow table is in [05 part 5](../operations/05-scaling-security-backup.md).
+k3s ships with a NetworkPolicy enforcer (kube-router). If something stops connecting, remove it with `kubectl delete -f deploy/k8s/networkpolicy.yaml`. Turn it on with `APPLY_NETPOL=1`. The full flow table is in [05 part 5](../operations/05-scaling-security-backup.md).
 
 ## `ingress.yaml` (optional, experimental)
 

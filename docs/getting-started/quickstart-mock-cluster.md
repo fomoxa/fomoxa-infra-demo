@@ -12,7 +12,7 @@ The mock cluster (`tools/MockCluster`) runs on one machine with no Docker, k3d, 
 
 It differs from the real cluster in a few ways. Matchmaking is instant instead of waiting for two players as Nakama does. Accounts live in memory. There is no Agones or gateway, and keys are not checked. Use it only on a local machine.
 
-Everything in this document was run while writing it (output labeled "real"), except the Unity part. You need the .NET 8 SDK ([01, Step 7](prepare-environment.md#step-7-install-the-net-8-sdk)).
+You need the .NET 8 SDK ([01, Step 7](prepare-environment.md#step-7-install-the-net-8-sdk)).
 
 ## Step 1. Build the game server and the mock cluster
 
@@ -29,7 +29,7 @@ dotnet publish tools/MockCluster/MockCluster.csproj   -c Release -o .mock/cluste
 
 Or run it in one go: `./scripts/run-mock-cluster.sh`. It runs those two `publish` commands and then starts the cluster from Step 2.
 
-Expected output (sample):
+Expected output:
 
 ```
   MyGame.Server -> /home/you/fomoxa-infra-demo/MyGame/Server~/bin/Release/net8.0/MyGame.Server.dll
@@ -62,7 +62,7 @@ dotnet .mock/cluster/MockCluster.dll --server=.mock/server/MyGame.Server.dll
 
 `MockCluster.dll` opens the mock services and then launches four `MyGame.Server` processes itself, one UDP port each, each holding one room `arena:N`. `--server=` tells it where the pod is. Keep this window open and stop it with Ctrl+C.
 
-Expected output (real):
+Expected output:
 
 ```
 [Mock] directory giả  : 0.0.0.0:9500
@@ -139,7 +139,7 @@ A client connects to the mock backend over the real fRPC protocol. It registers,
 
 Or run it in one go: `./scripts/run-mock-cluster.sh --selftest --pods=2`
 
-Expected output (real, shortened: some lines are removed, and your codes and ports will differ):
+Expected output (shortened: some lines are removed, and your codes and ports will differ):
 
 ```
 [selftest] OK   Dang ky trung ten bi tu choi
@@ -173,7 +173,7 @@ A bot registers, asks for a ticket, connects to a pod over real encrypted UDP, a
 
 Or run it in one go: `./scripts/run-mock-cluster.sh --bot-test --pods=2`
 
-Expected output (real, shortened):
+Expected output (shortened):
 
 ```
 [bot] OK   Co ticket vao arena:1 -> 127.0.0.1:7779

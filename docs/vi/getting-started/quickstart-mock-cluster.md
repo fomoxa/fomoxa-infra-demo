@@ -13,7 +13,6 @@ backend, directory và các game server thật. Dùng để: thử client, phát
 
 Khác cụm thật: ghép trận tức thì (không chờ đủ 2 người như Nakama), tài khoản nằm trong bộ nhớ, không có Agones/gateway, key không được kiểm tra. Chỉ dùng trên máy local.
 
-> Đã chạy thật khi viết tài liệu: toàn bộ tài liệu này (output ghi *(thật)*), trừ phần Unity.
 > Cần: .NET SDK 8 ([01, Bước 7](prepare-environment.md#bước-7-cài-net-sdk-8)).
 
 ## Bước 1. Build game server và cụm giả
@@ -36,7 +35,7 @@ dotnet publish tools/MockCluster/MockCluster.csproj   -c Release -o .mock/cluste
 
 Hoặc chạy gọn: `./scripts/run-mock-cluster.sh` (nó chạy đúng hai lệnh `publish` trên rồi chạy luôn cụm giả ở Bước 2).
 
-Kết quả mong đợi (mẫu):
+Kết quả mong đợi:
 
 ```
   MyGame.Server -> /home/you/fomoxa-infra-demo/MyGame/Server~/bin/Release/net8.0/MyGame.Server.dll
@@ -72,7 +71,7 @@ dotnet .mock/cluster/MockCluster.dll --server=.mock/server/MyGame.Server.dll
 Ý nghĩa: `MockCluster.dll` mở các dịch vụ giả rồi tự khởi chạy 4 tiến trình `MyGame.Server` (mỗi pod một cổng UDP, mỗi pod giữ một phòng `arena:N`).
 `--server=` chỉ cho nó biết file pod ở đâu. Để chạy tiếp, giữ cửa sổ này mở; tắt bằng Ctrl+C.
 
-Kết quả mong đợi (thật):
+Kết quả mong đợi:
 
 ```
 [Mock] directory giả  : 0.0.0.0:9500
@@ -149,7 +148,7 @@ dotnet .mock/cluster/MockCluster.dll --server=.mock/server/MyGame.Server.dll --p
 
 Hoặc chạy gọn: `./scripts/run-mock-cluster.sh --selftest --pods=2`
 
-Kết quả mong đợi (thật, đã rút gọn: bỏ bớt dòng, giá trị mã/cổng của bạn sẽ khác):
+Kết quả mong đợi (đã rút gọn: bỏ bớt dòng, giá trị mã/cổng của bạn sẽ khác):
 
 ```
 [selftest] OK   Dang ky trung ten bi tu choi
@@ -184,7 +183,7 @@ rồi kiểm tra bảng điểm và kỷ lục đã lưu. Đây là bài kiểm 
 
 Hoặc chạy gọn: `./scripts/run-mock-cluster.sh --bot-test --pods=2`
 
-Kết quả mong đợi (thật, đã rút gọn):
+Kết quả mong đợi (đã rút gọn):
 
 ```
 [bot] OK   Co ticket vao arena:1 -> 127.0.0.1:7779

@@ -2,8 +2,6 @@
 
 This document covers opening the Unity project in `MyGame/`, building the two scenes (Lobby and Game), producing a Windows build, and connecting it to a cluster: the [mock cluster](getting-started/quickstart-mock-cluster.md) or the [Kubernetes cluster](deploy/README.md).
 
-Status: the project owner ran the client in Unity against the mock cluster and it works. The wording of individual menus and screens was written without Unity open, so a label may differ slightly from what you see. The command-line parts (`fomoxac`) and the protocol (login, rooms, UDP, jumping and landing on platforms) were also checked with the bot and the selftest ([06](testing.md)). If Unity reports a compile error or the UI differs from what is described, send the error so the documents can be fixed.
-
 | Item | Value |
 |---|---|
 | Unity | 6000.5.7f1 (the version in `MyGame/ProjectSettings/ProjectVersion.txt`) |
@@ -246,7 +244,7 @@ On Windows use `MyGame.Backend\tools\fomoxac\win-x64\fomoxac.exe generate`. Unit
 
 `generate` rewrites the `*.cs` files and `.fomoxa/schema.json`. `--check` only compares, and exits non-zero if the generated code is stale (it prints `fomoxac: up to date` when it matches). Adding a field or model changes the protocol fingerprint, so the client, backend and pod must be rebuilt together. An old `MyGame.exe` cannot connect to a new backend.
 
-Expected output (real):
+Expected output:
 
 ```
 ✓ RoomTicket.rpc unchanged

@@ -30,7 +30,7 @@ Declare the ports now. k3d cannot add ports to an existing cluster. If one is mi
 
 Or run it in one go: `./scripts/k8s-up.sh` checks the ports are free and runs this command if the cluster does not exist.
 
-Expected output (sample):
+Expected output:
 
 ```
 INFO[0000] Prep: Network
@@ -54,7 +54,7 @@ docker port k3d-fomoxa-serverlb
 
 `use-context` selects the cluster `kubectl` talks to. One machine can have several, and picking the wrong context is a common mistake. `docker port` lists the published ports.
 
-Expected output (sample):
+Expected output:
 
 ```
 NAME                  STATUS   ROLES                  AGE   VERSION
@@ -104,7 +104,7 @@ What the flags do:
 
 Or run it in one go: `./scripts/k8s-up.sh` runs these commands and skips them if `helm list -n agones-system` already shows `agones`. Set `AGONES_VERSION=1.xx.y` to pin the chart.
 
-Expected output (sample):
+Expected output:
 
 ```
 NAME: agones
@@ -121,7 +121,7 @@ kubectl get crd | grep agones.dev
 ```
 
 ```
-NAME                                 READY   STATUS    RESTARTS   AGE   (sample)
+NAME                                 READY   STATUS    RESTARTS   AGE
 agones-controller-6b9c7c6f5d-7xk2p   1/1     Running   0          2m
 agones-controller-6b9c7c6f5d-q9wzl   1/1     Running   0          2m
 agones-extensions-7d5b8c9d6-4hjfm    1/1     Running   0          2m
@@ -160,7 +160,7 @@ This packs each image into a tar file and loads it into the node `k3d-fomoxa-ser
 
 Or run it in one go: `./scripts/k8s-up.sh` (its "4/6 Import images" stage).
 
-Expected output (sample):
+Expected output:
 
 ```
 INFO[0000] Importing image(s) into cluster 'fomoxa'

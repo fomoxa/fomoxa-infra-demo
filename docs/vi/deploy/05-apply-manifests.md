@@ -18,7 +18,7 @@ kubectl wait --for=condition=Ready pod -l app=postgres -n fomoxa --timeout=120s
 
 Ý nghĩa: tạo PersistentVolumeClaim (ổ đĩa 1 GiB), Deployment và Service `postgres:5432`. `rollout status` đợi bản triển khai xong; `kubectl wait --for=condition=Ready` đợi pod báo sẵn sàng (readiness probe `pg_isready`).
 
-Kết quả mong đợi (mẫu):
+Kết quả mong đợi:
 
 ```
 persistentvolumeclaim/postgres-data created
@@ -89,7 +89,7 @@ kubectl wait --for=jsonpath='{.status.state}'=Ready gs -l agones.dev/fleet=fomox
 Ý nghĩa: `Fleet` là "bể" game server; `replicas: 4` → Agones tạo 4 `GameServer`, mỗi cái là một pod có 2 container (`fomoxa-server` và sidecar của Agones). Mỗi pod đăng ký với directory, giữ một phòng trong `arena:1..16`.
 Với GameServer không dùng `--for=condition=Ready` mà dùng `--for=jsonpath='{.status.state}'=Ready` vì Agones lưu trạng thái ở `.status.state`, không dùng `conditions`.
 
-Kết quả mong đợi (mẫu):
+Kết quả mong đợi:
 
 ```
 fleet.agones.dev/fomoxa-server created

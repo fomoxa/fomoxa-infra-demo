@@ -18,7 +18,7 @@ kubectl wait --for=condition=Ready pod -l app=postgres -n fomoxa --timeout=120s
 
 This creates a PersistentVolumeClaim (1 GiB of disk), a Deployment and a Service `postgres:5432`. `rollout status` waits for the rollout to finish. `kubectl wait --for=condition=Ready` waits for the pod's readiness probe (`pg_isready`).
 
-Expected output (sample):
+Expected output:
 
 ```
 persistentvolumeclaim/postgres-data created
@@ -85,7 +85,7 @@ kubectl wait --for=jsonpath='{.status.state}'=Ready gs -l agones.dev/fleet=fomox
 
 A `Fleet` is a pool of game servers. With `replicas: 4`, Agones creates four `GameServer`s, each a pod with two containers (`fomoxa-server` and Agones' sidecar). Each pod registers with the directory and holds one room out of `arena:1..16`. For GameServers use `--for=jsonpath='{.status.state}'=Ready` instead of `--for=condition=Ready`, because Agones records the state in `.status.state` and does not use `conditions`.
 
-Expected output (sample):
+Expected output:
 
 ```
 fleet.agones.dev/fomoxa-server created

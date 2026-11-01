@@ -18,7 +18,7 @@ ls gateway | head
 
 Hoặc chạy gọn: `./scripts/build-images.sh` tự clone nếu thiếu (nó là bước đầu của script).
 
-Kết quả mong đợi (mẫu): thấy `Cargo.toml` và các thư mục crate.
+Kết quả mong đợi: thấy `Cargo.toml` và các thư mục crate.
 
 Lỗi thường gặp: `Repository not found` / đòi mật khẩu → repo `fomoxa/gateway` là repo riêng/không truy cập được từ tài khoản của bạn; xin quyền truy cập hoặc đặt sẵn mã vào `gateway/`.
 
@@ -52,7 +52,7 @@ Hoặc chạy gọn: `./scripts/build-images.sh` (clone `gateway/` nếu thiếu
 
 Thời gian: hai image Rust build lâu nhất (10-25 phút lần đầu vì tải và biên dịch crate); các lần sau nhanh nhờ cache.
 
-Kết quả mong đợi (mẫu, đoạn cuối):
+Kết quả mong đợi (đoạn cuối):
 
 ```
  => exporting to image
@@ -68,7 +68,7 @@ docker images | grep -E '^fomoxa-(server|directory|gateway|backend)\b'
 Phải thấy 4 dòng, tag `latest`:
 
 ```
-fomoxa-backend     latest   3f1c...   2 minutes ago   260MB   (mẫu)
+fomoxa-backend     latest   3f1c...   2 minutes ago   260MB
 fomoxa-gateway     latest   9a77...   6 minutes ago   95MB
 fomoxa-directory   latest   c04b...   9 minutes ago   98MB
 fomoxa-server      latest   e1d2...   12 minutes ago  235MB

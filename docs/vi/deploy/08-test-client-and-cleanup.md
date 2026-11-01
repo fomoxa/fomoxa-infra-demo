@@ -48,7 +48,7 @@ Script này làm gì (bung ra):
 4. Dùng `kubectl` (qua `wsl.exe` nếu chạy từ `test-p5.sh`) đếm pod `Allocated`: phải đúng 2, nếu không script thất bại.
 5. Tuỳ chọn `TEST_SCALE=1 ./scripts/test-p5.sh`: scale Fleet lên 5 rồi về 4 và kiểm tra số GameServer.
 
-Kết quả mong đợi (mẫu):
+Kết quả mong đợi:
 
 ```
 === Kiem tra DoD P5: Game server chay tren K8s + Agones ===

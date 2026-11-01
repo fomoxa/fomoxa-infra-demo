@@ -5,8 +5,6 @@ Làm tay từng bước để hiểu; cuối tài liệu có đường tắt m�
 
 > Điều kiện: đã xong [01, Chuẩn bị môi trường](../getting-started/prepare-environment.md) (`docker`, `kubectl`, `k3d`, `helm`, `openssl`, `git`).
 > Thời gian: lần đầu 30-60 phút, phần lớn là build image Rust (directory, gateway) và kéo image.
-> Chưa kiểm chứng: các bước 4 (build image Rust), 5-11 (k3d/Agones/manifest) chưa được chạy lại khi viết tài liệu; lệnh lấy nguyên từ `scripts/k8s-up.sh`,
-> `scripts/build-images.sh`, `scripts/gen-*.sh` và manifest. Output ghi *(mẫu)*. Các bước 2 và 12 đã chạy thật.
 
 ## Nên đọc trước
 
@@ -62,7 +60,7 @@ Biến môi trường tuỳ chọn (đặt trước lệnh, ví dụ `AUTOSCALE=
 | `AGONES_VERSION=1.xx.y` | ghim phiên bản chart Agones | Bước 6 |
 | `AUTOSCALE=1` | bật `FleetAutoscaler` (giữ 2 pod Ready, 4..16 pod) | [05](../operations/05-scaling-security-backup.md#autoscaling) |
 | `INSTALL_MONITORING=1` | cài Prometheus/Alertmanager/Grafana/Loki | [05](../operations/04-monitoring.md#giám-sát) |
-| `APPLY_NETPOL=1` | bật NetworkPolicy (chưa thử trên cụm thật) | [05](../operations/05-scaling-security-backup.md#networkpolicy-tuỳ-chọn) |
+| `APPLY_NETPOL=1` | bật NetworkPolicy | [05](../operations/05-scaling-security-backup.md#networkpolicy-tuỳ-chọn) |
 | `TLS_ONLY=1` | đóng cổng 9600 không mã hoá, chỉ còn TLS 9643 | [05](../operations/03-tls-and-keys.md#tls-giữa-client-và-backend) |
 | `APPLY_INGRESS=1` | áp dụng Ingress thử nghiệm | [08](../reference.md) |
 

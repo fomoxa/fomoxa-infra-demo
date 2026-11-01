@@ -204,7 +204,7 @@ Fleet dùng hai secret: `fomoxa-pod-key` (pod↔directory) và `fomoxa-backend-p
 
 132 dòng. Chính sách đầu tiên, `default-deny-ingress`, chặn mọi lưu lượng đi vào pod trong namespace; các chính sách sau mở từng đường cần thiết (ví dụ `postgres-from-nakama` chỉ cho pod `nakama` vào cổng 5432). Luồng được mở: client→gateway (UDP 7777)→pod (UDP 7778); client→backend (9600, 9601); backend→directory (9500) và nakama (7350); gateway và pod→directory (9500); pod→backend (9602).
 
-k3s có sẵn bộ thực thi NetworkPolicy (kube-router), nhưng file này chưa thử trên cụm thật: nếu có gì không nối được, gỡ bằng `kubectl delete -f deploy/k8s/networkpolicy.yaml`. Bật bằng `APPLY_NETPOL=1`; bảng luồng chi tiết ở [05 phần 5](../operations/05-scaling-security-backup.md).
+k3s có sẵn bộ thực thi NetworkPolicy (kube-router). Nếu có gì không nối được, gỡ bằng `kubectl delete -f deploy/k8s/networkpolicy.yaml`. Bật bằng `APPLY_NETPOL=1`; bảng luồng chi tiết ở [05 phần 5](../operations/05-scaling-security-backup.md).
 
 ## `ingress.yaml` (tuỳ chọn, thử nghiệm)
 

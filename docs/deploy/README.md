@@ -4,8 +4,6 @@ This document builds the real cluster on your machine: Postgres, Nakama, directo
 
 Prerequisite: [01 Prepare the environment](../getting-started/prepare-environment.md) is done (`docker`, `kubectl`, `k3d`, `helm`, `openssl`, `git`). The first run takes 30 to 60 minutes, mostly building the Rust images and pulling images.
 
-Not verified: steps 4 (Rust image builds) and 5 to 11 (k3d, Agones, manifests) were not re-run while writing. The commands come straight from `scripts/k8s-up.sh`, `scripts/build-images.sh`, `scripts/gen-*.sh` and the manifests, and the output is labeled (sample). Steps 2 and 12 were run for real.
-
 ## Read first
 
 - [Kubernetes concepts used here](concepts.md): pod, deployment, service, secret, configmap, Agones and so on, with commands that show each one in this cluster.

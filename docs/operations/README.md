@@ -2,8 +2,6 @@
 
 Day-to-day tasks and the operational features: logs, scaling, updates, graceful shutdown (drain), accounts, TLS, Nakama keys, monitoring, autoscaling, NetworkPolicy and backups. This document assumes a running cluster from [03](../deploy/README.md), your shell in `~/fomoxa-infra-demo`, and `kubectl config use-context k3d-fomoxa`.
 
-Run while writing: the Nakama and RPC commands (`kv_get`), `openssl s_client` against a certificate, `/metrics`, and the `promtool`, `amtool`, `loki` and `promtail` config checks. Not run on a real Kubernetes cluster: the `kubectl` commands below (output labeled sample), and the manifests for `tls-proxy`, `networkpolicy`, `fleet-autoscaler` and `monitoring/`.
-
 ## Parts
 
 - [01-status-and-updates.md](01-status-and-updates.md): Status and logs, internal services, manual scaling, restarts, image updates

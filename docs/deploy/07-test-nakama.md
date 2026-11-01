@@ -53,7 +53,7 @@ echo "$RESP_B"
 TICKET=$(echo "$RESP_B" | grep -o '"ticket":"[^"]*' | cut -d'"' -f4)
 ```
 
-Expected output (real):
+Expected output:
 
 ```
 {"ok":true}
@@ -81,7 +81,7 @@ curl -s -X POST "$BASE/v2/rpc/verify_ticket?unwrap" -H "Authorization: Basic $HT
      -d "{\"ticket\":\"$TICKET\",\"room\":\"arena:1\",\"user_id\":\"00000000-0000-0000-0000-000000000001\"}"; echo
 ```
 
-Expected output (real):
+Expected output:
 
 ```
 {"exp":1793533330,"ok":true,"room":"arena:1"}
@@ -95,7 +95,7 @@ curl -s -X POST "$BASE/v2/rpc/verify_ticket?unwrap" -H "Authorization: Bearer $T
      -H 'Content-Type: application/json' -d '{}'; echo
 ```
 
-Expected output (real):
+Expected output:
 
 ```
 {"code":7,"error":{},"message":"chi backend duoc goi RPC nay"}
@@ -105,7 +105,7 @@ Code 7 is `PERMISSION_DENIED`. The RPCs `verify_ticket`, `reset_match`, `list_ro
 
 Or run it in one go: `./scripts/test-nakama.sh` performs 12.1 to 12.3 and checks the results automatically. It reads the keys from the `fomoxa-nakama` secret when Nakama runs in k3d. `./scripts/test-nakama-pool.sh` sends four players to "auto", and they must land in two different rooms.
 
-Expected output of `test-nakama.sh` (real, the end):
+Expected output of `test-nakama.sh` (the end):
 
 ```
 3) ana find_match...
@@ -122,7 +122,7 @@ Expected output of `test-nakama.sh` (real, the end):
 OK: 2 client ghep dung room, ticket dung, user ngoai bi chan!
 ```
 
-Expected output of `test-nakama-pool.sh` (real, the end):
+Expected output of `test-nakama-pool.sh` (the end):
 
 ```
    -> Cap 1 matched vao room: arena:1 (ticket: e0d102e4-...)

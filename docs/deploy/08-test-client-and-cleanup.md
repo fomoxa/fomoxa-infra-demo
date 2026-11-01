@@ -47,7 +47,7 @@ What the script does, step by step:
 4. It counts `Allocated` pods with `kubectl` (through `wsl.exe` when started from `test-p5.sh`). There must be exactly two, or the script fails.
 5. With `TEST_SCALE=1 ./scripts/test-p5.sh` it also scales the Fleet up by one, then back, and checks the GameServer count.
 
-Expected output (sample):
+Expected output:
 
 ```
 === Kiem tra DoD P5: Game server chay tren K8s + Agones ===

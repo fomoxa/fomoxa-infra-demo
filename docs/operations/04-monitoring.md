@@ -66,7 +66,7 @@ kubectl apply -f deploy/monitoring/20-alertmanager.yaml
 kubectl rollout restart deployment/alertmanager -n monitoring
 ```
 
-To validate the configuration before applying it (run for real while writing; needs Docker):
+To validate the configuration before applying it (needs Docker):
 
 ```bash
 # extract the config to files, then check them with the official tool
@@ -81,7 +81,7 @@ PY
 docker run --rm --entrypoint promtool -v /tmp/prom:/tmp/prom prom/prometheus:v2.55.1 check config /tmp/prom/prometheus.yml
 ```
 
-Expected output (real):
+Expected output:
 
 ```
 Checking /tmp/prom/prometheus.yml

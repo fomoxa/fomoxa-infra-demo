@@ -55,7 +55,7 @@ kubectl create secret tls fomoxa-tls -n fomoxa \
 
 Or run it in one go: `./scripts/gen-k8s-secrets.sh` generates the keys if missing and the certificate if missing, then creates the secrets.
 
-Expected output (sample):
+Expected output:
 
 ```
 namespace/fomoxa created
@@ -98,13 +98,13 @@ This table is why a game pod cannot see the `root` key: it only receives `fomoxa
 kubectl exec deploy/gateway -n fomoxa -- ls /secrets/directory
 ```
 
-Expected output (sample): only `gateway`. If you also see `root` and `admin`, the `items` block in `gateway.yaml` was lost.
+Expected output: only `gateway`. If you also see `root` and `admin`, the `items` block in `gateway.yaml` was lost.
 
 ```bash
 kubectl exec deploy/directory -n fomoxa -- ls /secrets/directory
 ```
 
-Expected output (sample): `admin backend gateway pod root`. The gateway uses a small image that may not contain `ls`. If you get `executable file not found`, that is expected. Run `kubectl describe pod -l app=gateway -n fomoxa` and read the `Mounts` section instead.
+Expected output: `admin backend gateway pod root`. The gateway uses a small image that may not contain `ls`. If you get `executable file not found`, that is expected. Run `kubectl describe pod -l app=gateway -n fomoxa` and read the `Mounts` section instead.
 
 ### After you change a secret
 

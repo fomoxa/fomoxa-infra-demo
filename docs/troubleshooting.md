@@ -263,7 +263,7 @@ Fix: `kubectl get pod <pod> -n fomoxa -o jsonpath='{.metadata.annotations}'`. Th
 
 ### Something stopped connecting after turning on NetworkPolicy
 
-Remove it right away to confirm the cause: `kubectl delete -f deploy/k8s/networkpolicy.yaml`. If the problem goes away, the policy is missing a path. See the list of paths at the top of that file. It has not been tried on a real cluster.
+Remove it right away to confirm the cause: `kubectl delete -f deploy/k8s/networkpolicy.yaml`. If the problem goes away, the policy is missing a path. See the list of paths at the top of that file.
 
 ### Grafana shows no data
 

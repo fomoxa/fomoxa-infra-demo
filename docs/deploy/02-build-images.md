@@ -15,7 +15,7 @@ This clones tag `0.2.0`, the version this repository uses, and `--depth 1` takes
 
 Or run it in one go: `./scripts/build-images.sh` clones it if missing, as its first action.
 
-Expected output (sample): a `Cargo.toml` and the crate directories.
+Expected output: a `Cargo.toml` and the crate directories.
 
 If you get `Repository not found` or a password prompt, `fomoxa/gateway` is private or your account cannot see it. Ask for access, or place the source in `gateway/` yourself.
 
@@ -45,7 +45,7 @@ Or run it in one go: `./scripts/build-images.sh` clones `gateway/` if needed and
 
 The two Rust images take the longest, 10 to 25 minutes the first time, because Docker downloads and compiles the crates. Later builds are faster thanks to the cache.
 
-Expected output (sample, the end of a build):
+Expected output (the end of a build):
 
 ```
  => exporting to image
@@ -58,7 +58,7 @@ Check:
 docker images | grep -E '^fomoxa-(server|directory|gateway|backend)\b'
 ```
 
-You should see four lines, all tagged `latest` (sample):
+You should see four lines, all tagged `latest`:
 
 ```
 fomoxa-backend     latest   3f1c...   2 minutes ago   260MB

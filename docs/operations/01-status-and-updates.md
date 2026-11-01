@@ -33,7 +33,7 @@ kubectl top pods -n fomoxa
 
 `deploy/<name>` tells `kubectl logs` to pick any pod of that deployment. A game server has two containers, so you must name `-c fomoxa-server` (the other one is Agones' sidecar).
 
-Expected `kubectl top` output (sample):
+Expected `kubectl top` output:
 
 ```
 NAME                        CPU(cores)   MEMORY(bytes)
@@ -60,7 +60,7 @@ curl -s http://127.0.0.1:9610/metrics | head -20
 kill %1
 ```
 
-`/metrics` output (real, from the backend):
+`/metrics` output (from the backend):
 
 ```
 # HELP fomoxa_online_players Số người chơi online (báo có mặt trong 20 giây gần nhất)

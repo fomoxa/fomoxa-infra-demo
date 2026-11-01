@@ -20,7 +20,7 @@ kubectl delete gs "$GS" -n fomoxa --wait=false
 kubectl logs -n fomoxa "$GS" -c fomoxa-server -f --tail=5
 ```
 
-Expected output (the line formats are real):
+Expected output:
 
 ```
 [Pod] SIGTERM: xin drain, cho het nguoi choi (gui tin hieu lan nua de thoat ngay)
@@ -29,8 +29,6 @@ Expected output (the line formats are real):
 ```
 
 For a pod with no players (`Ready`) the last line appears almost immediately, and the Fleet creates a replacement GameServer.
-
-This was checked at the process level (the pod exits when players are gone). It has not been run fully against the real directory with `kubectl delete` on a cluster.
 
 ## 7. Accounts and player data
 

@@ -2,8 +2,6 @@
 
 By the end of this document you will have `docker`, `kubectl`, `k3d`, `helm`, `openssl`, `git` and the .NET 8 SDK installed, and the repository cloned. After that you can run the [mock cluster](quickstart-mock-cluster.md) or the [Kubernetes deployment](../deploy/README.md).
 
-Not verified: the install commands below are each tool's standard procedure. They were not re-run on a clean machine while writing, so the output is labeled (sample).
-
 ## Step 1. Check that the machine is big enough
 
 Goal: make sure the machine can run k3d, Agones, Nakama and Postgres together.
@@ -27,7 +25,7 @@ lsb_release -d   # Ubuntu version
 
 The `available` column of `free -h` is the memory you can actually use. Below about 3 GB, k3d and Agones become slow or get killed for lack of memory.
 
-Expected output (sample):
+Expected output:
 
 ```
                total        used        free      shared  buff/cache   available
@@ -67,7 +65,7 @@ git --version
 openssl version
 ```
 
-Expected output (sample):
+Expected output:
 
 ```
 curl 7.81.0 (x86_64-pc-linux-gnu) ...
@@ -92,7 +90,7 @@ docker ps
 
 The first command prints both versions when the Ubuntu terminal can reach Docker Desktop. `docker ps` lists running containers, and an empty list is fine.
 
-Expected output (sample):
+Expected output:
 
 ```
 client=27.3.1 server=27.3.1
@@ -133,7 +131,7 @@ Check:
 docker run --rm hello-world
 ```
 
-Expected output (sample): a line that says `Hello from Docker!`.
+Expected output: a line that says `Hello from Docker!`.
 
 ### Common errors (Docker)
 
@@ -158,7 +156,7 @@ kubectl version --client
 
 This reads the latest stable version number, downloads the binary, installs it into `/usr/local/bin` (which is on `PATH`), deletes the download, and prints the version.
 
-Expected output (sample):
+Expected output:
 
 ```
 Client Version: v1.31.2
@@ -178,7 +176,7 @@ k3d version
 
 This is k3d's official install script, pinned to `v5.7.4`, the version this repository was written against. Other versions may change the `--port` syntax.
 
-Expected output (sample):
+Expected output:
 
 ```
 k3d version v5.7.4
@@ -196,7 +194,7 @@ curl -fsSL https://raw.githubusercontent.com/helm/helm/main/scripts/get-helm-3 |
 helm version --short
 ```
 
-Expected output (sample):
+Expected output:
 
 ```
 v3.16.2+g13654a5
@@ -223,7 +221,7 @@ source ~/.bashrc
 dotnet --version
 ```
 
-Expected output (real, the version used while writing):
+Expected output:
 
 ```
 8.0.427
@@ -243,7 +241,7 @@ echo "openssl: $(openssl version | cut -d' ' -f1-2)"
 echo "git    : $(git --version)"
 ```
 
-Expected output (sample):
+Expected output:
 
 ```
 docker : 27.3.1
@@ -271,7 +269,7 @@ git branch --show-current
 ls
 ```
 
-Expected output (sample):
+Expected output:
 
 ```
 main

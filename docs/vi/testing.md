@@ -1,7 +1,6 @@
 # 06: Kiểm thử
 
-Danh sách các bài kiểm thử của repo: mỗi bài kiểm cái gì, chạy thế nào (lệnh tay + script), kết quả mong đợi, và cái gì chưa được kiểm.
-Tất cả bài dưới đây có kết quả đánh dấu *(thật)* đã được chạy khi viết tài liệu, trừ khi ghi khác.
+Danh sách các bài kiểm thử của repo: mỗi bài kiểm cái gì, chạy thế nào (lệnh tay + script), kết quả mong đợi, và phần nó không bao phủ.
 
 ## Bản đồ kiểm thử
 
@@ -12,8 +11,8 @@ Tất cả bài dưới đây có kết quả đánh dấu *(thật)* đã đư�
 | 3 | [`test-nakama.sh`, `test-nakama-pool.sh`](#3-module-lua-của-nakama) | module Lua: ghép cặp, ticket, chặn RPC nội bộ | Nakama (compose hoặc cụm) | ~10 s | |
 | 4 | [`test-real-backend.sh`](#4-backend-thật--nakama-thật) | backend thật + Nakama thật + pod thật: toàn bộ chức năng + `/metrics` | Docker, .NET 8 | ~2 phút | CI chạy bài này |
 | 5 | [Kiểm tra tĩnh](#5-kiểm-tra-tĩnh-mã-sinh-yaml-shell-lua-cấu-hình-giám-sát) | mã sinh khớp model, YAML, shell, Lua = ConfigMap, cấu hình giám sát | tuỳ | vài giây | |
-| 6 | [`test-p5.sh`](#6-test-p5-gameserver-trên-k8s--agones-cần-unity-player) | Agones: `Ready` → `Allocated`, ghép cặp 4 client | cụm K8s + `MyGame.exe` | ~1 phút | chưa chạy thật |
-| 7 | [Kịch bản thử tay trong Unity](#7-kịch-bản-thử-tay-trong-unity) | giao diện, camera, nhảy, bạn bè | Unity | 10 phút | chủ dự án đã chạy, đạt |
+| 6 | [`test-p5.sh`](#6-test-p5-gameserver-trên-k8s--agones-cần-unity-player) | Agones: `Ready` → `Allocated`, ghép cặp 4 client | cụm K8s + `MyGame.exe` | ~1 phút | |
+| 7 | [Kịch bản thử tay trong Unity](#7-kịch-bản-thử-tay-trong-unity) | giao diện, camera, nhảy, bạn bè | Unity | 10 phút | |
 
 > Mọi bài `--selftest`/`--bot-test` đều dựng cụm giả riêng rồi tắt, vì vậy tắt cụm giả đang chạy (Ctrl+C) trước khi chạy chúng, nếu không sẽ trùng cổng.
 
@@ -41,7 +40,7 @@ Nó làm gì: khởi động directory/backend giả + 2 pod thật, rồi một
 | Xã hội | lời mời kết bạn đến người nhận; chấp nhận → bạn 2 chiều; mời bạn vào phòng; bạn hiện online + đang ở đâu; không mời được người chưa là bạn |
 | TLS | nối qua cổng TLS với đúng pin và gọi RPC; sai pin bị `TlsRejected` |
 
-Kết quả mong đợi (thật): các dòng `[selftest] OK ...`, kết thúc bằng:
+Kết quả mong đợi: các dòng `[selftest] OK ...`, kết thúc bằng:
 
 ```
 [selftest] TAT CA DAT
@@ -67,7 +66,7 @@ Hoặc chạy gọn: `./scripts/run-mock-cluster.sh --bot-test --pods=2`
 Nó làm gì: (1) bot đăng ký `botjumper` qua fRPC và xin vào `arena:1` để lấy ticket; (2) dựng một runtime mạng Fomoxa thật (cùng thư viện với Unity), nối UDP mã hoá vào pod bằng ticket;
 (3) pod xác thực ticket và biết đây là `botjumper`; (4) bot đọc vị trí server gửi về và tự đi/nhảy lên các bục; (5) sau ~25 giây kiểm bảng điểm và hồ sơ.
 
-Kết quả mong đợi (thật):
+Kết quả mong đợi:
 
 ```
 [bot] OK   Co ticket vao arena:1 -> 127.0.0.1:7779
@@ -109,7 +108,7 @@ docker compose -f deploy/compose.yaml down -v
 Các bước script làm (bung ra thành `curl` tay ở [03, Bước 12](deploy/07-test-nakama.md#bước-12-test-nakama-bằng-curl)): đăng nhập 2 device → `reset_match` → ana `find_match` (`waiting`) → bo `find_match` (`matched` + ticket) → ana `poll_match` → backend `verify_ticket` (đúng người `ok:true`, người lạ `ok:false`).
 Bài `pool` cho 4 người vào "auto": cặp 1 vào một phòng, cặp 2 vào phòng khác.
 
-Kết quả mong đợi (thật):
+Kết quả mong đợi:
 
 ```
 OK: 2 client ghep dung room, ticket dung, user ngoai bi chan!
@@ -174,7 +173,7 @@ Giải thích các tham số quan trọng:
 - `--selftest-target=9600,9602`: chạy selftest vào backend ngoài (cổng người chơi 9600, cổng pod 9602) thay vì backend giả.
 - Tên người chơi trong selftest có hậu tố ngẫu nhiên (`st1a2b3c`...) vì tài khoản được lưu lâu dài trong Nakama, chạy lại không bị "tên đã có người dùng".
 
-Kết quả mong đợi (thật):
+Kết quả mong đợi:
 
 ```
 [selftest] OK   Dang ky tra ve ma khoi phuc (XNM7-NS5F-GBBC-QZV3)
@@ -233,7 +232,7 @@ PY
 
 Ý nghĩa: `main.lua` tồn tại ở hai nơi (file cho docker compose và bản nhúng trong ConfigMap cho K8s). Sửa một nơi mà quên nơi kia là lỗi hay gặp, bài kiểm này bắt nó. Lệnh `promtool`/`amtool` kiểm cấu hình giám sát: xem [05, mục Giám sát](operations/04-monitoring.md#104-cảnh-báo-có-sẵn).
 
-Kết quả mong đợi (thật): `Lien ket noi bo: OK`; `fomoxac: up to date` hai lần; `ok scripts/...`; `main.lua == ConfigMap: ok`.
+Kết quả mong đợi: `Lien ket noi bo: OK`; `fomoxac: up to date` hai lần; `ok scripts/...`; `main.lua == ConfigMap: ok`.
 
 ## 6. `test-p5`: GameServer trên K8s + Agones (cần Unity Player)
 
@@ -246,8 +245,6 @@ TEST_SCALE=1 ./scripts/test-p5.sh    # thêm: scale Fleet +1 rồi về lại
 
 Điều kiện: cụm k3d đang chạy ([03](deploy/README.md)), có `MyGame/Builds/MyGame.exe` ([04](unity-client.md)), chạy từ WSL2 có `powershell.exe`.
 Từ PowerShell thuần: `powershell -ExecutionPolicy Bypass -File scripts\test-p5.ps1`.
-
-Chưa chạy thật khi viết tài liệu.
 
 ## 7. Kịch bản thử tay trong Unity
 

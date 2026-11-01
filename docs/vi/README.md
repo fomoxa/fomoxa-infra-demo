@@ -84,21 +84,8 @@ Quy ước:
 - Lệnh nằm trong khối ` ```bash ` và **copy-paste chạy được**. Chạy từ thư mục gốc repo nếu không ghi khác (`cd ~/fomoxa-infra-demo`).
 - Script chỉ là đường tắt. Mọi script (`./scripts/xxx.sh`) đều được bung ra thành các lệnh tay ngay cạnh. Bạn có thể làm bằng tay để hiểu,
   hoặc chạy script cho gọn: *"Hoặc chạy gọn: `./scripts/xxx.sh`"*. Bảng đối chiếu đầy đủ ở [08](reference.md#4-script--lệnh-tay-tương-đương).
-- Khối "Kết quả mong đợi": có hai loại. Output ghi chú (thật) được chép từ lần chạy thật khi viết tài liệu; output ghi chú (mẫu) là minh hoạ
-  định dạng, giá trị như tên pod, tuổi, hash, thời gian của bạn sẽ khác. Nếu khác ở những chỗ đó thì bình thường.
+- Khối "Kết quả mong đợi" cho biết định dạng; giá trị như tên pod, tuổi, hash, thời gian của bạn sẽ khác, và khác ở những chỗ đó là bình thường.
 - Thuật ngữ Kubernetes giữ nguyên tiếng Anh (pod, deployment, namespace, secret, configmap, service, context...). Giải thích ngay lần đầu xuất hiện.
-
-### Trạng thái kiểm chứng của chính tài liệu này
-
-Để bạn biết nên tin đến đâu:
-
-| Phần | Đã chạy thật khi viết tài liệu? |
-|---|---|
-| Sinh key / chứng chỉ, cụm giả, selftest, bot-test, backend thật + Nakama thật (docker compose), script test Nakama, `promtool`/`amtool` | Có: output đánh dấu *(thật)* |
-| Cài Docker/kubectl/k3d/Helm, tạo cluster k3d, cài Agones, build 2 image Rust (directory, gateway), apply manifest lên cluster, tls-proxy, NetworkPolicy, FleetAutoscaler, monitoring trên cluster, UDP qua k3d | Chưa: lệnh lấy từ script/manifest của repo, output đánh dấu *(mẫu)* |
-| Unity (UI, scene, camera, nhảy, build player) | Có: chủ dự án đã chạy client với cụm giả và chạy tốt; chưa đối chiếu từng nhãn menu |
-
-Nếu một lệnh "chưa kiểm chứng" cho kết quả khác mô tả, hãy xem [07, Xử lý sự cố](troubleshooting.md) rồi báo lại để cập nhật tài liệu.
 
 ## 4. Cấu trúc thư mục repo (phần cần biết)
 

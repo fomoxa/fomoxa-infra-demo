@@ -33,7 +33,7 @@ kubectl top pods -n fomoxa
 
 Ý nghĩa: `deploy/<tên>` cho `kubectl logs` chọn một pod bất kỳ của deployment đó. Game server có 2 container, nên phải chỉ rõ `-c fomoxa-server` (container còn lại là sidecar của Agones).
 
-Kết quả mong đợi `kubectl top` (mẫu):
+Kết quả mong đợi `kubectl top`:
 
 ```
 NAME                        CPU(cores)   MEMORY(bytes)
@@ -60,7 +60,7 @@ curl -s http://127.0.0.1:9610/metrics | head -20
 kill %1
 ```
 
-Kết quả `/metrics` (thật, từ backend):
+Kết quả `/metrics` (từ backend):
 
 ```
 # HELP fomoxa_online_players Số người chơi online (báo có mặt trong 20 giây gần nhất)

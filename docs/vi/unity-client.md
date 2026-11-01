@@ -3,10 +3,6 @@
 Tài liệu này hướng dẫn mở project Unity trong repo (`MyGame/`), dựng hai scene Lobby và Game, build bản chạy Windows và kết nối vào cụm
 ([02: cụm giả](getting-started/quickstart-mock-cluster.md) hoặc [03, cụm Kubernetes](deploy/README.md)).
 
-> Trạng thái: chủ dự án đã chạy client trong Unity với cụm giả và chạy tốt. Tên menu và màn hình trong tài liệu được viết khi chưa mở Unity, nên một nhãn có thể lệch chút so với thực tế.
-> Phần dòng lệnh (`fomoxac`) và giao thức (đăng nhập, phòng, UDP, nhảy/đáp bục) còn được kiểm chứng bằng bot và selftest ([06](testing.md)). Nếu Unity báo lỗi biên dịch hoặc giao diện lệch so với mô tả, hãy gửi nội dung lỗi để cập nhật.
-> Nếu Unity báo lỗi biên dịch hoặc giao diện lệch so với mô tả, hãy gửi nội dung lỗi để cập nhật.
-
 | Thứ | Giá trị |
 |---|---|
 | Unity | 6000.5.7f1 (đúng phiên bản trong `MyGame/ProjectSettings/ProjectVersion.txt`) |
@@ -257,7 +253,7 @@ Trên Windows dùng `MyGame.Backend\tools\fomoxac\win-x64\fomoxac.exe generate`.
 Ý nghĩa: `generate` ghi lại `*.cs` và `.fomoxa/schema.json`; `--check` chỉ so sánh và thoát mã khác 0 nếu mã sinh đã cũ (in `fomoxac: up to date` khi khớp).
 Thêm trường hoặc model mới làm đổi "vân tay" giao thức → client, backend và pod phải được build lại cùng lúc (bản `MyGame.exe` cũ sẽ không bắt tay được với backend mới).
 
-Kết quả mong đợi (thật):
+Kết quả mong đợi:
 
 ```
 ✓ RoomTicket.rpc unchanged

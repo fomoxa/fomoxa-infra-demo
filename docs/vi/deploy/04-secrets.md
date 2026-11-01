@@ -60,7 +60,7 @@ kubectl create secret tls fomoxa-tls -n fomoxa \
 
 Hoặc chạy gọn: `./scripts/gen-k8s-secrets.sh` (nếu thiếu khoá thì tự gọi `gen-keys.sh`, thiếu chứng chỉ thì tự gọi `gen-tls-cert.sh`).
 
-Kết quả mong đợi (mẫu):
+Kết quả mong đợi:
 
 ```
 namespace/fomoxa created
@@ -103,13 +103,13 @@ Bảng này là lý do pod game không thấy được khoá `root`: nó chỉ n
 kubectl exec deploy/gateway -n fomoxa -- ls /secrets/directory
 ```
 
-Kết quả mong đợi (mẫu): chỉ có `gateway`. Nếu thấy cả `root` và `admin` thì `items` trong `gateway.yaml` đã bị mất.
+Kết quả mong đợi: chỉ có `gateway`. Nếu thấy cả `root` và `admin` thì `items` trong `gateway.yaml` đã bị mất.
 
 ```bash
 kubectl exec deploy/directory -n fomoxa -- ls /secrets/directory
 ```
 
-Kết quả mong đợi (mẫu): `admin backend gateway pod root`. Gateway dùng image nhỏ có thể không có `ls`; khi đó lỗi `executable file not found` là bình thường, hãy dùng `kubectl describe pod -l app=gateway -n fomoxa` và đọc mục `Mounts`.
+Kết quả mong đợi: `admin backend gateway pod root`. Gateway dùng image nhỏ có thể không có `ls`; khi đó lỗi `executable file not found` là bình thường, hãy dùng `kubectl describe pod -l app=gateway -n fomoxa` và đọc mục `Mounts`.
 
 ### Sửa secret rồi làm gì
 

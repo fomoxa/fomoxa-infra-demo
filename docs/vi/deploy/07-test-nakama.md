@@ -4,7 +4,7 @@ Lên đầu tài liệu: [03-TRIEN-KHAI-K8S](README.md) · Trước: [06-kiem-tr
 
 ## Bước 12. Test Nakama bằng `curl`
 
-Mục tiêu: chứng minh Nakama ghép đúng hai người vào cùng một phòng, phát ticket hợp lệ, và chặn người ngoài. Đây là bài test đã chạy thật (trên Nakama của docker compose có cùng module `main.lua`).
+Mục tiêu: chứng minh Nakama ghép đúng hai người vào cùng một phòng, phát ticket hợp lệ, và chặn người ngoài. Bài này chạy được trên Nakama của docker compose, cùng module `main.lua`.
 
 Lấy khoá Nakama của cụm:
 
@@ -54,7 +54,7 @@ echo "$RESP_B"
 TICKET=$(echo "$RESP_B" | grep -o '"ticket":"[^"]*' | cut -d'"' -f4)
 ```
 
-Kết quả mong đợi (thật):
+Kết quả mong đợi:
 
 ```
 {"ok":true}
@@ -82,7 +82,7 @@ curl -s -X POST "$BASE/v2/rpc/verify_ticket?unwrap" -H "Authorization: Basic $HT
      -d "{\"ticket\":\"$TICKET\",\"room\":\"arena:1\",\"user_id\":\"00000000-0000-0000-0000-000000000001\"}"; echo
 ```
 
-Kết quả mong đợi (thật):
+Kết quả mong đợi:
 
 ```
 {"exp":1793533330,"ok":true,"room":"arena:1"}
@@ -96,7 +96,7 @@ curl -s -X POST "$BASE/v2/rpc/verify_ticket?unwrap" -H "Authorization: Bearer $T
      -H 'Content-Type: application/json' -d '{}'; echo
 ```
 
-Kết quả mong đợi (thật):
+Kết quả mong đợi:
 
 ```
 {"code":7,"error":{},"message":"chi backend duoc goi RPC nay"}
@@ -107,7 +107,7 @@ Kết quả mong đợi (thật):
 Hoặc chạy gọn: `./scripts/test-nakama.sh` làm đúng các bước 12.1-12.3 và kiểm tra tự động; script tự đọc khoá từ secret `fomoxa-nakama` khi Nakama chạy trong k3d.
 `./scripts/test-nakama-pool.sh` thử 4 người chơi vào "auto" (phải ra 2 phòng khác nhau).
 
-Kết quả mong đợi của `test-nakama.sh` (thật, đoạn cuối):
+Kết quả mong đợi của `test-nakama.sh` (đoạn cuối):
 
 ```
 3) ana find_match...
@@ -124,7 +124,7 @@ Kết quả mong đợi của `test-nakama.sh` (thật, đoạn cuối):
 OK: 2 client ghep dung room, ticket dung, user ngoai bi chan!
 ```
 
-Kết quả mong đợi của `test-nakama-pool.sh` (thật, đoạn cuối):
+Kết quả mong đợi của `test-nakama-pool.sh` (đoạn cuối):
 
 ```
    -> Cap 1 matched vao room: arena:1 (ticket: e0d102e4-...)

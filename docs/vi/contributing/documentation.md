@@ -34,7 +34,7 @@ Các trang tiếng Việt nằm trong `vi/` và phản chiếu trang tiếng Anh
 ## Quy tắc cho mọi trang
 
 - Viết văn xuôi kỹ thuật rõ ràng; tiêu đề tiếng Anh viết hoa chữ đầu câu.
-- Mô tả đúng việc mã đang làm. Ghi rõ phần chưa kiểm chứng; kết quả lệnh gắn nhãn (thật) khi đã chạy và (mẫu) khi dựng từ manifest.
+- Mô tả đúng việc mã đang làm.
 - Mỗi bước có mục tiêu, lệnh, ý nghĩa, kết quả mong đợi, cách kiểm tra và lỗi thường gặp.
 - Ưu tiên lệnh tường minh hơn script. Khi có script, nói rõ nó chạy những lệnh nào.
 - Link trang liên quan bằng đường dẫn tương đối và giữ tiêu đề ổn định, vì trang khác link tới chúng.

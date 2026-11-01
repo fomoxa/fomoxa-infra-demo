@@ -23,7 +23,7 @@ ss -ltnu | grep -E ':(7777|9600|9643|7350)\b' || echo "Không có tiến trình 
 
 Ý nghĩa: cluster k3d đưa 4 cổng của máy bạn vào cluster; nếu cổng đã bị giữ, `k3d cluster create` sẽ thất bại giữa chừng.
 
-Kết quả mong đợi (mẫu):
+Kết quả mong đợi:
 
 ```
 Docker 27.3.1 - OK
@@ -87,7 +87,7 @@ openssl x509 -in deploy/secrets/tls/tls.crt -outform DER | openssl dgst -sha256 
 
 Hoặc chạy gọn: `./scripts/gen-keys.sh` (sinh 12 khoá ở trên) và `./scripts/gen-tls-cert.sh` (sinh chứng chỉ + in pin). Cả hai không ghi đè file đã có (thêm `-f` để ép tạo lại).
 
-Kết quả mong đợi (thật, từ `gen-keys.sh` và `gen-tls-cert.sh`):
+Kết quả mong đợi (từ `gen-keys.sh` và `gen-tls-cert.sh`):
 
 ```
 === Sinh keys cho Fomoxa ===

@@ -34,7 +34,7 @@ The Vietnamese pages live in `vi/` and mirror the English pages file for file, w
 ## Rules for every page
 
 - Write plain technical prose and use sentence case for headings.
-- Describe what the code does today. Mark what is unverified, and label command output as (real) when it was captured and (sample) when it was built from the manifests.
+- Describe what the code does today.
 - Give every step a goal, the commands, what they mean, the expected output, a check, and the common errors.
 - Prefer explicit commands over scripts. When a script exists, say which commands it runs.
 - Link related pages with relative links and keep headings stable, because other pages link to them.

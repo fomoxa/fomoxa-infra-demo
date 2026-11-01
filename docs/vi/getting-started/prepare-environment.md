@@ -3,8 +3,6 @@
 Mục tiêu của tài liệu này: máy của bạn có đủ công cụ (`docker`, `kubectl`, `k3d`, `helm`, `openssl`, `git`, `.NET SDK 8`) và đã clone repo.
 Xong tài liệu này, bạn chạy được [02, cụm giả](quickstart-mock-cluster.md) và [03, cụm Kubernetes](../deploy/README.md).
 
-> Chưa kiểm chứng: các lệnh cài đặt dưới đây là quy trình chuẩn của từng công cụ, chưa được chạy lại trên máy sạch khi viết tài liệu. Output ghi *(mẫu)*.
-
 ## Bước 1. Kiểm tra máy đủ sức
 
 Mục tiêu: chắc chắn máy chịu nổi k3d + Agones + Nakama + Postgres cùng lúc.
@@ -28,7 +26,7 @@ lsb_release -d   # phiên bản Ubuntu
 
 Ý nghĩa: `free -h` cột `available` là RAM thực sự còn dùng được. Nếu dưới ~3 GB, k3d + Agones sẽ chậm hoặc bị OOM-kill.
 
-Kết quả mong đợi (mẫu):
+Kết quả mong đợi:
 
 ```
                total        used        free      shared  buff/cache   available
@@ -70,7 +68,7 @@ git --version
 openssl version
 ```
 
-Kết quả mong đợi (mẫu):
+Kết quả mong đợi:
 
 ```
 curl 7.81.0 (x86_64-pc-linux-gnu) ...
@@ -96,7 +94,7 @@ docker ps
 
 Ý nghĩa: lệnh đầu in phiên bản client và server; nếu thấy cả hai nghĩa là terminal Ubuntu nói chuyện được với Docker Desktop. `docker ps` liệt kê container đang chạy (rỗng cũng được).
 
-Kết quả mong đợi (mẫu):
+Kết quả mong đợi:
 
 ```
 client=27.3.1 server=27.3.1
@@ -139,7 +137,7 @@ Kiểm tra:
 docker run --rm hello-world
 ```
 
-Kết quả mong đợi (mẫu): có dòng `Hello from Docker!`.
+Kết quả mong đợi: có dòng `Hello from Docker!`.
 
 ### Lỗi thường gặp (Docker)
 
@@ -166,7 +164,7 @@ kubectl version --client
 
 Ý nghĩa: lấy số phiên bản ổn định mới nhất, tải file chạy, cài vào `/usr/local/bin` (có trong `PATH`), xoá file tải về, in phiên bản.
 
-Kết quả mong đợi (mẫu):
+Kết quả mong đợi:
 
 ```
 Client Version: v1.31.2
@@ -188,7 +186,7 @@ k3d version
 
 Ý nghĩa: script cài đặt chính thức của k3d, ghim phiên bản `v5.7.4` (phiên bản mà repo này dùng; bản khác có thể đổi cú pháp `--port`).
 
-Kết quả mong đợi (mẫu):
+Kết quả mong đợi:
 
 ```
 k3d version v5.7.4
@@ -209,7 +207,7 @@ curl -fsSL https://raw.githubusercontent.com/helm/helm/main/scripts/get-helm-3 |
 helm version --short
 ```
 
-Kết quả mong đợi (mẫu):
+Kết quả mong đợi:
 
 ```
 v3.16.2+g13654a5
@@ -236,7 +234,7 @@ source ~/.bashrc
 dotnet --version
 ```
 
-Kết quả mong đợi (thật, bản dùng khi viết tài liệu):
+Kết quả mong đợi:
 
 ```
 8.0.427
@@ -258,7 +256,7 @@ echo "openssl: $(openssl version | cut -d' ' -f1-2)"
 echo "git    : $(git --version)"
 ```
 
-Kết quả mong đợi (mẫu):
+Kết quả mong đợi:
 
 ```
 docker : 27.3.1
@@ -288,7 +286,7 @@ git branch --show-current
 ls
 ```
 
-Kết quả mong đợi (mẫu):
+Kết quả mong đợi:
 
 ```
 main

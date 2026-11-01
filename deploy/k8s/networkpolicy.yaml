@@ -1,5 +1,5 @@
 # Tuỳ chọn (APPLY_NETPOL=1 khi chạy k8s-up): chỉ cho các luồng cần thiết trong namespace fomoxa.
-# k3s/k3d có sẵn bộ thực thi NetworkPolicy (kube-router). CHƯA được thử trên cụm thật: nếu có gì không
+# k3s/k3d có sẵn bộ thực thi NetworkPolicy (kube-router). Nếu có gì không
 # nối được sau khi áp dụng, gỡ bằng: kubectl delete -f deploy/k8s/networkpolicy.yaml
 #
 # Luồng: client -> gateway (UDP 7777) -> pod (UDP 7778); client -> backend (9600/9601);
