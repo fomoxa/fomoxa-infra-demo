@@ -186,6 +186,8 @@ namespace MockCluster
             using RpcConnection connection = await RpcConnection.Connect(address, NetSchema.Build(), LobbyClient.Declare(PlayersClient.Registry()).Build(), options);
             RoomList list = await new LobbyClient(connection).ListRoomsAsync(new ListRoomsRequest(), CallOptions.Within(TimeSpan.FromSeconds(5)));
             Console.WriteLine("[probe] " + string.Join(", ", list.Rooms.Select(r => $"{r.RoomKey}[{r.Players}/{r.Capacity}] {r.State}")));
+            OnlineList online = await new LobbyClient(connection).PresenceAsync(new PresenceRequest { Room = "" }, CallOptions.Within(TimeSpan.FromSeconds(5)));
+            Console.WriteLine("[probe] online: " + string.Join(", ", online.Players.Select(p => $"{p.Name}@{(p.Room.Length == 0 ? "sanh" : p.Room)}")));
             return 0;
         }
 
@@ -216,6 +218,10 @@ namespace MockCluster
 
                 RoomTicket auto = await lobby.JoinRoomAsync(new JoinRoomRequest { RoomKey = "auto", Version = "1.0" }, CallOptions.Within(TimeSpan.FromSeconds(5)));
                 Check("JoinRoom auto", auto.Port != 0 && auto.Connection.Length > 0, $"-> {auto.Address}:{auto.Port}");
+
+                OnlineList online = await lobby.PresenceAsync(new PresenceRequest { Room = "arena:1" }, CallOptions.Within(TimeSpan.FromSeconds(5)));
+                Check("Presence (danh sach online)", online.Players.Any(p => p.Name == "selftest" && p.Room == "arena:1"),
+                    $"({string.Join(", ", online.Players.Select(p => $"{p.Name}@{(p.Room.Length == 0 ? "sanh" : p.Room)}"))})");
 
                 try
                 {

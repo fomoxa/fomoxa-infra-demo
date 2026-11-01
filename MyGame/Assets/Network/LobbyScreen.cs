@@ -35,6 +35,10 @@ namespace MyGame.Network
         private Label status;
         private Label emptyRooms;
         private ScrollView roomList;
+        private VisualElement onlinePanel;
+        private Label onlineTitle;
+        private ScrollView onlineList;
+        private int builtOnlineVersion = -1;
         private Foldout devTools;
 
         private string lastSignature = "";
@@ -62,6 +66,9 @@ namespace MyGame.Network
             emptyRooms = root.Q<Label>("empty-rooms");
             roomList = root.Q<ScrollView>("room-list");
             devTools = root.Q<Foldout>("dev-tools");
+            onlinePanel = root.Q<VisualElement>("online-panel");
+            onlineTitle = root.Q<Label>("online-title");
+            onlineList = root.Q<ScrollView>("online-list");
 
             if (nameField != null && string.IsNullOrEmpty(nameField.value))
             {
@@ -85,6 +92,7 @@ namespace MyGame.Network
 
             lastSignature = "";
             builtRoomsVersion = -1;
+            builtOnlineVersion = -1;
         }
 
         private void OnDisable()
@@ -120,7 +128,7 @@ namespace MyGame.Network
             bool loggedIn = joiner.LoggedIn;
             bool busy = joiner.Busy;
 
-            string signature = $"{inGame}|{loggedIn}|{busy}|{joiner.LoggedInAs}|{joiner.Status}|{joiner.IsError}|{joiner.RoomsVersion}|{launcher.CurrentRoom}";
+            string signature = $"{inGame}|{loggedIn}|{busy}|{joiner.LoggedInAs}|{joiner.Status}|{joiner.IsError}|{joiner.RoomsVersion}|{joiner.OnlineVersion}|{launcher.CurrentRoom}";
             if (signature == lastSignature)
             {
                 return;
@@ -132,6 +140,7 @@ namespace MyGame.Network
             Show(lobbyPanel, !inGame && loggedIn);
             Show(gamePanel, inGame);
             Show(devTools, !inGame);
+            Show(onlinePanel, loggedIn);
 
             loginPanel.SetEnabled(!busy);
             lobbyPanel.SetEnabled(!busy);
@@ -144,6 +153,12 @@ namespace MyGame.Network
 
             status.text = joiner.Status ?? "";
             status.EnableInClassList("error", joiner.IsError);
+
+            if (builtOnlineVersion != joiner.OnlineVersion)
+            {
+                builtOnlineVersion = joiner.OnlineVersion;
+                RebuildOnline();
+            }
 
             if (builtRoomsVersion != joiner.RoomsVersion)
             {
@@ -161,6 +176,31 @@ namespace MyGame.Network
             }
 
             Show(emptyRooms, joiner.Rooms.Count == 0);
+        }
+
+        private void RebuildOnline()
+        {
+            onlineList.Clear();
+            onlineTitle.text = $"Đang online ({joiner.Online.Count})";
+            foreach (OnlinePlayer player in joiner.Online)
+            {
+                var row = new VisualElement();
+                row.AddToClassList("online-row");
+
+                var dot = new VisualElement();
+                dot.AddToClassList("online-dot");
+                row.Add(dot);
+
+                var name = new Label(player.Name);
+                name.AddToClassList("online-name");
+                row.Add(name);
+
+                var place = new Label(string.IsNullOrEmpty(player.Room) ? "ở sảnh" : $"trong {player.Room}");
+                place.AddToClassList("online-place");
+                row.Add(place);
+
+                onlineList.Add(row);
+            }
         }
 
         private VisualElement RoomRow(RoomInfo room)

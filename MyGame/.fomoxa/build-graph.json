@@ -1,7 +1,7 @@
 {
   "schema_version": 1,
   "generator": "fomoxac 0.2.3",
-  "schema_fingerprint": "sha256:c6bdbbbd255768580c47ce15df0f3d13d4c2faf67214aa4e1493ed7074185699",
+  "schema_fingerprint": "sha256:9d8b3f6dcadc2511236d121c830affd80b4084ce8905f9c99fa5f36dd38e1219",
   "sha256_of": "each file with its `// generated-at:` line emptied, so an unchanged schema keeps an unchanged digest",
   "sources": {
     "Assets/Network/Models/Backend/Players.cs": {
@@ -75,6 +75,9 @@
     "Assets/Network/Models/Backend/Rooms.cs": {
       "models": [
         "ListRoomsRequest",
+        "OnlineList",
+        "OnlinePlayer",
+        "PresenceRequest",
         "RoomInfo",
         "RoomList",
         "RoomReport"
@@ -86,6 +89,27 @@
           "codec": "rpc",
           "fingerprint": "sha256:ec0077b09426fb42e92c7c22915d30e78c0dcc4e31c29b5ea8ef0203e2aa343b",
           "sha256": "c1dbbbc36bb8cb2f76ab46eaebc1d479737c21a024e438f85cc6a79a36a07ac4"
+        },
+        {
+          "path": "Assets/Network/Generated/OnlineListRpcCodec.cs",
+          "model": "OnlineList",
+          "codec": "rpc",
+          "fingerprint": "sha256:ee801c3d48e7979fad129b506b5589e732909f2be67e74881eb29c5d4f13733b",
+          "sha256": "d40b2da8f8e69e01cad1bd557e056027bb94826a9300067c9b3b189c7b89a59d"
+        },
+        {
+          "path": "Assets/Network/Generated/OnlinePlayerRpcCodec.cs",
+          "model": "OnlinePlayer",
+          "codec": "rpc",
+          "fingerprint": "sha256:5b7244e41b6b4b9628ff9c32e1111d4aded65c91754eeb2d05e2c9473a813485",
+          "sha256": "b9bd19454c0b13496a5878e2181ddea33d926661782df72f5f29d6b9d7932c30"
+        },
+        {
+          "path": "Assets/Network/Generated/PresenceRequestRpcCodec.cs",
+          "model": "PresenceRequest",
+          "codec": "rpc",
+          "fingerprint": "sha256:ac2607026f066a879b28ac59d48e5d997df1e116b8cc1420bccc85f8855e77d7",
+          "sha256": "eae874bf901e648e9a9ce6ade8681a9807510a4324e1c8b888a83999e316ae75"
         },
         {
           "path": "Assets/Network/Generated/RoomInfoRpcCodec.cs",
@@ -802,12 +826,12 @@
     {
       "path": "Assets/Network/Generated/Handshake.cs",
       "kind": "handshake",
-      "sha256": "3e0766b75023c3dcc9443c813b6061678ad804a7bc42bc215ec080214b5bc668"
+      "sha256": "9f0d1a6c864a478c52e56ed2b12797e3f408d3b426cbe8631ce26b259d4b97b3"
     },
     {
       "path": "Assets/Network/Generated/NetSchema.cs",
       "kind": "net_schema",
-      "sha256": "b086500b8fed96a13516ea52472dab444c89ab70c5328c71013f97f776fccf8f"
+      "sha256": "247bbfa7ed5485e275dfc8a425af2e26c47ad5d3879f46bcaa8f936140b0f647"
     }
   ]
 }

@@ -101,6 +101,22 @@ namespace MyGame.Network
         /// <summary>Tăng mỗi khi danh sách phòng đổi, để UI biết cần dựng lại.</summary>
         public int RoomsVersion { get; private set; }
 
+        /// <summary>Người đang online (từ Lobby.Presence, làm mới mỗi vài giây).</summary>
+        public System.Collections.Generic.IReadOnlyList<OnlinePlayer> Online => online;
+
+        public int OnlineVersion { get; private set; }
+
+        private readonly System.Collections.Generic.List<OnlinePlayer> online = new System.Collections.Generic.List<OnlinePlayer>();
+        private string currentRoom = "";
+        private float nextPoll;
+        private bool polling;
+        private string roomsSignature = "";
+        private string onlineSignature = "";
+        private const float PollSeconds = 5f;
+
+        /// <summary>Client đã rời phòng (Launcher gọi) - quay về sảnh.</summary>
+        public void LeftRoom() => currentRoom = "";
+
         private string loggedInAs;
         private readonly System.Collections.Generic.List<RoomInfo> rooms = new System.Collections.Generic.List<RoomInfo>();
 
@@ -117,6 +133,8 @@ namespace MyGame.Network
             {
                 await LoginCore(player, password);
                 await RefreshRoomsCore();
+                await PresenceCore();
+                nextPoll = Time.unscaledTime + PollSeconds;
             }
             catch (Exception error)
             {
@@ -138,8 +156,13 @@ namespace MyGame.Network
             connection?.Dispose();
             connection = null;
             loggedInAs = null;
+            currentRoom = "";
             rooms.Clear();
+            online.Clear();
+            roomsSignature = "";
+            onlineSignature = "";
             RoomsVersion++;
+            OnlineVersion++;
             SetStatus("Đã đăng xuất");
         }
 
@@ -267,10 +290,56 @@ namespace MyGame.Network
         private async Task RefreshRoomsCore()
         {
             RoomList list = await new LobbyClient(connection).ListRoomsAsync(new ListRoomsRequest(), CallOptions.Within(TimeSpan.FromSeconds(10)));
-            rooms.Clear();
-            rooms.AddRange(list.Rooms);
-            RoomsVersion++;
-            Debug.Log($"[Lobby] {rooms.Count} phòng");
+            string signature = string.Join(";", System.Linq.Enumerable.Select(list.Rooms, r => $"{r.RoomKey}|{r.Players}|{r.Capacity}|{r.State}"));
+            if (signature != roomsSignature)
+            {
+                roomsSignature = signature;
+                rooms.Clear();
+                rooms.AddRange(list.Rooms);
+                RoomsVersion++;
+                Debug.Log($"[Lobby] {rooms.Count} phòng");
+            }
+        }
+
+        private async Task PresenceCore()
+        {
+            OnlineList list = await new LobbyClient(connection).PresenceAsync(
+                new PresenceRequest { Room = currentRoom }, CallOptions.Within(TimeSpan.FromSeconds(10)));
+            string signature = string.Join(";", System.Linq.Enumerable.Select(list.Players, p => $"{p.Name}|{p.Room}"));
+            if (signature != onlineSignature)
+            {
+                onlineSignature = signature;
+                online.Clear();
+                online.AddRange(list.Players);
+                OnlineVersion++;
+            }
+        }
+
+        /// <summary>Mỗi vài giây: báo "còn online" + lấy danh sách online; ở sảnh thì làm mới cả danh sách phòng.</summary>
+        private async Task PollOnce()
+        {
+            polling = true;
+            try
+            {
+                await PresenceCore();
+                if (!Busy && currentRoom.Length == 0)
+                {
+                    await RefreshRoomsCore();
+                }
+            }
+            catch (Exception error)
+            {
+                Debug.LogWarning($"[Lobby] poll loi: {error.Message}");
+                if (connection == null || !connection.IsOpen)
+                {
+                    loggedInAs = null;
+                    SetStatus("Mất kết nối backend, hãy đăng nhập lại", true);
+                }
+            }
+            finally
+            {
+                polling = false;
+            }
         }
 
         private async Task JoinCore(string roomKey)
@@ -284,6 +353,7 @@ namespace MyGame.Network
                 RoomKey = roomKey,
                 Version = Application.version,
             });
+            currentRoom = roomKey;
             Debug.Log($"[Join] room {roomKey} -> {ticket.Address}:{ticket.Port}, grant {ticket.Connection.Length} bytes");
             SetStatus($"Đã nhận ticket phòng {roomKey}. Đang kết nối game server {ticket.Address}:{ticket.Port}...");
             manager.ClientManager.StartConnection(ticket.Address, ticket.Port, ticket.Connection);
@@ -359,6 +429,12 @@ namespace MyGame.Network
             }
 
             connection?.Tick(MonotonicClock.Now);
+
+            if (LoggedIn && !polling && Time.unscaledTime >= nextPoll)
+            {
+                nextPoll = Time.unscaledTime + PollSeconds;
+                _ = PollOnce();
+            }
         }
 
         private void OnDestroy()

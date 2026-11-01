@@ -1,7 +1,7 @@
 {
   "schema_version": 1,
   "generator": "fomoxac 0.2.3",
-  "schema_fingerprint": "sha256:0473f2fa5a468756977cfe1a54c292dd87841ad03b765e336c8dda955317292d",
+  "schema_fingerprint": "sha256:9dee5cf7c3d465d8248658ab9c513e18b69dc973e6a18dd9e242d01a1c58cfd0",
   "sha256_of": "each file with its `// generated-at:` line emptied, so an unchanged schema keeps an unchanged digest",
   "sources": {
     "../fomoxa-rpc/Fomoxa.Rpc/SystemModels/FRpc.cs": {
@@ -121,6 +121,9 @@
     "Models/Rooms.cs": {
       "models": [
         "ListRoomsRequest",
+        "OnlineList",
+        "OnlinePlayer",
+        "PresenceRequest",
         "RoomInfo",
         "RoomList",
         "RoomReport"
@@ -132,6 +135,27 @@
           "codec": "rpc",
           "fingerprint": "sha256:ec0077b09426fb42e92c7c22915d30e78c0dcc4e31c29b5ea8ef0203e2aa343b",
           "sha256": "f3fece1f723fa056fa8403b7a787dc92824225140a46c91155669e6b530f67e9"
+        },
+        {
+          "path": "Generated/OnlineListRpcCodec.cs",
+          "model": "OnlineList",
+          "codec": "rpc",
+          "fingerprint": "sha256:ee801c3d48e7979fad129b506b5589e732909f2be67e74881eb29c5d4f13733b",
+          "sha256": "db13e4163e62a0b2c4060f63bdcf37433a454838edecd565cd802d80608b2da2"
+        },
+        {
+          "path": "Generated/OnlinePlayerRpcCodec.cs",
+          "model": "OnlinePlayer",
+          "codec": "rpc",
+          "fingerprint": "sha256:5b7244e41b6b4b9628ff9c32e1111d4aded65c91754eeb2d05e2c9473a813485",
+          "sha256": "c040ebfa7f59e9b86218f0fa114e7aa0cd70cc6affc94c866318a69405145dc3"
+        },
+        {
+          "path": "Generated/PresenceRequestRpcCodec.cs",
+          "model": "PresenceRequest",
+          "codec": "rpc",
+          "fingerprint": "sha256:ac2607026f066a879b28ac59d48e5d997df1e116b8cc1420bccc85f8855e77d7",
+          "sha256": "0dc870d19b66519df1a10dda0fd9842bba42af34f405b4f2c083b6f1160f0a72"
         },
         {
           "path": "Generated/RoomInfoRpcCodec.cs",
@@ -166,12 +190,12 @@
     {
       "path": "Generated/Handshake.cs",
       "kind": "handshake",
-      "sha256": "58bed6fc7b5b8ed4f2ae2e0882b8e8e7fe9a4f778bb4a0f7ea51d54c9c87465a"
+      "sha256": "7d86545b6418ced7b4a46e7e7f0ddb130c9cb6a9fbf4e7d15170f4eb40b05811"
     },
     {
       "path": "Generated/NetSchema.cs",
       "kind": "net_schema",
-      "sha256": "90c60bce1081a4aa748a90bffa29d543b4196dd2328ba78ae2cac6b03d14e6f3"
+      "sha256": "548ced27cefd3e7870a947271ef59ee644aac4df7adc29c3613afc0657b54a20"
     }
   ]
 }

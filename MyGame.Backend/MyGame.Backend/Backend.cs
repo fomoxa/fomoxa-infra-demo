@@ -78,7 +78,7 @@ namespace MyGame.Backend
             var schema = Generated.NetSchema.Build();
             var sessions = new PlayerSessions();
             var stats = new RoomStats();
-            Registry players = new LobbyServer(new Lobby(directory, nakama, sessions, stats)).Registry().Authenticate(new Players(nakama, sessions)).Build();
+            Registry players = new LobbyServer(new Lobby(directory, nakama, sessions, stats, new OnlinePlayers())).Registry().Authenticate(new Players(nakama, sessions)).Build();
             if (!string.IsNullOrEmpty(settings.PlayersTcp))
             {
                 RpcServer server = Started(RpcServer.Bind(settings.PlayersTcp, schema, players));

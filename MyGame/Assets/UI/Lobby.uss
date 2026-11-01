@@ -205,3 +205,41 @@
     margin-top: 10px;
     color: rgb(150, 160, 185);
 }
+
+/* --- người đang online --- */
+.online {
+    margin-top: 6px;
+}
+
+.online-list {
+    max-height: 120px;
+}
+
+.online-row {
+    flex-direction: row;
+    align-items: center;
+    height: 24px;
+    padding: 0 8px;
+    margin: 1px 0;
+    border-radius: 6px;
+    background-color: rgba(36, 44, 66, 0.7);
+}
+
+.online-dot {
+    width: 8px;
+    height: 8px;
+    margin-right: 8px;
+    border-radius: 4px;
+    background-color: rgb(110, 214, 140);
+}
+
+.online-name {
+    flex-grow: 1;
+    font-size: 13px;
+    color: rgb(225, 232, 250);
+}
+
+.online-place {
+    font-size: 11px;
+    color: rgb(150, 160, 185);
+}

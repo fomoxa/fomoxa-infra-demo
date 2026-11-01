@@ -61,12 +61,20 @@ namespace MockCluster
     {
         private readonly MockDirectory directory;
         private readonly TimeSpan matchDelay;
+        private readonly OnlinePlayers online = new OnlinePlayers();
         private int autoCursor;
 
         public MockLobby(MockDirectory directory, TimeSpan matchDelay)
         {
             this.directory = directory;
             this.matchDelay = matchDelay;
+        }
+
+        public OnlineList Presence(CallContext context, PresenceRequest request)
+        {
+            string principal = context.Session!.Principal;
+            online.Touch(principal, principal, request.Room);
+            return online.Snapshot();
         }
 
         public Task<RoomList> ListRooms(CallContext context, ListRoomsRequest request)
@@ -124,6 +132,7 @@ namespace MockCluster
                 throw new RpcException(Status.FailedPrecondition(problem.Status.Message, new NoRoomForVersion { Version = missing.Version }));
             }
 
+            online.Touch(player, player, room);
             Console.WriteLine($"[Backend] {player} -> {room} ({allocation.Address}:{allocation.Port})");
             return new RoomTicket
             {

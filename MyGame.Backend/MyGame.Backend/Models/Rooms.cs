@@ -58,4 +58,37 @@ namespace MyGame.Backend.Models
         [Codec("rpc")]
         public uint Capacity { get; set; }
     }
+
+    /// <summary>Client báo "tôi đang online" (kèm phòng đang ở, rỗng nếu đang ở sảnh) và xin danh sách người online.</summary>
+    [Network]
+    [Codec("rpc")]
+    public class PresenceRequest
+    {
+        [Network("string")]
+        [Codec("rpc")]
+        public string Room { get; set; } = "";
+    }
+
+    [Network]
+    [Codec("rpc")]
+    public class OnlinePlayer
+    {
+        [Network("string")]
+        [Codec("rpc")]
+        public string Name { get; set; } = "";
+
+        /// <summary>Phòng đang chơi; rỗng = đang ở sảnh.</summary>
+        [Network("string")]
+        [Codec("rpc")]
+        public string Room { get; set; } = "";
+    }
+
+    [Network]
+    [Codec("rpc")]
+    public class OnlineList
+    {
+        [Network("Array<OnlinePlayer>")]
+        [Codec("rpc")]
+        public List<OnlinePlayer> Players { get; set; } = new List<OnlinePlayer>();
+    }
 }

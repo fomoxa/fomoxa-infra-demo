@@ -32,6 +32,12 @@
                 <ui:Button name="leave-button" text="Thoát phòng (về sảnh)" class="button danger" />
             </ui:VisualElement>
 
+            <!-- Người đang online (hiện khi đã đăng nhập, cả ở sảnh lẫn trong phòng) -->
+            <ui:VisualElement name="online-panel" class="panel online">
+                <ui:Label name="online-title" text="Đang online" class="subtitle" />
+                <ui:ScrollView name="online-list" class="online-list" />
+            </ui:VisualElement>
+
             <ui:Label name="status" text="" class="status" />
 
             <ui:Foldout name="dev-tools" text="Công cụ dev" value="false" class="dev">

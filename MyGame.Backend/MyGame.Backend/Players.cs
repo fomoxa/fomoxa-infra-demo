@@ -12,6 +12,23 @@ namespace MyGame.Backend
     public sealed class PlayerSessions
     {
         private readonly Dictionary<string, string> tokens = new Dictionary<string, string>();
+        private readonly Dictionary<string, string> names = new Dictionary<string, string>();
+
+        public void SetName(string userId, string name)
+        {
+            lock (tokens)
+            {
+                names[userId] = name;
+            }
+        }
+
+        public string NameOf(string userId)
+        {
+            lock (tokens)
+            {
+                return names.TryGetValue(userId, out string name) ? name : userId;
+            }
+        }
 
         public void Set(string userId, string token)
         {
@@ -116,6 +133,7 @@ namespace MyGame.Backend
 
             Console.WriteLine($"[Nakama] authenticated {request.Player} as {session.UserId}");
             sessions.Set(session.UserId, session.Token);
+            sessions.SetName(session.UserId, request.Player!);
             return (new Identity(session.UserId, new[] { Roles.Player }), new PlayerWelcome { Player = request.Player! });
         }
 
@@ -152,6 +170,7 @@ namespace MyGame.Backend
 
             Console.WriteLine($"[Nakama] authenticated {request.DeviceId} as {session.UserId}");
             sessions.Set(session.UserId, session.Token);
+            sessions.SetName(session.UserId, string.IsNullOrEmpty(request.Player) ? session.UserId : request.Player);
             return (new Identity(session.UserId, new[] { Roles.Player }), new PlayerWelcome { Player = request.Player });
         }
     }
@@ -167,10 +186,12 @@ namespace MyGame.Backend
         private readonly PlayerSessions sessions;
 
         private readonly RoomStats stats;
+        private readonly OnlinePlayers online;
 
-        public Lobby(DirectoryLink directory, NakamaLink nakama, PlayerSessions sessions, RoomStats stats)
+        public Lobby(DirectoryLink directory, NakamaLink nakama, PlayerSessions sessions, RoomStats stats, OnlinePlayers online)
         {
             this.stats = stats;
+            this.online = online;
             this.directory = directory;
             this.nakama = nakama;
             this.sessions = sessions;
@@ -207,6 +228,13 @@ namespace MyGame.Backend
                 Console.Error.WriteLine($"[Lobby] FormatException: {formatProblem.Message}");
                 throw new RpcException(new Status(StatusCode.Unavailable, $"du lieu khong hop le: {formatProblem.Message}"));
             }
+        }
+
+        public OnlineList Presence(CallContext context, PresenceRequest request)
+        {
+            string principal = context.Session!.Principal;
+            online.Touch(principal, sessions.NameOf(principal), request.Room);
+            return online.Snapshot();
         }
 
         public async Task<RoomList> ListRooms(CallContext context, ListRoomsRequest request)

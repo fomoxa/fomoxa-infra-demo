@@ -25,6 +25,9 @@ namespace MyGame.Backend
 
         [Unary(Requires = Roles.Player)]
         Task<RoomList> ListRooms(CallContext context, ListRoomsRequest request);
+
+        [Unary(Requires = Roles.Player)]
+        OnlineList Presence(CallContext context, PresenceRequest request);
     }
 
     [Service("Pods")]

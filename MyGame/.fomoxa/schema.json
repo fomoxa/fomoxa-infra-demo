@@ -1,8 +1,8 @@
 {
   "schema_version": 1,
   "generator": "fomoxac 0.2.3",
-  "fingerprint": "sha256:c6bdbbbd255768580c47ce15df0f3d13d4c2faf67214aa4e1493ed7074185699",
-  "fingerprint_u64": "0xC6BDBBBD25576858",
+  "fingerprint": "sha256:9d8b3f6dcadc2511236d121c830affd80b4084ce8905f9c99fa5f36dd38e1219",
+  "fingerprint_u64": "0x9D8B3F6DCADC2511",
   "models": {
     "AnimatorState": {
       "source": "FomoxaSystemModels/AnimatorState.cs",
@@ -1875,6 +1875,89 @@
         }
       }
     },
+    "OnlineList": {
+      "source": "Assets/Network/Models/Backend/Rooms.cs",
+      "fingerprint": "sha256:41ab1a96913dbb406768fe30c78a9447aeb674e5860b73d129bb9152ba9569bf",
+      "codecs": [
+        "rpc"
+      ],
+      "fields": [
+        {
+          "name": "Players",
+          "type": "Array<OnlinePlayer>",
+          "codecs": [
+            "rpc"
+          ]
+        }
+      ],
+      "messages": {
+        "rpc": {
+          "id": "0x9D22F1B3",
+          "fingerprint": "sha256:ee801c3d48e7979fad129b506b5589e732909f2be67e74881eb29c5d4f13733b",
+          "fingerprint_u64": "0xEE801C3D48E7979F",
+          "prefixes": [
+            "sha256:ee801c3d48e7979fad129b506b5589e732909f2be67e74881eb29c5d4f13733b"
+          ],
+          "prefixes_u64": [
+            "0xEE801C3D48E7979F"
+          ],
+          "fields": [
+            {
+              "name": "Players",
+              "type": "Array<OnlinePlayer>"
+            }
+          ]
+        }
+      }
+    },
+    "OnlinePlayer": {
+      "source": "Assets/Network/Models/Backend/Rooms.cs",
+      "fingerprint": "sha256:84a8eea4a794259478c181ea9f2e101c088f89c362c4c29dc99d1e941cfdcfc0",
+      "codecs": [
+        "rpc"
+      ],
+      "fields": [
+        {
+          "name": "Name",
+          "type": "string",
+          "codecs": [
+            "rpc"
+          ]
+        },
+        {
+          "name": "Room",
+          "type": "string",
+          "codecs": [
+            "rpc"
+          ]
+        }
+      ],
+      "messages": {
+        "rpc": {
+          "id": "0x0BD14DDA",
+          "fingerprint": "sha256:5b7244e41b6b4b9628ff9c32e1111d4aded65c91754eeb2d05e2c9473a813485",
+          "fingerprint_u64": "0x5B7244E41B6B4B96",
+          "prefixes": [
+            "sha256:bf063825a4767072613afb1222f444dd2fb35cab09544e2287abd25a83e8930a",
+            "sha256:5b7244e41b6b4b9628ff9c32e1111d4aded65c91754eeb2d05e2c9473a813485"
+          ],
+          "prefixes_u64": [
+            "0xBF063825A4767072",
+            "0x5B7244E41B6B4B96"
+          ],
+          "fields": [
+            {
+              "name": "Name",
+              "type": "string"
+            },
+            {
+              "name": "Room",
+              "type": "string"
+            }
+          ]
+        }
+      }
+    },
     "PeerLeave": {
       "source": "FomoxaSystemModels/PeerLeave.cs",
       "fingerprint": "sha256:b00cdd65e7121331c6beae119edde05cd74ced007dc39953e8483b5b1ea92bb5",
@@ -2093,6 +2176,41 @@
             {
               "name": "Key",
               "type": "bytes"
+            }
+          ]
+        }
+      }
+    },
+    "PresenceRequest": {
+      "source": "Assets/Network/Models/Backend/Rooms.cs",
+      "fingerprint": "sha256:e7038cf7bac5c54a529cf9797a0b34ba950a1ea17e7a507452aebb9e0473644f",
+      "codecs": [
+        "rpc"
+      ],
+      "fields": [
+        {
+          "name": "Room",
+          "type": "string",
+          "codecs": [
+            "rpc"
+          ]
+        }
+      ],
+      "messages": {
+        "rpc": {
+          "id": "0x2C2E54AB",
+          "fingerprint": "sha256:ac2607026f066a879b28ac59d48e5d997df1e116b8cc1420bccc85f8855e77d7",
+          "fingerprint_u64": "0xAC2607026F066A87",
+          "prefixes": [
+            "sha256:ac2607026f066a879b28ac59d48e5d997df1e116b8cc1420bccc85f8855e77d7"
+          ],
+          "prefixes_u64": [
+            "0xAC2607026F066A87"
+          ],
+          "fields": [
+            {
+              "name": "Room",
+              "type": "string"
             }
           ]
         }

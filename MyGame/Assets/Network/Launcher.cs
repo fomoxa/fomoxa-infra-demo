@@ -387,6 +387,7 @@ namespace MyGame.Network
             // Rời phòng (hoặc bị ngắt): quay về sảnh và tải lại danh sách phòng.
             if (args.State == ConnectionState.Stopped && joiner != null && joiner.LoggedIn)
             {
+                joiner.LeftRoom();
                 joiner.SetNotice(args.Reason == StopReason.None || args.Reason == StopReason.LocalStop ? "Đã rời phòng" : $"Mất kết nối phòng: {args.Reason}");
                 lobbyRoom = "";
                 _ = joiner.RefreshRooms();
