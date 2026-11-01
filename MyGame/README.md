@@ -209,7 +209,6 @@ Kiểm chứng lặp lại được (pod giữ room, 2 client thấy nhau, bot d
 powershell -NoProfile -ExecutionPolicy Bypass -File scripts\test-console-server.ps1
 ```
 
-
 ## Chạy nhanh trong Editor (không cần cụm)
 
 1. Mở project bằng Unity **6000.5.7f1**, mở `Assets/Scenes/Game.unity`.
@@ -347,7 +346,6 @@ BO    [Pos] id=3 x: 3.00 -> 3.15                       <- bot di chuyển qua se
 `dotnet build` 0 warning/0 error; `test-console-server.ps1` lặp lại được; `test-p4.ps1`
 vẫn pass với pod console.
 
-
 ## Chạy cụm Kubernetes + Agones (P5)
 
 Đưa toàn bộ game server stack lên Kubernetes với Agones:
@@ -400,7 +398,6 @@ Kiểm chứng:
 ```powershell
 powershell -ExecutionPolicy Bypass -File scripts\k8s-down.ps1
 ```
-
 
 ## Ghi chú kỹ thuật đã gặp
 

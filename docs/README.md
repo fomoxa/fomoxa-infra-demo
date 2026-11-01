@@ -1,131 +1,113 @@
-# Tài liệu Fomoxa - từ máy trắng đến game chạy được
+# Fomoxa documentation
 
-English version: [en/README.md](en/README.md)
+These documents take you from a blank machine to a running multiplayer game: Fomoxa networking, Nakama for matchmaking and accounts, and Agones game servers on Kubernetes. Every step is a shell command you can paste. You do not need to know Kubernetes beforehand.
 
-Bộ tài liệu này hướng dẫn **từng bước, bằng lệnh bash copy-paste được**, để dựng toàn bộ hạ tầng game server nhiều người chơi
-(Fomoxa + Nakama + Agones trên Kubernetes) và chạy client Unity kết nối vào. Người chưa biết Kubernetes vẫn làm theo được.
-
----
-
-## 1. Hệ thống gồm những gì
+## What the system contains
 
 ```
-                         MÁY CỦA BẠN (WSL2 / Ubuntu)
- ┌─────────────────────────────────────────────────────────────────────────────┐
- │   Docker                                                                    │
- │   └─ k3d  = k3s (Kubernetes nhẹ) chạy bên trong container Docker            │
- │      └─ cluster "fomoxa"                                                    │
- │         ├─ namespace agones-system   Agones (điều khiển GameServer)         │
- │         └─ namespace fomoxa                                                 │
- │            ├─ postgres      CSDL của Nakama                                 │
- │            ├─ nakama        ghép trận + kho tài khoản/hồ sơ/bạn bè          │
- │            ├─ directory     biết pod nào giữ phòng nào, cấp ticket          │
- │            ├─ gateway       cửa UDP duy nhất của game server                │
- │            ├─ backend       đăng nhập, danh sách phòng, xin vào phòng       │
- │            └─ game-server   Agones Fleet: các pod chơi thật (MyGame.Server) │
- └─────────────────────────────────────────────────────────────────────────────┘
-        ▲  TCP 9600  (backend)                    ▲  UDP 7777  (gateway)
-        │  đăng nhập, xem phòng, xin ticket       │  chơi game (đã mã hoá bằng ticket)
-        └──────────────────────  CLIENT UNITY  ───┘
+                         YOUR MACHINE (WSL2 or Ubuntu)
+ +-----------------------------------------------------------------------------+
+ |  Docker                                                                     |
+ |  +- k3d = k3s (small Kubernetes) running inside Docker containers           |
+ |     +- cluster "fomoxa"                                                     |
+ |        +- namespace agones-system   Agones (controls game servers)          |
+ |        +- namespace fomoxa                                                  |
+ |           +- postgres      Nakama's database                                |
+ |           +- nakama        matchmaking, plus accounts/profiles/friends      |
+ |           +- directory     knows which pod holds which room, issues tickets |
+ |           +- gateway       the only UDP entry point for game servers        |
+ |           +- backend       login, room list, join requests                  |
+ |           +- game-server   Agones Fleet: the pods that run the game         |
+ +-----------------------------------------------------------------------------+
+        ^  TCP 9600 (backend)                      ^  UDP 7777 (gateway)
+        |  login, room list, ticket requests       |  gameplay, encrypted with the ticket
+        +-------------------  UNITY CLIENT  -------+
 ```
 
-**Client chỉ nhìn thấy đúng hai cổng:**
+A client sees exactly two ports:
 
-| Cổng | Giao thức | Tới đâu | Dùng để |
+| Port | Protocol | Goes to | Used for |
 |---|---|---|---|
-| `9600` | TCP | `backend` | đăng nhập, danh sách phòng, xin vào phòng (fRPC) |
-| `7777` | UDP | `gateway` | chơi game; gateway chuyển tiếp tới đúng `game-server` |
+| 9600 | TCP | backend | login, room list, join requests (fRPC) |
+| 7777 | UDP | gateway | gameplay; the gateway forwards to the right game server |
 
-Mọi thứ còn lại (postgres, nakama, directory, game-server) **nằm trong cluster**, client không nối trực tiếp.
-Ngoại lệ có chủ đích:
+Everything else (postgres, nakama, directory, game servers) stays inside the cluster. Two ports are exposed on purpose:
 
-| Cổng | Khi nào mở | Ghi chú |
+| Port | When | Notes |
 |---|---|---|
-| `9643` TCP | tuỳ chọn | cùng việc với 9600 nhưng **được mã hoá TLS** (proxy `tls-proxy`). Môi trường thật nên dùng cổng này thay 9600. |
-| `7350` TCP | chỉ để chạy script test | Nakama API. Client thật **không** dùng. |
+| 9643 TCP | optional | same job as 9600, but TLS-encrypted through the `tls-proxy`. Use this one outside your own network. |
+| 7350 TCP | test scripts only | Nakama API. A real client never uses it. |
 
-### Luồng một lần vào game
+### One trip into a game
 
 ```
-1. Client ──TCP 9600──► backend      đăng nhập (tên + mật khẩu), lấy danh sách phòng
-2. Client ──TCP 9600──► backend      "cho tôi vào phòng arena:1"
-3.          backend ──► nakama        ghép đủ 2 người, nhận phòng được gán
-4.          backend ──► directory     "cấp ticket vào arena:1"
-5.          directory trả ticket + public_address (= địa chỉ GATEWAY, không phải địa chỉ pod)
-6. Client ──UDP 7777──► gateway ──► game-server giữ arena:1     (ticket được pod kiểm tra)
+1. Client --TCP 9600--> backend      log in (name + password), get the room list
+2. Client --TCP 9600--> backend      "let me into arena:1"
+3.          backend --> nakama        pair two players, receive the assigned room
+4.          backend --> directory     "issue a ticket for arena:1"
+5.          directory returns the ticket and public_address (the GATEWAY address, not the pod's)
+6. Client --UDP 7777--> gateway --> the game server that holds arena:1   (the pod checks the ticket)
 ```
 
-`public_address` trong `directory.toml` là địa chỉ mà **client thấy**. Chạy local nó là `127.0.0.1:7777` (k3d đưa cổng 7777 của
-máy bạn vào gateway). Đặt sai chỗ này, client sẽ cố nối vào địa chỉ nội bộ của pod và treo.
+`public_address` in `directory.toml` is the address the client sees. On a local setup it is `127.0.0.1:7777`, because k3d forwards your machine's port 7777 to the gateway. If it is wrong, the client tries an internal pod address and hangs.
 
-### k3d là gì?
+### What k3d is
 
-`k3d` chạy **k3s** (một bản Kubernetes gọn) bên trong các container Docker. Cả cluster là vài container trên máy bạn, xoá đi là sạch.
-Cổng của máy bạn được đưa vào cluster qua một container "load balancer" của k3d (tham số `--port ...@loadbalancer`).
+k3d runs k3s, a compact Kubernetes distribution, inside Docker containers. The whole cluster is a few containers on your machine, and deleting them leaves nothing behind. Ports on your machine reach the cluster through a load balancer container, configured with `--port ...@loadbalancer`.
 
----
+## Which document to read
 
-## 2. Chọn đường đi
-
-| Bạn muốn... | Đọc |
+| You want to | Read |
 |---|---|
-| Chỉ thử client Unity trên một máy, **không** cần Kubernetes | [02 - Chạy nhanh bằng cụm giả](02-CHAY-NHANH-CUM-GIA.md) |
-| Dựng cụm Kubernetes thật (k3d + Agones) | [01](01-CHUAN-BI-MOI-TRUONG.md) rồi [03 - Triển khai K8s](03-TRIEN-KHAI-K8S.md) |
-| Mở project Unity, build client, tham số dòng lệnh | [04 - Client Unity](04-CLIENT-UNITY.md) |
-| Logs, scale, cập nhật, TLS, giám sát, autoscaling, sao lưu | [05 - Vận hành](05-VAN-HANH.md) |
-| Chạy các bài kiểm thử, hiểu từng test kiểm cái gì | [06 - Kiểm thử](06-KIEM-THU.md) |
-| Gặp lỗi | [07 - Xử lý sự cố](07-XU-LY-SU-CO.md) |
-| Tra cứu cổng, secrets, biến môi trường, script làm gì | [08 - Tham khảo](08-THAM-KHAO.md) |
+| Try the Unity client on one machine, without Kubernetes | [02 Quick start with the mock cluster](getting-started/quickstart-mock-cluster.md) |
+| Build the real Kubernetes cluster (k3d + Agones) | [01](getting-started/prepare-environment.md), then [03 Deploy to Kubernetes](deploy/README.md) |
+| Open the Unity project, build the client, use command-line flags | [04 Unity client](unity-client.md) |
+| Logs, scaling, updates, TLS, monitoring, autoscaling, backups | [05 Operations](operations/README.md) |
+| Run the tests and see what each one checks | [06 Testing](testing.md) |
+| Fix an error | [07 Troubleshooting](troubleshooting.md) |
+| Look up ports, secrets, settings, or what a script runs | [08 Reference](reference.md) |
 
-Thứ tự đề xuất cho người mới: **01 → 02 (thấy game chạy) → 03 (dựng cụm thật) → 04 → 05**.
+New readers should go 01, 02 (see the game run), 03 (the real cluster), 04, 05.
 
----
+## How to read a step
 
-## 3. Cách đọc tài liệu này
+Each step follows one pattern: the goal, the commands, what they do and why, the expected output, a check, and common errors.
 
-Mỗi bước trong các tài liệu có cùng khuôn:
+- Commands are in `bash` blocks and run from the repository root unless noted (`cd ~/fomoxa-infra-demo`).
+- Scripts are shortcuts. Every script is expanded into the manual commands beside it, so you can follow by hand to learn what happens, or run the script. Look for "Or run it in one go: `./scripts/xxx.sh`". The full mapping is in [08](reference.md#4-scripts-and-their-manual-equivalents).
+- Expected output is labeled either (real), copied from a run made while writing these documents, or (sample), which shows the format only. Pod names, ages, hashes, and timings will differ on your machine. Log lines printed by the game programs are in Vietnamese or ASCII Vietnamese, and the documents quote them exactly.
+- Kubernetes terms (pod, deployment, namespace, secret, configmap, service, context) are kept in English and explained when they first appear.
 
-> **Mục tiêu** → **Lệnh** → **Ý nghĩa** → **Kết quả mong đợi** → **Kiểm tra** → **Lỗi thường gặp**
+## How far to trust these documents
 
-Quy ước:
-
-- Lệnh nằm trong khối ` ```bash ` và **copy-paste chạy được**. Chạy từ thư mục gốc repo nếu không ghi khác (`cd ~/fomoxa-infra-demo`).
-- **Script chỉ là đường tắt.** Mọi script (`./scripts/xxx.sh`) đều được **bung ra thành các lệnh tay** ngay cạnh. Bạn có thể làm bằng tay để hiểu,
-  hoặc chạy script cho gọn: *"Hoặc chạy gọn: `./scripts/xxx.sh`"*. Bảng đối chiếu đầy đủ ở [08](08-THAM-KHAO.md#4-script--lệnh-tay-tương-đương).
-- Khối **"Kết quả mong đợi"**: có hai loại. Output ghi chú **(thật)** được chép từ lần chạy thật khi viết tài liệu; output ghi chú **(mẫu)** là minh hoạ
-  định dạng, giá trị như tên pod, tuổi, hash, thời gian của bạn sẽ khác. Nếu khác ở những chỗ đó thì bình thường.
-- Thuật ngữ Kubernetes giữ nguyên tiếng Anh (pod, deployment, namespace, secret, configmap, service, context...). Giải thích ngay lần đầu xuất hiện.
-
-### Trạng thái kiểm chứng của chính tài liệu này
-
-Để bạn biết nên tin đến đâu:
-
-| Phần | Đã chạy thật khi viết tài liệu? |
+| Part | Run while writing? |
 |---|---|
-| Sinh key / chứng chỉ, cụm giả, selftest, bot-test, backend thật + Nakama thật (docker compose), script test Nakama, `promtool`/`amtool` | **Có** - output đánh dấu *(thật)* |
-| Cài Docker/kubectl/k3d/Helm, tạo cluster k3d, cài Agones, build 2 image Rust (directory, gateway), apply manifest lên cluster, tls-proxy, NetworkPolicy, FleetAutoscaler, monitoring trên cluster, UDP qua k3d | **Chưa** - lệnh lấy từ script/manifest của repo, output đánh dấu *(mẫu)* |
-| Unity (UI, scene, camera, nhảy, build player) | **Chưa** - môi trường viết tài liệu không có Unity |
+| Key and certificate generation, the mock cluster, selftest, bot test, the real backend with a real Nakama (docker compose), the Nakama test scripts, `promtool`/`amtool` | Yes. Output is labeled (real). |
+| Installing Docker, kubectl, k3d and Helm; creating the k3d cluster; installing Agones; building the two Rust images (directory, gateway); applying manifests to a cluster; tls-proxy; NetworkPolicy; FleetAutoscaler; monitoring on a cluster; UDP through k3d | No. The commands come from the repository's scripts and manifests, and output is labeled (sample). |
+| Unity (UI, scenes, camera, jumping, building the player) | No. The environment used to write these documents has no Unity. |
 
-Nếu một lệnh "chưa kiểm chứng" cho kết quả khác mô tả, hãy xem [07 - Xử lý sự cố](07-XU-LY-SU-CO.md) rồi báo lại để cập nhật tài liệu.
+If a command in the second or third row behaves differently from what is described, check [07](troubleshooting.md) and report it so the documents can be corrected.
 
----
-
-## 4. Cấu trúc thư mục repo (phần cần biết)
+## Repository layout
 
 ```
 fomoxa-infra-demo/
-├── deploy/
-│   ├── k8s/                 manifest Kubernetes (postgres, nakama, directory, gateway, backend, tls-proxy, fleet, ...)
-│   ├── monitoring/          Prometheus, Alertmanager, Grafana, Loki, Promtail
-│   ├── nakama/modules/      main.lua - module ghép trận + kho key-value cho Nakama
-│   ├── Dockerfile.{server,directory,gateway}
-│   ├── compose.yaml         Nakama + Postgres cho dev local (không cần K8s)
-│   └── secrets/             (tự sinh, KHÔNG commit) key và chứng chỉ
-├── MyGame/                  project Unity (client) + Server~/ (game server console .NET 8)
-├── MyGame.Backend/          backend .NET (đăng nhập, phòng, tài khoản, bạn bè)
-├── server-deps/             mã nguồn thư viện Fomoxa dùng để build game server
-├── tools/MockCluster/       cụm giả (backend + directory + pod thật trên một máy)
-├── scripts/                 script tiện ích (.sh cho Linux/WSL2, .ps1 cho Windows)
-├── gateway/                 (tự clone, KHÔNG commit) mã Rust của directory + gateway
-└── docs/                    tài liệu này
++- deploy/
+|  +- k8s/                 Kubernetes manifests (postgres, nakama, directory, gateway, backend, tls-proxy, fleet, ...)
+|  +- monitoring/          Prometheus, Alertmanager, Grafana, Loki, Promtail
+|  +- nakama/modules/      main.lua, the Nakama module for matchmaking and the key-value store
+|  +- Dockerfile.{server,directory,gateway}
+|  +- compose.yaml         Nakama + Postgres for local development (no Kubernetes)
+|  +- secrets/             generated, never committed: keys and certificates
++- MyGame/                 Unity project (client) and Server~/ (console game server, .NET 8)
++- MyGame.Backend/         .NET backend (login, rooms, accounts, friends)
++- server-deps/            source of the Fomoxa libraries used to build the game server
++- tools/MockCluster/      mock cluster (backend + directory + real pods on one machine)
++- scripts/                helper scripts (.sh for Linux/WSL2, .ps1 for Windows)
++- gateway/                cloned on demand, never committed: Rust source of directory and gateway
++- docs/                   these documents (Vietnamese) and docs/en (English)
 ```
+
+## Working on these docs
+
+See [Documentation](contributing/documentation.md) for the layout, the GitBook setup and the checker. Switch language with the language picker, or open the Vietnamese pages under `vi/`.
