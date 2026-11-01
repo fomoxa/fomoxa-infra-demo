@@ -37,22 +37,34 @@ MyGame/
   Builds/MyGame.exe              bản build dùng làm pod và client
 ```
 
-## Giao diện sảnh (UI Toolkit)
+## Hai scene: sảnh và trận đấu
 
-Sảnh (đăng nhập, danh sách phòng, thoát phòng) dựng từ asset, không vẽ bằng code:
+| Scene | Có gì | Khi nào tải |
+|---|---|---|
+| `Assets/Scenes/Lobby.unity` | camera nền tối, `RoomJoiner` (kết nối backend, giữ phiên đăng nhập), `BootRouter`, giao diện sảnh | scene đầu tiên của bản build |
+| `Assets/Scenes/Game.unity` | sàn, cột mốc, camera bám người chơi, `NetworkManager`, `Launcher`, HUD trong trận | **chỉ sau khi** người chơi bấm vào một phòng và đã có ticket |
+
+Luồng: `Lobby` (đăng nhập → danh sách phòng + người online) → bấm phòng → `RoomJoiner` lấy ticket → `MatchSession.Begin` tải scene `Game` →
+`Launcher` lấy ticket ra và nối vào pod → bấm **Thoát phòng** (hoặc mất kết nối) → quay về `Lobby`, vẫn đăng nhập.
+`RoomJoiner` sống xuyên hai scene nên danh sách online vẫn cập nhật khi đang chơi.
+
+Dòng lệnh `-pod`, `-host`, `-client` bỏ qua sảnh và vào thẳng scene `Game` như trước (`BootRouter`). `-autojoin` vẫn đi qua sảnh để đăng nhập và lấy ticket.
+
+## Giao diện (UI Toolkit, dựng từ asset)
 
 ```
-Assets/UI/Lobby.uxml           bố cục (ô nhập, nút, danh sách phòng)
-Assets/UI/Lobby.uss            màu sắc, kích thước, hiệu ứng hover
-Assets/UI/LobbyTheme.tss       theme mặc định của UI Toolkit
-Assets/UI/LobbyPanelSettings.asset   tạo tự động khi gắn UI vào scene
-Assets/Network/LobbyScreen.cs  nối UI với RoomJoiner / Launcher
-Assets/Editor/LobbyUiSetup.cs  menu Tools/Demo/Add Lobby UI
+Assets/UI/Lobby.uxml / Lobby.uss        giao diện sảnh (đăng nhập, phòng, online)
+Assets/UI/MatchHud.uxml / MatchHud.uss  HUD trong trận (tên phòng, nút thoát, công cụ dev)
+Assets/UI/LobbyTheme.tss                theme mặc định của UI Toolkit
+Assets/UI/LobbyPanelSettings.asset      tạo tự động
+Assets/Network/LobbyScreen.cs           nối sảnh với RoomJoiner
+Assets/Network/MatchHudScreen.cs        nối HUD với Launcher
+Assets/Network/MatchSession.cs          chuyển ticket từ sảnh sang scene Game
+Assets/Editor/LobbyUiSetup.cs           gắn UI vào scene
 ```
 
-Gắn vào scene hiện có: menu **Tools → Demo → Add Lobby UI** (hoặc **Rebuild Scene**, đã gọi sẵn). Có `LobbyScreen` trong scene thì
-`Launcher` tự tắt giao diện IMGUI cũ; chưa gắn thì vẫn dùng IMGUI làm dự phòng. Sửa giao diện: mở `Lobby.uxml` bằng UI Builder
-hoặc chỉnh `Lobby.uss`, không cần đụng code.
+**Tools → Demo → Rebuild Scene** dựng lại cả hai scene và đặt Build Settings (`Lobby` trước, `Game` sau).
+Sửa giao diện: mở `.uxml` bằng UI Builder hoặc chỉnh `.uss`, không đụng code.
 
 ## Package
 

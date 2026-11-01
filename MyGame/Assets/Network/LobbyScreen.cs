@@ -7,31 +7,23 @@ namespace MyGame.Network
 {
     /// <summary>
     /// Giao diện sảnh dựng từ asset UI Toolkit (Assets/UI/Lobby.uxml + Lobby.uss), thay cho IMGUI vẽ bằng code.
-    /// Chỉ điều khiển hiển thị: đăng nhập / làm mới / vào phòng đều gọi qua <see cref="RoomJoiner"/> và <see cref="Launcher"/>.
+    /// Chỉ điều khiển hiển thị: đăng nhập / làm mới / vào phòng đều gọi qua <see cref="RoomJoiner"/>. Vào phòng xong, RoomJoiner
+    /// mới tải scene trận đấu (xem <see cref="MatchSession"/>).
     /// Đổi bố cục hay màu sắc: sửa Lobby.uxml / Lobby.uss.
     /// </summary>
     [RequireComponent(typeof(UIDocument))]
     public sealed class LobbyScreen : MonoBehaviour
     {
-        /// <summary>Có LobbyScreen đang chạy thì Launcher không vẽ giao diện IMGUI cũ nữa.</summary>
-        public static bool Active { get; private set; }
-
-        public Launcher launcher;
         public RoomJoiner joiner;
 
         private VisualElement loginPanel;
         private VisualElement lobbyPanel;
-        private VisualElement gamePanel;
         private TextField nameField;
         private TextField passwordField;
         private Button loginButton;
         private Button refreshButton;
         private Button logoutButton;
-        private Button leaveButton;
-        private Button hostButton;
-        private Button podButton;
         private Label welcome;
-        private Label gameInfo;
         private Label status;
         private Label emptyRooms;
         private ScrollView roomList;
@@ -39,33 +31,25 @@ namespace MyGame.Network
         private Label onlineTitle;
         private ScrollView onlineList;
         private int builtOnlineVersion = -1;
-        private Foldout devTools;
 
         private string lastSignature = "";
         private int builtRoomsVersion = -1;
 
         private void OnEnable()
         {
-            Active = true;
             VisualElement root = GetComponent<UIDocument>().rootVisualElement;
 
             loginPanel = root.Q<VisualElement>("login-panel");
             lobbyPanel = root.Q<VisualElement>("lobby-panel");
-            gamePanel = root.Q<VisualElement>("game-panel");
             nameField = root.Q<TextField>("name-field");
             passwordField = root.Q<TextField>("password-field");
             loginButton = root.Q<Button>("login-button");
             refreshButton = root.Q<Button>("refresh-button");
             logoutButton = root.Q<Button>("logout-button");
-            leaveButton = root.Q<Button>("leave-button");
-            hostButton = root.Q<Button>("host-button");
-            podButton = root.Q<Button>("pod-button");
             welcome = root.Q<Label>("welcome");
-            gameInfo = root.Q<Label>("game-info");
             status = root.Q<Label>("status");
             emptyRooms = root.Q<Label>("empty-rooms");
             roomList = root.Q<ScrollView>("room-list");
-            devTools = root.Q<Foldout>("dev-tools");
             onlinePanel = root.Q<VisualElement>("online-panel");
             onlineTitle = root.Q<Label>("online-title");
             onlineList = root.Q<ScrollView>("online-list");
@@ -82,9 +66,6 @@ namespace MyGame.Network
                 passwordField.value = "";
                 joiner.Logout();
             };
-            leaveButton.clicked += () => launcher.LeaveRoom();
-            hostButton.clicked += () => launcher.BeginHost();
-            podButton.clicked += () => launcher.BeginPod();
 
             // Enter ở ô nhập = đăng nhập
             nameField.RegisterCallback<KeyDownEvent>(SubmitOnEnter);
@@ -93,11 +74,6 @@ namespace MyGame.Network
             lastSignature = "";
             builtRoomsVersion = -1;
             builtOnlineVersion = -1;
-        }
-
-        private void OnDisable()
-        {
-            Active = false;
         }
 
         private void SubmitOnEnter(KeyDownEvent evt)
@@ -119,16 +95,21 @@ namespace MyGame.Network
 
         private void Update()
         {
-            if (joiner == null || launcher == null)
+            // RoomJoiner sống xuyên scene: sau khi quay về sảnh, tham chiếu trong scene trỏ tới bản trùng đã bị hủy.
+            if (RoomJoiner.Instance != null)
+            {
+                joiner = RoomJoiner.Instance;
+            }
+
+            if (joiner == null)
             {
                 return;
             }
 
-            bool inGame = launcher.ClientRunning || launcher.ServerRunning;
             bool loggedIn = joiner.LoggedIn;
             bool busy = joiner.Busy;
 
-            string signature = $"{inGame}|{loggedIn}|{busy}|{joiner.LoggedInAs}|{joiner.Status}|{joiner.IsError}|{joiner.RoomsVersion}|{joiner.OnlineVersion}|{launcher.CurrentRoom}";
+            string signature = $"{loggedIn}|{busy}|{joiner.LoggedInAs}|{joiner.Status}|{joiner.IsError}|{joiner.RoomsVersion}|{joiner.OnlineVersion}";
             if (signature == lastSignature)
             {
                 return;
@@ -136,20 +117,14 @@ namespace MyGame.Network
 
             lastSignature = signature;
 
-            Show(loginPanel, !inGame && !loggedIn);
-            Show(lobbyPanel, !inGame && loggedIn);
-            Show(gamePanel, inGame);
-            Show(devTools, !inGame);
+            Show(loginPanel, !loggedIn);
+            Show(lobbyPanel, loggedIn);
             Show(onlinePanel, loggedIn);
 
             loginPanel.SetEnabled(!busy);
             lobbyPanel.SetEnabled(!busy);
 
             welcome.text = $"Xin chào, {joiner.LoggedInAs}";
-            gameInfo.text = string.IsNullOrEmpty(launcher.CurrentRoom)
-                ? "Đang trong game"
-                : $"Phòng {launcher.CurrentRoom}";
-            leaveButton.text = launcher.ServerRunning ? "Dừng server" : "Thoát phòng (về sảnh)";
 
             status.text = joiner.Status ?? "";
             status.EnableInClassList("error", joiner.IsError);
@@ -228,7 +203,6 @@ namespace MyGame.Network
 
         private void Join(string roomKey)
         {
-            launcher.SelectRoom(roomKey);
             _ = joiner.JoinRoom(roomKey);
         }
 

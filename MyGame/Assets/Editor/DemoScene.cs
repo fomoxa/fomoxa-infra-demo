@@ -12,6 +12,7 @@ using UnityEngine.SceneManagement;
 public static class DemoScene
 {
     private const string ScenePath = "Assets/Scenes/Game.unity";
+    private const string LobbyScenePath = "Assets/Scenes/Lobby.unity";
     private const string PrefabPath = "Assets/Prefabs/Player.prefab";
     private const string PlayerBuildPath = "Builds/MyGame.exe";
 
@@ -35,20 +36,14 @@ public static class DemoScene
             var encrypted = managerGo.AddComponent<EncryptedUdpNetworkTransport>();
             AssignTransport(manager, encrypted);
 
-            var backendGo = new GameObject("Backend");
-            var tcp = backendGo.AddComponent<TcpNetworkTransport>();
-            var joiner = backendGo.AddComponent<RoomJoiner>();
-            joiner.manager = manager;
-            joiner.backendTransport = tcp;
-
             var launcher = managerGo.AddComponent<Launcher>();
             launcher.manager = manager;
             launcher.playerPrefab = prefab.GetComponent<NetworkObject>();
             launcher.port = 7777;
             launcher.encryptedTransport = encrypted;
-            launcher.joiner = joiner;
 
-            LobbyUiSetup.AddTo(launcher, joiner);
+            // HUD trong trận (asset UI Toolkit). Sảnh nằm ở scene Lobby riêng.
+            LobbyUiSetup.AddMatchHud(launcher);
 
             AssetDatabase.SaveAssets();
             AssetDatabase.Refresh();
@@ -74,6 +69,8 @@ public static class DemoScene
             AssetDatabase.SaveAssets();
             AssetDatabase.Refresh();
 
+            BuildLobby();
+
             Debug.Log("[Demo] scene built: " + ScenePath);
             Debug.Log("[Demo] prefab built: " + PrefabPath);
             Quit(0);
@@ -85,6 +82,42 @@ public static class DemoScene
         }
     }
 
+    /// <summary>
+    /// Scene sảnh: camera nền tối + RoomJoiner (kết nối backend, giữ phiên đăng nhập) + giao diện sảnh (asset).
+    /// Không chứa NetworkManager / sàn / nhân vật - những thứ đó chỉ được tải khi người chơi bấm vào một phòng.
+    /// </summary>
+    private static void BuildLobby()
+    {
+        Scene lobby = EditorSceneManager.NewScene(NewSceneSetup.EmptyScene, NewSceneMode.Single);
+
+        var cameraGo = new GameObject("Lobby Camera");
+        cameraGo.tag = "MainCamera";
+        var camera = cameraGo.AddComponent<Camera>();
+        camera.clearFlags = CameraClearFlags.SolidColor;
+        camera.backgroundColor = new Color(0.07f, 0.09f, 0.14f);
+        cameraGo.AddComponent<AudioListener>();
+
+        var backendGo = new GameObject("Backend");
+        var tcp = backendGo.AddComponent<TcpNetworkTransport>();
+        var joiner = backendGo.AddComponent<RoomJoiner>();
+        joiner.backendTransport = tcp;
+        backendGo.AddComponent<BootRouter>();
+
+        LobbyUiSetup.AddLobby(joiner);
+
+        EditorSceneManager.SaveScene(lobby, LobbyScenePath);
+
+        // Sảnh là scene đầu tiên của bản build; Game được tải khi bấm vào phòng.
+        EditorBuildSettings.scenes = new[]
+        {
+            new EditorBuildSettingsScene(LobbyScenePath, true),
+            new EditorBuildSettingsScene(ScenePath, true),
+        };
+        AssetDatabase.SaveAssets();
+        AssetDatabase.Refresh();
+        Debug.Log("[Demo] lobby scene built: " + LobbyScenePath);
+    }
+
     [MenuItem("Tools/Demo/Build Windows Player")]
     public static void BuildPlayer()
     {
@@ -93,7 +126,7 @@ public static class DemoScene
             Directory.CreateDirectory("Builds");
             BuildReport report = BuildPipeline.BuildPlayer(new BuildPlayerOptions
             {
-                scenes = new[] { ScenePath },
+                scenes = new[] { LobbyScenePath, ScenePath },
                 locationPathName = PlayerBuildPath,
                 target = BuildTarget.StandaloneWindows64,
                 options = BuildOptions.None,

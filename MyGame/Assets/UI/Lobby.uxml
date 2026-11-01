@@ -25,12 +25,6 @@
                 <ui:Label name="empty-rooms" text="Chưa có dữ liệu phòng - bấm Làm mới" class="hint" />
             </ui:VisualElement>
 
-            <!-- 3. Đang trong phòng -->
-            <ui:VisualElement name="game-panel" class="panel">
-                <ui:Label name="game-info" text="" class="subtitle" />
-                <ui:Label text="Di chuyển: WASD / phím mũi tên" class="hint" />
-                <ui:Button name="leave-button" text="Thoát phòng (về sảnh)" class="button danger" />
-            </ui:VisualElement>
 
             <!-- Người đang online (hiện khi đã đăng nhập, cả ở sảnh lẫn trong phòng) -->
             <ui:VisualElement name="online-panel" class="panel online">
@@ -40,10 +34,6 @@
 
             <ui:Label name="status" text="" class="status" />
 
-            <ui:Foldout name="dev-tools" text="Công cụ dev" value="false" class="dev">
-                <ui:Button name="host-button" text="Host (server cục bộ + người chơi)" class="button small" />
-                <ui:Button name="pod-button" text="Start pod (đăng ký với directory)" class="button small" />
-            </ui:Foldout>
         </ui:VisualElement>
     </ui:VisualElement>
 </ui:UXML>

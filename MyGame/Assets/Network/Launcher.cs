@@ -28,22 +28,21 @@ namespace MyGame.Network
         public string roomKey = "arena:1";
         public bool behindGateway = true;
 
-        [Header("Client")]
-        public RoomJoiner joiner;
-
         private DirectoryPod pod;
         private int slot;
-
-        // Lobby: đăng nhập (tên + mật khẩu) rồi chọn phòng từ danh sách backend trả về.
-        // "auto" = Nakama tự cấp phòng trống từ pool arena:1..4 khi đủ 2 người.
-        private string playerName = "ana";
-        private string lobbyRoom = "";
-        private string password = "";
 
         private void Start()
         {
             manager.ServerManager.OnRemoteConnectionState += OnRemoteConnectionState;
             manager.ClientManager.OnClientConnectionState += OnClientConnectionState;
+
+            // Vào từ sảnh: sảnh đã lấy ticket, scene này chỉ việc nối vào pod.
+            if (MatchSession.TryTake(out RoomTicket ticket))
+            {
+                Debug.Log($"[Match] {MatchSession.Room} -> {ticket.Address}:{ticket.Port}");
+                manager.ClientManager.StartConnection(ticket.Address, ticket.Port, ticket.Connection);
+                return;
+            }
 
             string[] args = Environment.GetCommandLineArgs();
             if (Array.IndexOf(args, "-pod") >= 0)
@@ -75,162 +74,40 @@ namespace MyGame.Network
             pod?.Dispose();
         }
 
-        // --- API cho LobbyScreen (UI Toolkit) ---
+        // --- API cho MatchHudScreen (UI Toolkit) ---
 
         public bool ClientRunning => manager != null && manager.ClientManager.State != ConnectionState.Stopped;
 
         public bool ServerRunning => manager != null && manager.ServerManager.State != ServerState.Stopped;
 
-        /// <summary>Phòng người chơi vừa chọn trong sảnh (rỗng nếu chưa chọn).</summary>
-        public string CurrentRoom => lobbyRoom;
+        /// <summary>Phòng đang chơi (do sảnh chọn); rỗng nếu chạy Host / pod trực tiếp.</summary>
+        public string CurrentRoom => MatchSession.Room;
 
-        public void SelectRoom(string room) => lobbyRoom = room;
+        public bool PodRunning => pod != null;
+
+        public string PodSummary => pod == null ? "" : $"pod: {podName} id={pod.PodId} rooms={pod.Rooms.Count}";
+
+        public string ConnectionSummary =>
+            $"server: {manager.ServerManager.State}  peers: {manager.ServerManager.PeerCount}  client: {manager.ClientManager.State}";
 
         public void BeginHost() => StartHost();
 
         public void BeginPod() => StartPod(Environment.GetCommandLineArgs());
 
-        /// <summary>Thoát phòng / dừng server; <see cref="OnClientConnectionState"/> đưa người chơi về sảnh.</summary>
+        /// <summary>Thoát phòng / dừng server. Vào từ sảnh thì <see cref="OnClientConnectionState"/> đưa về scene sảnh.</summary>
         public void LeaveRoom()
         {
             manager.ClientManager.StopConnection();
             manager.ServerManager.StopConnection();
-        }
-
-        private void OnGUI()
-        {
-            // Đã có LobbyScreen (UI Toolkit) thì không vẽ IMGUI cũ nữa.
-            if (LobbyScreen.Active)
+            if (!MatchSession.FromLobby)
             {
                 return;
             }
 
-            GUILayout.BeginArea(new Rect(10f, 10f, 460f, 460f));
-            DrawControls();
-            GUILayout.EndArea();
-        }
-
-        private void DrawControls()
-        {
-            bool serverRunning = manager.ServerManager.State != ServerState.Stopped;
-            bool clientRunning = manager.ClientManager.State != ConnectionState.Stopped;
-
-            if (serverRunning || clientRunning)
+            // Nếu client chưa kịp chạy (Stopped ngay) thì không có sự kiện Stopped -> tự về sảnh.
+            if (!ClientRunning)
             {
-                if (joiner != null && clientRunning)
-                {
-                    GUILayout.Label($"Người chơi: {playerName}   phòng: {lobbyRoom}");
-                }
-
-                GUILayout.Label($"server: {manager.ServerManager.State}  peers: {manager.ServerManager.PeerCount}  client: {manager.ClientManager.State}");
-                if (pod != null)
-                {
-                    GUILayout.Label($"pod: {podName} id={pod.PodId} rooms={pod.Rooms.Count}");
-                }
-
-                GUILayout.Label("move: WASD / arrow keys");
-                // Với client đã đăng nhập, dừng kết nối = thoát phòng; OnClientConnectionState đưa về sảnh.
-                if (GUILayout.Button(joiner != null && joiner.LoggedIn && clientRunning && !serverRunning ? "Thoát phòng (về sảnh)" : "Stop"))
-                {
-                    manager.ClientManager.StopConnection();
-                    manager.ServerManager.StopConnection();
-                    if (joiner != null && !joiner.LoggedIn)
-                    {
-                        joiner.ClearStatus();
-                    }
-                }
-
-                return;
-            }
-
-            if (GUILayout.Button("Host (local server + player)"))
-            {
-                StartHost();
-            }
-
-            DrawLobby();
-
-            GUILayout.Space(8f);
-            GUILayout.Label("Công cụ dev:");
-            if (GUILayout.Button("Start pod (register with directory)"))
-            {
-                StartPod(Environment.GetCommandLineArgs());
-            }
-        }
-
-        private void DrawLobby()
-        {
-            GUILayout.Space(8f);
-            GUILayout.Label("=== Lobby ===");
-
-            bool busy = joiner != null && joiner.Busy;
-            GUI.enabled = !busy;
-
-            if (joiner == null)
-            {
-                GUILayout.Label("Chưa gán RoomJoiner");
-            }
-            else if (!joiner.LoggedIn)
-            {
-                GUILayout.BeginHorizontal();
-                GUILayout.Label("Tên:", GUILayout.Width(70f));
-                playerName = GUILayout.TextField(playerName ?? "", 24);
-                GUILayout.EndHorizontal();
-
-                GUILayout.BeginHorizontal();
-                GUILayout.Label("Mật khẩu:", GUILayout.Width(70f));
-                password = GUILayout.PasswordField(password ?? "", '*', 64);
-                GUILayout.EndHorizontal();
-
-                GUILayout.Label("(Tên mới sẽ được tạo tài khoản với mật khẩu này. Tối thiểu 8 ký tự.)");
-                if (GUILayout.Button("Đăng nhập / Đăng ký"))
-                {
-                    _ = joiner.Login(playerName, password);
-                }
-            }
-            else
-            {
-                GUILayout.BeginHorizontal();
-                GUILayout.Label($"Xin chào, {joiner.LoggedInAs}");
-                if (GUILayout.Button("Làm mới", GUILayout.Width(80f)))
-                {
-                    _ = joiner.RefreshRooms();
-                }
-
-                if (GUILayout.Button("Đăng xuất", GUILayout.Width(80f)))
-                {
-                    password = "";
-                    joiner.Logout();
-                }
-
-                GUILayout.EndHorizontal();
-
-                GUILayout.Label("Phòng (mỗi phòng cần 2 người để ghép trận):");
-                foreach (RoomInfo room in joiner.Rooms)
-                {
-                    string name = room.RoomKey == "auto" ? "Tự động ghép trận" : room.RoomKey;
-                    string stateText = room.State == "full" ? "đầy" : room.State == "waiting" ? "có người chờ" : "trống";
-                    if (GUILayout.Button($"{name}   [{room.Players}/{room.Capacity}] {stateText}"))
-                    {
-                        lobbyRoom = room.RoomKey;
-                        _ = joiner.JoinRoom(room.RoomKey);
-                    }
-                }
-
-                if (joiner.Rooms.Count == 0)
-                {
-                    GUILayout.Label("(Chưa có dữ liệu phòng - bấm Làm mới)");
-                }
-            }
-
-            GUI.enabled = true;
-
-            if (joiner != null && !string.IsNullOrEmpty(joiner.Status))
-            {
-                Color previous = GUI.color;
-                GUI.color = joiner.IsError ? new Color(1f, 0.4f, 0.4f) : Color.white;
-                GUILayout.Label(joiner.Status);
-                GUI.color = previous;
+                MatchSession.ReturnToLobby("Đã rời phòng");
             }
         }
 
@@ -379,18 +256,25 @@ namespace MyGame.Network
         {
             Debug.Log($"client: {args.State} {args.Reason}");
 
-            if (args.State == ConnectionState.Started && joiner != null && joiner.LoggedIn)
+            RoomJoiner joiner = RoomJoiner.Instance;
+            if (!MatchSession.FromLobby || joiner == null)
             {
-                joiner.SetNotice($"Đã vào phòng {lobbyRoom}");
+                return;
             }
 
-            // Rời phòng (hoặc bị ngắt): quay về sảnh và tải lại danh sách phòng.
-            if (args.State == ConnectionState.Stopped && joiner != null && joiner.LoggedIn)
+            if (args.State == ConnectionState.Started)
             {
-                joiner.LeftRoom();
-                joiner.SetNotice(args.Reason == StopReason.None || args.Reason == StopReason.LocalStop ? "Đã rời phòng" : $"Mất kết nối phòng: {args.Reason}");
-                lobbyRoom = "";
-                _ = joiner.RefreshRooms();
+                joiner.SetNotice($"Đã vào phòng {MatchSession.Room}");
+                return;
+            }
+
+            // Rời phòng hoặc bị ngắt: về scene sảnh (RoomJoiner giữ nguyên phiên đăng nhập).
+            if (args.State == ConnectionState.Stopped)
+            {
+                MatchSession.ReturnToLobby(
+                    args.Reason == StopReason.None || args.Reason == StopReason.LocalStop
+                        ? "Đã rời phòng"
+                        : $"Mất kết nối phòng: {args.Reason}");
             }
         }
     }

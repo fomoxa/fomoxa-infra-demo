@@ -1,0 +1,25 @@
+<ui:UXML xmlns:ui="UnityEngine.UIElements" editor-extension-mode="False">
+    <Style src="Lobby.uss" />
+    <Style src="MatchHud.uss" />
+    <ui:VisualElement name="root" class="root hud-root">
+        <ui:VisualElement name="hud-card" class="card hud-card">
+            <!-- Đang trong trận -->
+            <ui:VisualElement name="match-panel" class="panel">
+                <ui:Label name="match-title" text="" class="subtitle" />
+                <ui:Label name="match-state" text="" class="hint" />
+                <ui:Label text="Di chuyển: WASD / phím mũi tên" class="hint" />
+                <ui:Button name="leave-button" text="Thoát phòng (về sảnh)" class="button danger" />
+            </ui:VisualElement>
+
+            <!-- Chưa có kết nối (mở scene Game trực tiếp để dev) -->
+            <ui:VisualElement name="dev-panel" class="panel">
+                <ui:Label text="Công cụ dev" class="subtitle" />
+                <ui:Button name="host-button" text="Host (server cục bộ + người chơi)" class="button" />
+                <ui:Button name="pod-button" text="Start pod (đăng ký với directory)" class="button" />
+                <ui:Button name="lobby-button" text="Về sảnh" class="button small" />
+            </ui:VisualElement>
+
+            <ui:Label name="status" text="" class="status" />
+        </ui:VisualElement>
+    </ui:VisualElement>
+</ui:UXML>

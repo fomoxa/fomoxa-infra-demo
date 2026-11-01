@@ -5,36 +5,59 @@ using UnityEngine;
 using UnityEngine.UIElements;
 
 /// <summary>
-/// Gắn giao diện sảnh (UI Toolkit: Assets/UI/Lobby.uxml + Lobby.uss) vào scene hiện tại.
-/// Menu: Tools/Demo/Add Lobby UI. "Rebuild Scene" cũng gọi hàm này.
+/// Gắn giao diện (UI Toolkit) vào scene:
+///   - scene Lobby: Assets/UI/Lobby.uxml  (đăng nhập, danh sách phòng, người online)
+///   - scene Game : Assets/UI/MatchHud.uxml (HUD trong trận)
+/// Menu: Tools/Demo/Add Lobby UI (scene đang mở). "Rebuild Scene" gọi sẵn cho cả hai scene.
 /// </summary>
 public static class LobbyUiSetup
 {
-    private const string UxmlPath = "Assets/UI/Lobby.uxml";
+    private const string LobbyUxml = "Assets/UI/Lobby.uxml";
+    private const string HudUxml = "Assets/UI/MatchHud.uxml";
     private const string ThemePath = "Assets/UI/LobbyTheme.tss";
     private const string PanelSettingsPath = "Assets/UI/LobbyPanelSettings.asset";
 
     [MenuItem("Tools/Demo/Add Lobby UI")]
     public static void AddToOpenScene()
     {
-        var launcher = Object.FindFirstObjectByType<Launcher>();
         var joiner = Object.FindFirstObjectByType<RoomJoiner>();
-        if (launcher == null || joiner == null)
+        var launcher = Object.FindFirstObjectByType<Launcher>();
+        if (joiner == null && launcher == null)
         {
-            Debug.LogError("[Lobby] scene thieu Launcher/RoomJoiner. Chay Tools/Demo/Rebuild Scene truoc.");
+            Debug.LogError("[Lobby] scene khong co RoomJoiner (scene Lobby) hay Launcher (scene Game). Chay Tools/Demo/Rebuild Scene.");
             return;
         }
 
-        AddTo(launcher, joiner);
-        EditorSceneManager.MarkSceneDirty(launcher.gameObject.scene);
+        if (joiner != null)
+        {
+            AddLobby(joiner);
+        }
+
+        if (launcher != null)
+        {
+            AddMatchHud(launcher);
+        }
+
         EditorSceneManager.SaveOpenScenes();
-        Debug.Log("[Lobby] da them Lobby UI vao scene");
+        Debug.Log("[Lobby] da gan giao dien vao scene dang mo");
     }
 
-    public static void AddTo(Launcher launcher, RoomJoiner joiner)
+    public static void AddLobby(RoomJoiner joiner)
     {
-        var existing = Object.FindFirstObjectByType<LobbyScreen>();
-        GameObject go = existing != null ? existing.gameObject : new GameObject("Lobby UI");
+        GameObject go = UiObject<LobbyScreen>("Lobby UI", LobbyUxml);
+        go.GetComponent<LobbyScreen>().joiner = joiner;
+    }
+
+    public static void AddMatchHud(Launcher launcher)
+    {
+        GameObject go = UiObject<MatchHudScreen>("Match HUD", HudUxml);
+        go.GetComponent<MatchHudScreen>().launcher = launcher;
+    }
+
+    private static GameObject UiObject<T>(string name, string uxmlPath) where T : MonoBehaviour
+    {
+        var existing = Object.FindFirstObjectByType<T>();
+        GameObject go = existing != null ? existing.gameObject : new GameObject(name);
 
         var document = go.GetComponent<UIDocument>();
         if (document == null)
@@ -43,20 +66,18 @@ public static class LobbyUiSetup
         }
 
         document.panelSettings = EnsurePanelSettings();
-        document.visualTreeAsset = AssetDatabase.LoadAssetAtPath<VisualTreeAsset>(UxmlPath);
+        document.visualTreeAsset = AssetDatabase.LoadAssetAtPath<VisualTreeAsset>(uxmlPath);
         if (document.visualTreeAsset == null)
         {
-            Debug.LogError("[Lobby] khong thay " + UxmlPath);
+            Debug.LogError("[Lobby] khong thay " + uxmlPath);
         }
 
-        var screen = go.GetComponent<LobbyScreen>();
-        if (screen == null)
+        if (go.GetComponent<T>() == null)
         {
-            screen = go.AddComponent<LobbyScreen>();
+            go.AddComponent<T>();
         }
 
-        screen.launcher = launcher;
-        screen.joiner = joiner;
+        return go;
     }
 
     private static PanelSettings EnsurePanelSettings()

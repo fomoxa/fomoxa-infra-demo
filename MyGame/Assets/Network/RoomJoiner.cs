@@ -15,10 +15,29 @@ namespace MyGame.Network
 {
     public sealed class RoomJoiner : MonoBehaviour
     {
-        public NetworkManager manager;
+        /// <summary>Không còn dùng (NetworkManager nằm trong scene Game); giữ để scene cũ không mất tham chiếu.</summary>
+        [HideInInspector] public NetworkManager manager;
         public NetworkTransport backendTransport;
         public string backendAddress = "127.0.0.1";
         public ushort backendPort = 9600;
+
+        /// <summary>
+        /// RoomJoiner sống xuyên suốt các scene (sảnh ↔ trận): giữ phiên đăng nhập và tiếp tục báo online khi đang chơi.
+        /// </summary>
+        public static RoomJoiner Instance { get; private set; }
+
+        private void Awake()
+        {
+            if (Instance != null && Instance != this)
+            {
+                // Quay về scene sảnh sẽ nạp lại bản RoomJoiner của scene: bỏ bản trùng, dùng bản đang sống.
+                Destroy(gameObject);
+                return;
+            }
+
+            Instance = this;
+            DontDestroyOnLoad(gameObject);
+        }
 
         private ITransportConnector connector;
         private TaskCompletionSource<ITransport> connecting;
@@ -355,8 +374,9 @@ namespace MyGame.Network
             });
             currentRoom = roomKey;
             Debug.Log($"[Join] room {roomKey} -> {ticket.Address}:{ticket.Port}, grant {ticket.Connection.Length} bytes");
-            SetStatus($"Đã nhận ticket phòng {roomKey}. Đang kết nối game server {ticket.Address}:{ticket.Port}...");
-            manager.ClientManager.StartConnection(ticket.Address, ticket.Port, ticket.Connection);
+            SetStatus($"Đã nhận ticket phòng {roomKey}. Đang tải màn chơi...");
+            // Scene trận đấu chỉ được tải sau khi đã có ticket; Launcher trong scene đó sẽ nối vào pod.
+            MatchSession.Begin(roomKey, ticket);
         }
 
         private void Fail(Exception error)
@@ -439,6 +459,15 @@ namespace MyGame.Network
 
         private void OnDestroy()
         {
+            if (Instance == this)
+            {
+                Instance = null;
+            }
+            else
+            {
+                return;
+            }
+
             connector?.Dispose();
             connection?.Dispose();
         }

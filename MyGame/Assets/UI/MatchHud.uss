@@ -1,0 +1,10 @@
+/* HUD trong trận (dùng chung màu sắc với Lobby.uss) */
+.hud-root {
+    align-items: flex-start;
+    justify-content: flex-start;
+}
+
+.hud-card {
+    width: 300px;
+    padding: 12px;
+}
