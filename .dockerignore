@@ -1,0 +1,15 @@
+.git
+logs
+unity-docs
+MyGame/Library
+MyGame/Temp
+MyGame/Build
+MyGame/Builds
+MyGame/Logs
+MyGame/UserSettings
+deploy/secrets
+deploy/nakama/.cookie
+gateway/target
+**/bin
+**/obj
+*.log

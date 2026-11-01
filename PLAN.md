@@ -1,8 +1,8 @@
 # Kế hoạch cụm Fomoxa + Nakama + Agones
 
 Cập nhật: đã clone repos về `D:\Documents\fomoxa`, đã kiểm tra môi trường máy.
-P1–P4 xong (game + directory + gateway + Nakama). P5 (Agones) đã chốt phạm vi, xong bước 1–2/6
-(console server chạy local + Agones lifecycle), đang ở bước 3 (3 Dockerfile đóng gói image).
+P1–P4 xong (game + directory + gateway + Nakama). P5 (Agones) đã chốt phạm vi, xong bước 1–3/6
+(console server + Agones lifecycle + 3 Dockerfile), đang ở bước 4 (manifest K8s + agones fleet).
 
 ---
 
@@ -323,7 +323,7 @@ không dồn vào 1 room) — làm ở P5.5, kèm test ≥4 client.
 |---|---|---|---|
 | 1 | Vendor source 2 package vào `server-deps/`; tạo `MyGame/Server~` (csproj, `PodConfig`, `PodTransport`, `PlayerEntity`, `Program`); `-Server console` cho `start-cluster.ps1`/`run-pod.ps1`; `scripts/test-console-server.ps1` | `P5: console server chay local` | ✅ |
 | 2 | Wrapper Agones SDK (`Ready/Health/Allocate/Shutdown`) + `OnDrain`/`OnDrainDeadline`, no-op ngoài cluster | `P5: Agones lifecycle` | ✅ |
-| 3 | 3 Dockerfile: game server, directory, gateway | `P5: dong goi image` | |
+| 3 | 3 Dockerfile: game server, directory, gateway | `P5: dong goi image` | ✅ |
 | 4 | `deploy/k8s/`: manifest + `directory.toml`/`gateway.toml` bản K8s + script sinh Secret | `P5: manifest k8s + agones fleet` | |
 | 5 | `scripts/k8s-up.ps1`, `k8s-down.ps1`, `test-p5.ps1` | `P5: script cum k8s` | |
 | 6 | Cập nhật `PLAN.md` + `MyGame/README.md` | `P5: tai lieu` | |
@@ -374,6 +374,14 @@ Ghi chú đã gặp và cách xử lý:
   - Fallback / no-op an toàn khi chạy ngoài cluster (local dev không có sidecar Agones).
 - `PodConfig.cs`: tự động nhận diện `AGONES_SDK_GRPC_PORT` hoặc tham số `--agones=true/false` / env `FOMOXA_AGONES`.
 - Build `MyGame.Server.csproj` đạt **0 warning, 0 error**.
+
+##### Bước 3 — đã xong
+
+- `deploy/Dockerfile.server`: multi-stage build cho `MyGame.Server` trên `mcr.microsoft.com/dotnet/sdk:8.0` và runtime `runtime:8.0`, non-root user `app`, expose 7778/udp.
+- `deploy/Dockerfile.directory`: multi-stage build cho `fomoxa-directory` trên `rust:1.88-bookworm` và runtime `debian:bookworm-slim`, expose 9500 (service) và 9501 (admin).
+- `deploy/Dockerfile.gateway`: multi-stage build cho `fomoxa-gateway` trên `rust:1.88-bookworm` và runtime `debian:bookworm-slim`, expose 7777/udp.
+- `.dockerignore`: lọc bỏ các file rác, `.git`, cache Unity, và secrets.
+- `scripts/build-images.ps1`: script tiện ích tự động đóng gói cả 4 images (`fomoxa-server`, `fomoxa-directory`, `fomoxa-gateway`, `fomoxa-backend`).
 
 
 #### DoD
@@ -505,7 +513,7 @@ D:\Documents\fomoxa\
 
 ## 8. Việc tiếp theo
 
-P5 đã chốt phạm vi (xem mục 4). Bước 1 và Bước 2 đã xong:
+P5 đã chốt phạm vi (xem mục 4). Bước 1, 2 và 3 đã xong:
 
 1. ✅ `server-deps/` + `MyGame/Server~` build 0 warning, chạy local.
 2. ✅ 2 client Unity join `arena:1` qua backend + gateway vào console server, thấy nhau di chuyển
@@ -514,10 +522,14 @@ P5 đã chốt phạm vi (xem mục 4). Bước 1 và Bước 2 đã xong:
 4. ✅ **Agones lifecycle**: `AgonesSDK` 1.61.0, `ReadyAsync` trước khi register (retry ~60 × 500 ms),
    `HealthAsync` mỗi 2 s, `AllocateAsync` khi có room đầu tiên, `ReadyAsync` lại khi hết người,
    `ShutDownAsync` sau drain; ngoài cluster thì fallback no-op an toàn.
+5. ✅ **3 Dockerfile**: `deploy/Dockerfile.server`, `deploy/Dockerfile.directory`, `deploy/Dockerfile.gateway`,
+   kèm `.dockerignore` và script tiện ích `scripts/build-images.ps1`.
 
-Tiếp theo là **bước 3 — 3 Dockerfile: game server, directory, gateway**:
-- Dockerfile cho console server `MyGame.Server` (.NET 8 runtime).
-- Dockerfile cho `fomoxa-directory` (Rust binary).
-- Dockerfile cho `fomoxa-gateway` (Rust binary).
+Tiếp theo là **bước 4 — `deploy/k8s/`: manifest + `directory.toml`/`gateway.toml` bản K8s + script sinh Secret**:
+- Tạo thư mục `deploy/k8s/`.
+- File cấu hình cho K8s: `directory.k8s.toml`, `gateway.k8s.toml`.
+- Script sinh Secret K8s từ `deploy/secrets/`.
+- Manifest Deployment/Service cho: `postgres`, `nakama`, `directory`, `gateway`, `backend`.
+- Manifest Agones `Fleet` cho game server (`MyGame.Server`).
 
 

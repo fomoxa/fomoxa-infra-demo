@@ -1,0 +1,22 @@
+# Multi-stage build cho game server (console MyGame.Server trên .NET 8)
+FROM mcr.microsoft.com/dotnet/sdk:8.0 AS build
+WORKDIR /src
+
+# Sao chép vendor dependencies, model mạng, generated code và project console server
+COPY server-deps/ server-deps/
+COPY MyGame/Assets/Network/Models/ MyGame/Assets/Network/Models/
+COPY MyGame/Assets/Network/Generated/ MyGame/Assets/Network/Generated/
+COPY MyGame/Server~/ MyGame/Server~/
+
+RUN dotnet publish MyGame/Server~/MyGame.Server.csproj -c Release -o /app
+
+# Runtime image gọn nhẹ
+FROM mcr.microsoft.com/dotnet/runtime:8.0
+WORKDIR /app
+
+USER app
+COPY --from=build --chown=app:app /app .
+
+EXPOSE 7778/udp
+
+ENTRYPOINT ["dotnet", "MyGame.Server.dll"]
