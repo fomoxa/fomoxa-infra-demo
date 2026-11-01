@@ -16,6 +16,13 @@ spec:
       containers:
         - name: backend
           image: fomoxa-backend:latest
+          resources:
+            requests: { cpu: "100m", memory: "128Mi" }
+            limits: { cpu: "500m", memory: "384Mi" }
+          securityContext:
+            allowPrivilegeEscalation: false
+            capabilities: { drop: ["ALL"] }
+            seccompProfile: { type: RuntimeDefault }
           imagePullPolicy: IfNotPresent
           env:
             - name: Fomoxa__Directory__Address
@@ -78,6 +85,18 @@ spec:
     - name: ws
       port: 9601
       targetPort: 9601
+---
+# Cong 9602 chi cho pod (Agones GameServer) trong cum goi, khong lo ra LoadBalancer.
+apiVersion: v1
+kind: Service
+metadata:
+  name: backend-pods
+  namespace: fomoxa
+spec:
+  type: ClusterIP
+  selector:
+    app: backend
+  ports:
     - name: pods
       port: 9602
       targetPort: 9602

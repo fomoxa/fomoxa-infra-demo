@@ -1,0 +1,103 @@
+# Tuỳ chọn (APPLY_NETPOL=1 khi chạy k8s-up): chỉ cho các luồng cần thiết trong namespace fomoxa.
+# k3s/k3d có sẵn bộ thực thi NetworkPolicy (kube-router). CHƯA được thử trên cụm thật: nếu có gì không
+# nối được sau khi áp dụng, gỡ bằng: kubectl delete -f deploy/k8s/networkpolicy.yaml
+#
+# Luồng: client -> gateway (UDP 7777) -> pod (UDP 7778); client -> backend (9600/9601);
+#        backend -> directory (9500), nakama (7350); nakama -> postgres (5432);
+#        gateway, pod -> directory (9500); pod -> backend (9602).
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: default-deny-ingress
+  namespace: fomoxa
+spec:
+  podSelector: {}
+  policyTypes: ["Ingress"]
+---
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: postgres-from-nakama
+  namespace: fomoxa
+spec:
+  podSelector:
+    matchLabels: { app: postgres }
+  ingress:
+    - from:
+        - podSelector: { matchLabels: { app: nakama } }
+      ports:
+        - { protocol: TCP, port: 5432 }
+---
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: nakama-api
+  namespace: fomoxa
+spec:
+  podSelector:
+    matchLabels: { app: nakama }
+  ingress:
+    # API 7350 (backend gọi, và script test qua LoadBalancer); console 7351 KHÔNG mở.
+    - ports:
+        - { protocol: TCP, port: 7350 }
+---
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: directory-from-cluster
+  namespace: fomoxa
+spec:
+  podSelector:
+    matchLabels: { app: directory }
+  ingress:
+    - from:
+        - podSelector: { matchLabels: { app: backend } }
+        - podSelector: { matchLabels: { app: gateway } }
+        - podSelector: { matchLabels: { agones.dev/role: gameserver } }
+      ports:
+        - { protocol: TCP, port: 9500 }
+---
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: backend-clients
+  namespace: fomoxa
+spec:
+  podSelector:
+    matchLabels: { app: backend }
+  ingress:
+    # Người chơi (qua LoadBalancer)
+    - ports:
+        - { protocol: TCP, port: 9600 }
+        - { protocol: TCP, port: 9601 }
+    # Chỉ GameServer được báo cáo room
+    - from:
+        - podSelector: { matchLabels: { agones.dev/role: gameserver } }
+      ports:
+        - { protocol: TCP, port: 9602 }
+---
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: gateway-clients
+  namespace: fomoxa
+spec:
+  podSelector:
+    matchLabels: { app: gateway }
+  ingress:
+    - ports:
+        - { protocol: UDP, port: 7777 }
+---
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: gameserver-from-gateway
+  namespace: fomoxa
+spec:
+  podSelector:
+    matchLabels: { agones.dev/role: gameserver }
+  ingress:
+    - from:
+        - podSelector: { matchLabels: { app: gateway } }
+      ports:
+        - { protocol: UDP, port: 7778 }

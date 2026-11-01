@@ -32,5 +32,11 @@ kubectl create secret generic fomoxa-pod-key \
     --from-file=pod="$SECRETS_DIR/directory/pod" \
     --dry-run=client -o yaml | kubectl apply -f -
 
+# Pod -> backend (PodGate.ReportRoom): chi key backend-pod, khong chua key directory cua backend.
+kubectl create secret generic fomoxa-backend-pod-key \
+    --namespace="$NAMESPACE" \
+    --from-file=backend-pod="$SECRETS_DIR/backend-pod" \
+    --dry-run=client -o yaml | kubectl apply -f -
+
 echo "[gen-k8s-secrets] Hoan tat tao K8s secrets!"
 

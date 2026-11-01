@@ -35,6 +35,12 @@ namespace MockCluster
             Console.OutputEncoding = Encoding.UTF8;
             var args = Args.Parse(argv);
 
+            // --probe=host:port: đóng vai client gọi Login + ListRooms vào một backend (thật hoặc giả) rồi thoát.
+            if (args.Has("probe"))
+            {
+                return await Probe(args.Get("probe", ""));
+            }
+
             string playersAddress = args.Get("players", "0.0.0.0:9600");
             string directoryAddress = args.Get("directory", "0.0.0.0:9500");
             int podCount = int.Parse(args.Get("pods", "4"));
@@ -78,7 +84,7 @@ namespace MockCluster
                     string directoryTarget = "127.0.0.1:" + directoryServer.LocalEndPoint.Port;
                     for (int i = 0; i < podCount; i++)
                     {
-                        children.Add(StartPod(server, i, basePort + i, directoryTarget, rooms, keyFile));
+                        children.Add(StartPod(server, i, basePort + i, directoryTarget, rooms, keyFile, args.Get("pod-backend", ""), args.Get("pod-backend-key", "")));
                     }
                 }
 
@@ -121,7 +127,7 @@ namespace MockCluster
             }
         }
 
-        private static Process StartPod(string serverDll, int index, int port, string directory, string rooms, string keyFile)
+        private static Process StartPod(string serverDll, int index, int port, string directory, string rooms, string keyFile, string backend, string backendKey)
         {
             var info = new ProcessStartInfo("dotnet")
             {
@@ -138,6 +144,11 @@ namespace MockCluster
             info.ArgumentList.Add("--claim-one=true");
             info.ArgumentList.Add("--behind-gateway=false");
             info.ArgumentList.Add($"--key={keyFile}");
+            if (backend.Length > 0)
+            {
+                info.ArgumentList.Add($"--backend={backend}");
+                info.ArgumentList.Add($"--backend-key={backendKey}");
+            }
 
             Process process = Process.Start(info) ?? throw new InvalidOperationException("khong chay duoc dotnet");
             string tag = $"[pod-{index + 1}] ";
@@ -167,6 +178,15 @@ namespace MockCluster
             }
 
             return false;
+        }
+
+        private static async Task<int> Probe(string address)
+        {
+            var options = new ConnectOptions { Credential = Credential.Of(PlayersMethods.Login, new PlayerLogin { Player = "probe" }) };
+            using RpcConnection connection = await RpcConnection.Connect(address, NetSchema.Build(), LobbyClient.Declare(PlayersClient.Registry()).Build(), options);
+            RoomList list = await new LobbyClient(connection).ListRoomsAsync(new ListRoomsRequest(), CallOptions.Within(TimeSpan.FromSeconds(5)));
+            Console.WriteLine("[probe] " + string.Join(", ", list.Rooms.Select(r => $"{r.RoomKey}[{r.Players}/{r.Capacity}] {r.State}")));
+            return 0;
         }
 
         /// <summary>Đóng vai client: đăng nhập, xem phòng, vào phòng, kiểm tra ticket. Không kiểm UDP.</summary>

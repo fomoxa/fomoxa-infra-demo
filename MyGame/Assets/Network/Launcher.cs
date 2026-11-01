@@ -101,11 +101,15 @@ namespace MyGame.Network
                 }
 
                 GUILayout.Label("move: WASD / arrow keys");
-                if (GUILayout.Button("Stop"))
+                // Với client đã đăng nhập, dừng kết nối = thoát phòng; OnClientConnectionState đưa về sảnh.
+                if (GUILayout.Button(joiner != null && joiner.LoggedIn && clientRunning && !serverRunning ? "Thoát phòng (về sảnh)" : "Stop"))
                 {
                     manager.ClientManager.StopConnection();
                     manager.ServerManager.StopConnection();
-                    joiner?.ClearStatus();
+                    if (joiner != null && !joiner.LoggedIn)
+                    {
+                        joiner.ClearStatus();
+                    }
                 }
 
                 return;
@@ -346,6 +350,14 @@ namespace MyGame.Network
         private void OnClientConnectionState(ConnectionStateArgs args)
         {
             Debug.Log($"client: {args.State} {args.Reason}");
+
+            // Rời phòng (hoặc bị ngắt): quay về sảnh và tải lại danh sách phòng.
+            if (args.State == ConnectionState.Stopped && joiner != null && joiner.LoggedIn)
+            {
+                joiner.SetNotice(args.Reason == StopReason.None || args.Reason == StopReason.LocalStop ? "Đã rời phòng" : $"Mất kết nối phòng: {args.Reason}");
+                lobbyRoom = "";
+                _ = joiner.RefreshRooms();
+            }
         }
     }
 }

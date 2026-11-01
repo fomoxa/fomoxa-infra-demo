@@ -166,8 +166,11 @@ namespace MyGame.Backend
         private readonly NakamaLink nakama;
         private readonly PlayerSessions sessions;
 
-        public Lobby(DirectoryLink directory, NakamaLink nakama, PlayerSessions sessions)
+        private readonly RoomStats stats;
+
+        public Lobby(DirectoryLink directory, NakamaLink nakama, PlayerSessions sessions, RoomStats stats)
         {
+            this.stats = stats;
             this.directory = directory;
             this.nakama = nakama;
             this.sessions = sessions;
@@ -211,10 +214,19 @@ namespace MyGame.Backend
             var list = new RoomList();
             if (nakama == null)
             {
-                // Không có Nakama: ai cũng vào được room bất kỳ, chỉ gợi ý pool mặc định.
-                foreach (string room in new[] { "arena:1", "arena:2", "arena:3", "arena:4" })
+                // Không có Nakama: ai cũng vào được room bất kỳ; liệt kê room do pod báo lên (hoặc pool mặc định).
+                var reported = stats.Current();
+                if (reported.Count == 0)
                 {
-                    list.Rooms.Add(new RoomInfo { RoomKey = room, Players = 0, Capacity = 2, State = "open" });
+                    foreach (string room in new[] { "arena:1", "arena:2", "arena:3", "arena:4" })
+                    {
+                        list.Rooms.Add(new RoomInfo { RoomKey = room, Players = 0, Capacity = 2, State = "open" });
+                    }
+                }
+
+                foreach (var entry in reported)
+                {
+                    list.Rooms.Add(Describe(entry.Room, entry.Players, entry.Capacity == 0 ? 2u : entry.Capacity));
                 }
 
                 return list;
@@ -224,13 +236,16 @@ namespace MyGame.Backend
             {
                 foreach (NakamaRoom room in await nakama.ListRooms())
                 {
-                    list.Rooms.Add(new RoomInfo
+                    uint players = (uint)Math.Max(0, room.Players);
+                    uint capacity = (uint)Math.Max(0, room.Capacity);
+
+                    // Số người đang kết nối thật tại pod (nếu có) thắng số "đã ghép" của Nakama khi lớn hơn.
+                    if (room.Room != "auto" && stats.TryGet(room.Room, out uint actual, out _))
                     {
-                        RoomKey = room.Room,
-                        Players = (uint)Math.Max(0, room.Players),
-                        Capacity = (uint)Math.Max(0, room.Capacity),
-                        State = room.State,
-                    });
+                        players = Math.Max(players, actual);
+                    }
+
+                    list.Rooms.Add(Describe(room.Room, players, capacity));
                 }
             }
             catch (NakamaException problem)
@@ -240,6 +255,14 @@ namespace MyGame.Backend
 
             return list;
         }
+
+        private static RoomInfo Describe(string room, uint players, uint capacity) => new RoomInfo
+        {
+            RoomKey = room,
+            Players = players,
+            Capacity = capacity,
+            State = players >= capacity ? "full" : players > 0 ? "waiting" : "open",
+        };
 
         private async Task<string> WaitForMatch(string principal, string roomKey)
         {

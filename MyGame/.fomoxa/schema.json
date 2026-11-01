@@ -1,8 +1,8 @@
 {
   "schema_version": 1,
   "generator": "fomoxac 0.2.3",
-  "fingerprint": "sha256:d55606506a636130a19dc770259a30a4cf57df51ed7f36b8d860a6a5a21ce734",
-  "fingerprint_u64": "0xD55606506A636130",
+  "fingerprint": "sha256:c6bdbbbd255768580c47ce15df0f3d13d4c2faf67214aa4e1493ed7074185699",
+  "fingerprint_u64": "0xC6BDBBBD25576858",
   "models": {
     "AnimatorState": {
       "source": "FomoxaSystemModels/AnimatorState.cs",
@@ -2298,6 +2298,67 @@
             {
               "name": "Rooms",
               "type": "Array<RoomInfo>"
+            }
+          ]
+        }
+      }
+    },
+    "RoomReport": {
+      "source": "Assets/Network/Models/Backend/Rooms.cs",
+      "fingerprint": "sha256:be6c8e368905c913f877551fbf076f181098c249f09a08bf56296bde3ea0d345",
+      "codecs": [
+        "rpc"
+      ],
+      "fields": [
+        {
+          "name": "RoomKey",
+          "type": "string",
+          "codecs": [
+            "rpc"
+          ]
+        },
+        {
+          "name": "Players",
+          "type": "u32",
+          "codecs": [
+            "rpc"
+          ]
+        },
+        {
+          "name": "Capacity",
+          "type": "u32",
+          "codecs": [
+            "rpc"
+          ]
+        }
+      ],
+      "messages": {
+        "rpc": {
+          "id": "0xC498D93B",
+          "fingerprint": "sha256:b3628a0a8267ac4748a81c794f2373d86795e9242903358123cf63f354a21e28",
+          "fingerprint_u64": "0xB3628A0A8267AC47",
+          "prefixes": [
+            "sha256:f0cfb5b5e7a2443cf0cd4fc0a9958f4302bf4da678a49ba5498c847700a291bf",
+            "sha256:4b5ebb8bbad9ab46875c34b622fa360bd5e201cc8e87a057b224b0ee61cee54a",
+            "sha256:b3628a0a8267ac4748a81c794f2373d86795e9242903358123cf63f354a21e28"
+          ],
+          "prefixes_u64": [
+            "0xF0CFB5B5E7A2443C",
+            "0x4B5EBB8BBAD9AB46",
+            "0xB3628A0A8267AC47"
+          ],
+          "fields": [
+            {
+              "name": "RoomKey",
+              "type": "string"
+            },
+            {
+              "name": "Players",
+              "type": "u32"
+            },
+            {
+              "name": "Capacity",
+              "type": "u32"
             }
           ]
         }

@@ -40,4 +40,22 @@ namespace MyGame.Backend.Models
         [Codec("rpc")]
         public List<RoomInfo> Rooms { get; set; } = new List<RoomInfo>();
     }
+
+    /// <summary>Pod báo lên backend: số người đang kết nối thật và sức chứa của một room nó giữ.</summary>
+    [Network]
+    [Codec("rpc")]
+    public class RoomReport
+    {
+        [Network("string")]
+        [Codec("rpc")]
+        public string RoomKey { get; set; } = "";
+
+        [Network("u32")]
+        [Codec("rpc")]
+        public uint Players { get; set; }
+
+        [Network("u32")]
+        [Codec("rpc")]
+        public uint Capacity { get; set; }
+    }
 }

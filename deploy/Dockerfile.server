@@ -6,6 +6,7 @@ WORKDIR /src
 COPY server-deps/ server-deps/
 COPY MyGame/Assets/Network/Models/ MyGame/Assets/Network/Models/
 COPY MyGame/Assets/Network/Generated/ MyGame/Assets/Network/Generated/
+COPY MyGame/Assets/Network/Rpc/ MyGame/Assets/Network/Rpc/
 COPY MyGame/Server~/ MyGame/Server~/
 
 RUN dotnet publish MyGame/Server~/MyGame.Server.csproj -c Release -o /app

@@ -22,6 +22,13 @@ spec:
           containers:
             - name: fomoxa-server
               image: fomoxa-server:latest
+              resources:
+                requests: { cpu: "100m", memory: "128Mi" }
+                limits: { cpu: "1000m", memory: "384Mi" }
+              securityContext:
+                allowPrivilegeEscalation: false
+                capabilities: { drop: ["ALL"] }
+                seccompProfile: { type: RuntimeDefault }
               imagePullPolicy: IfNotPresent
               env:
                 - name: FOMOXA_DIRECTORY
@@ -46,14 +53,24 @@ spec:
                   value: "true"
                 - name: FOMOXA_CLAIM_ONE
                   value: "true"
+                - name: FOMOXA_BACKEND
+                  value: "backend-pods.fomoxa.svc.cluster.local:9602"
+                - name: POD_BACKEND_KEY_FILE
+                  value: "/secrets/backend-pod/backend-pod"
                 - name: FOMOXA_ROOM
                   value: "arena:1,arena:2,arena:3,arena:4"
               volumeMounts:
                 - name: pod-key
                   mountPath: /secrets/pod
                   readOnly: true
+                - name: backend-pod-key
+                  mountPath: /secrets/backend-pod
+                  readOnly: true
           volumes:
             - name: pod-key
               secret:
                 secretName: fomoxa-pod-key
+            - name: backend-pod-key
+              secret:
+                secretName: fomoxa-backend-pod-key
 

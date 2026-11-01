@@ -112,6 +112,11 @@ namespace MyGame.Server
                 MaxPlayers = config.MaxPlayers,
             });
 
+            using var backendReporter = BackendReporter.StartIfConfigured(
+                config,
+                () => pod.Rooms,
+                () => runtime.ServerManager.PeerCount);
+
             bool draining = false;
 
             // SIGTERM/SIGINT lần 1: xin directory drain (ngừng nhận room mới) rồi chờ hết người chơi.

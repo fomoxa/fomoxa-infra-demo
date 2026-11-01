@@ -26,6 +26,7 @@
     <Compile Include="$(Rpc)/Runtime/Directory/**/*.cs" />
     <Compile Include="$(Game)/Assets/Network/Models/**/*.cs" />
     <Compile Include="$(Game)/Assets/Network/Generated/**/*.cs" />
+    <Compile Include="$(Game)/Assets/Network/Rpc/Services.cs" />
     <Compile Include="*.cs" />
   </ItemGroup>
 

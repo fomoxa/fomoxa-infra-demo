@@ -1,7 +1,7 @@
 {
   "schema_version": 1,
   "generator": "fomoxac 0.2.3",
-  "schema_fingerprint": "sha256:d55606506a636130a19dc770259a30a4cf57df51ed7f36b8d860a6a5a21ce734",
+  "schema_fingerprint": "sha256:c6bdbbbd255768580c47ce15df0f3d13d4c2faf67214aa4e1493ed7074185699",
   "sha256_of": "each file with its `// generated-at:` line emptied, so an unchanged schema keeps an unchanged digest",
   "sources": {
     "Assets/Network/Models/Backend/Players.cs": {
@@ -76,7 +76,8 @@
       "models": [
         "ListRoomsRequest",
         "RoomInfo",
-        "RoomList"
+        "RoomList",
+        "RoomReport"
       ],
       "outputs": [
         {
@@ -99,6 +100,13 @@
           "codec": "rpc",
           "fingerprint": "sha256:ca2d0b231c774fba60907bd314b9946cee65822477d79d95e8826e47d42b5adf",
           "sha256": "8766eb77fdd87ec1a865fec0198a00017fcf0ae2d2bd8ba8ee69582a835dbf5e"
+        },
+        {
+          "path": "Assets/Network/Generated/RoomReportRpcCodec.cs",
+          "model": "RoomReport",
+          "codec": "rpc",
+          "fingerprint": "sha256:b3628a0a8267ac4748a81c794f2373d86795e9242903358123cf63f354a21e28",
+          "sha256": "08f10744123f49125b2a9d2d1af2a3d6e34d8bce938b63d53e3460067d0fa3c8"
         }
       ]
     },
@@ -794,12 +802,12 @@
     {
       "path": "Assets/Network/Generated/Handshake.cs",
       "kind": "handshake",
-      "sha256": "7f06c917d3e301eb4bfac68cf1b0f84060cd115626bba6c10fe431cc5a2ed957"
+      "sha256": "3e0766b75023c3dcc9443c813b6061678ad804a7bc42bc215ec080214b5bc668"
     },
     {
       "path": "Assets/Network/Generated/NetSchema.cs",
       "kind": "net_schema",
-      "sha256": "746431c1d4b381d5e8eda43a73447ea2bdeb7284105636c461d18957565326f6"
+      "sha256": "b086500b8fed96a13516ea52472dab444c89ab70c5328c71013f97f776fccf8f"
     }
   ]
 }

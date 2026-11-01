@@ -113,6 +113,11 @@ if [[ "${APPLY_INGRESS:-}" == "1" && -f "$REPO_ROOT/deploy/k8s/ingress.yaml" ]];
     kubectl apply -f "$REPO_ROOT/deploy/k8s/ingress.yaml"
 fi
 
+# NetworkPolicy la tuy chon (chua thu tren cum that): APPLY_NETPOL=1
+if [[ "${APPLY_NETPOL:-}" == "1" ]]; then
+    kubectl apply -f "$REPO_ROOT/deploy/k8s/networkpolicy.yaml"
+fi
+
 echo -e "\nCho cac dich vu khoi dong..."
 kubectl rollout status deployment/postgres -n fomoxa --timeout=90s
 kubectl rollout status deployment/nakama -n fomoxa --timeout=120s

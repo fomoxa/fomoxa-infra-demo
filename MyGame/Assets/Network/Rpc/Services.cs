@@ -39,5 +39,8 @@ namespace MyGame.Backend
     {
         [Unary(Requires = Roles.Pod, Details = new[] { typeof(NoRoomForVersion) })]
         Task<RoomTicket> TransferPlayer(CallContext context, TransferPlayerRequest request);
+
+        [Unary(Requires = Roles.Pod)]
+        void ReportRoom(CallContext context, RoomReport request);
     }
 }

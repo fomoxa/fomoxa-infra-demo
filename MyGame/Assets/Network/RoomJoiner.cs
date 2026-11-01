@@ -29,6 +29,9 @@ namespace MyGame.Network
         public bool IsError { get; private set; }
         public bool Busy { get; private set; }
 
+        /// <summary>Đặt thông báo thường (không lỗi) cho lobby, ví dụ khi rời phòng.</summary>
+        public void SetNotice(string text) => SetStatus(text);
+
         public void ClearStatus()
         {
             if (!Busy)

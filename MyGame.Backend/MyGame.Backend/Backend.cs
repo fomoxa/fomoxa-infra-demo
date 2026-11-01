@@ -77,7 +77,8 @@ namespace MyGame.Backend
         {
             var schema = Generated.NetSchema.Build();
             var sessions = new PlayerSessions();
-            Registry players = new LobbyServer(new Lobby(directory, nakama, sessions)).Registry().Authenticate(new Players(nakama, sessions)).Build();
+            var stats = new RoomStats();
+            Registry players = new LobbyServer(new Lobby(directory, nakama, sessions, stats)).Registry().Authenticate(new Players(nakama, sessions)).Build();
             if (!string.IsNullOrEmpty(settings.PlayersTcp))
             {
                 RpcServer server = Started(RpcServer.Bind(settings.PlayersTcp, schema, players));
@@ -94,7 +95,7 @@ namespace MyGame.Backend
 
             if (!string.IsNullOrEmpty(settings.PodsTcp))
             {
-                Registry pods = new PodGateServer(new PodGate(directory)).Registry().Authenticate(new PodKeys(settings.PodKey)).Build();
+                Registry pods = new PodGateServer(new PodGate(directory, stats)).Registry().Authenticate(new PodKeys(settings.PodKey)).Build();
                 RpcServer server = Started(RpcServer.Bind(settings.PodsTcp, schema, pods));
                 PodsTcp = server.LocalEndPoint;
             }

@@ -51,6 +51,13 @@ spec:
       containers:
         - name: directory
           image: fomoxa-directory:latest
+          resources:
+            requests: { cpu: "50m", memory: "64Mi" }
+            limits: { cpu: "300m", memory: "192Mi" }
+          securityContext:
+            allowPrivilegeEscalation: false
+            capabilities: { drop: ["ALL"] }
+            seccompProfile: { type: RuntimeDefault }
           imagePullPolicy: IfNotPresent
           args: ["/config/directory.toml"]
           ports:

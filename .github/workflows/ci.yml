@@ -1,0 +1,60 @@
+name: CI
+
+on:
+  push:
+    branches: [main, "claude/**"]
+  pull_request:
+
+jobs:
+  build-and-selftest:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: 8.0.x
+
+      - name: Codec sinh sẵn còn khớp model (fomoxac --check)
+        run: |
+          chmod +x MyGame.Backend/tools/fomoxac/linux-x64/fomoxac
+          (cd MyGame.Backend/MyGame.Backend && ../tools/fomoxac/linux-x64/fomoxac generate --check)
+          (cd MyGame && ../MyGame.Backend/tools/fomoxac/linux-x64/fomoxac generate --check)
+
+      - name: Build backend
+        run: dotnet build MyGame.Backend/MyGame.Backend/MyGame.Backend.csproj -c Release -p:FomoxaGenerate=false
+
+      - name: Build server pod
+        run: dotnet build MyGame/Server~/MyGame.Server.csproj -c Release
+
+      - name: MockCluster selftest (login, ListRooms, JoinRoom với pod thật)
+        run: ./scripts/run-mock-cluster.sh --selftest
+
+  lint-scripts-and-manifests:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Cú pháp script bash
+        run: |
+          for f in scripts/*.sh; do bash -n "$f" && echo "ok $f"; done
+
+      - name: YAML manifests parse được
+        run: |
+          pip install pyyaml
+          python3 - <<'PY'
+          import glob, yaml
+          for f in sorted(glob.glob("deploy/k8s/*.yaml")):
+              docs = [d for d in yaml.safe_load_all(open(f)) if d]
+              print("ok", f, len(docs), "doc")
+          PY
+
+      - name: main.lua khớp ConfigMap trong nakama.yaml
+        run: |
+          python3 - <<'PY'
+          import yaml
+          docs = list(yaml.safe_load_all(open("deploy/k8s/nakama.yaml")))
+          lua = [d for d in docs if d and d.get("kind") == "ConfigMap"][0]["data"]["main.lua"]
+          assert lua.strip() == open("deploy/nakama/modules/main.lua").read().strip(), "main.lua lệch ConfigMap"
+          print("ok")
+          PY

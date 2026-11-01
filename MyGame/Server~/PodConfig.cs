@@ -48,6 +48,11 @@ namespace MyGame.Server
 
         public string KeyFile { get; private set; } = "";
 
+        /// <summary>host:port cổng pod của backend (9602). Rỗng = không báo số người về backend.</summary>
+        public string BackendAddress { get; private set; } = "";
+
+        public string BackendKeyFile { get; private set; } = "";
+
         public static PodConfig Read(string[] argv)
         {
             var config = new PodConfig();
@@ -96,6 +101,13 @@ namespace MyGame.Server
             if (config.KeyFile.Length == 0)
             {
                 throw new PodConfigException("POD_KEY_FILE chua duoc dat (file key pod do gen-keys.ps1 sinh)");
+            }
+
+            config.BackendAddress = config.Value("backend", "FOMOXA_BACKEND", "");
+            config.BackendKeyFile = config.Value("backend-key", "POD_BACKEND_KEY_FILE", "");
+            if (config.BackendAddress.Length > 0 && config.BackendKeyFile.Length == 0)
+            {
+                throw new PodConfigException("--backend can kem --backend-key (hoac POD_BACKEND_KEY_FILE)");
             }
 
             return config;

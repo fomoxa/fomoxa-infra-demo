@@ -31,6 +31,13 @@ spec:
       containers:
         - name: gateway
           image: fomoxa-gateway:latest
+          resources:
+            requests: { cpu: "50m", memory: "64Mi" }
+            limits: { cpu: "500m", memory: "192Mi" }
+          securityContext:
+            allowPrivilegeEscalation: false
+            capabilities: { drop: ["ALL"] }
+            seccompProfile: { type: RuntimeDefault }
           imagePullPolicy: IfNotPresent
           args: ["/config/gateway.toml"]
           ports:
