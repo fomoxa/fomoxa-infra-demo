@@ -5,7 +5,7 @@ Tài liệu này gom các tính năng thêm sau P6. Phần "Đã kiểm chứng 
 ## 1. Gameplay: leo bục
 
 - 18 bục xếp xoắn ốc quanh tâm sàn, mỗi bục cao hơn bục trước 1,4 m (xem `MyGame/Assets/Network/Models/Course.cs`).
-- Điều khiển: WASD / mũi tên, **Space** để nhảy. Bục là "một chiều": nhảy xuyên từ dưới lên được và đáp lên mặt trên, nhưng đi ngang từ bên cạnh thì bị chặn.
+- Điều khiển: WASD / mũi tên (theo hướng camera), **Space** để nhảy, chuột phải hoặc Q / E để xoay camera. Đang chơi thì HUD **ẩn**; **Esc / Tab** mở menu + bảng điểm + nút thoát phòng. Bục là "một chiều": nhảy xuyên từ dưới lên được và đáp lên mặt trên, nhưng đi ngang từ bên cạnh thì bị chặn.
 - Điểm = chỉ số bục cao nhất đã đứng lên (số bậc). Bảng điểm xếp hạng theo phòng hiện trong HUD; **kỷ lục cá nhân** (số bậc cao nhất từ trước tới nay) và **số trận** lưu trong hồ sơ.
 - Server là bên tính vật lý. `Course.Simulate` dùng chung cho `Player.cs` (Unity, chế độ Host) và `PlayerEntity.cs` (server console) nên hai bên cho cùng kết quả.
 - Luồng điểm: pod → `PodGate.ReportScores` (cổng 9602 của backend) → backend lưu kỷ lục → client hỏi `Lobby.Scoreboard`.

@@ -26,11 +26,26 @@ namespace MyGame.Network
         private VisualElement inviteFriends;
         private int builtBoard = -1;
         private int builtSocial = -1;
+        private VisualElement card;
+        private Label hint;
         private string lastSignature = "";
+
+        // Đang chơi thì ẩn HUD để phím Space (nhảy) không bấm nhầm nút. Esc / Tab mở menu + bảng điểm.
+        private bool menuOpen;
+        private bool wasRunning;
+        private float hintUntil;
+        private bool lastVisible = true;
 
         private void OnEnable()
         {
             VisualElement root = GetComponent<UIDocument>().rootVisualElement;
+            root.pickingMode = PickingMode.Ignore;
+            card = root.Q<VisualElement>("hud-card");
+            hint = root.Q<Label>("hud-hint");
+            hint.pickingMode = PickingMode.Ignore;
+
+            // Nút không nhận focus bàn phím: Space / Enter không kích hoạt nút nào (chuột vẫn bấm bình thường).
+            root.Query<Button>().ForEach(button => button.focusable = false);
             matchPanel = root.Q<VisualElement>("match-panel");
             devPanel = root.Q<VisualElement>("dev-panel");
             matchTitle = root.Q<Label>("match-title");
@@ -52,6 +67,7 @@ namespace MyGame.Network
                 UnityEngine.SceneManagement.SceneManager.LoadSceneAsync(MatchSession.LobbyScene);
             };
             lastSignature = "";
+            lastVisible = true;
             builtBoard = builtSocial = -1;
         }
 
@@ -63,6 +79,34 @@ namespace MyGame.Network
             }
 
             bool running = launcher.ClientRunning || launcher.ServerRunning;
+
+            if (running && !wasRunning)
+            {
+                menuOpen = false;
+                hintUntil = Time.unscaledTime + 10f;
+            }
+
+            wasRunning = running;
+            if (running && (Input.GetKeyDown(KeyCode.Escape) || Input.GetKeyDown(KeyCode.Tab)))
+            {
+                menuOpen = !menuOpen;
+            }
+
+            // Đang chơi: ẩn cả HUD trừ khi mở menu. Chưa chơi (đang kết nối / dev): hiện để thấy trạng thái và lỗi.
+            bool visible = !running || menuOpen;
+            if (visible != lastVisible)
+            {
+                lastVisible = visible;
+                card.style.display = visible ? DisplayStyle.Flex : DisplayStyle.None;
+                if (!visible)
+                {
+                    // Bỏ focus còn sót để chắc chắn không phím nào kích hoạt phần tử ẩn.
+                    GetComponent<UIDocument>().rootVisualElement.panel?.focusController?.focusedElement?.Blur();
+                }
+            }
+
+            hint.style.display = running && !menuOpen && Time.unscaledTime < hintUntil ? DisplayStyle.Flex : DisplayStyle.None;
+
             RoomJoiner joiner = RoomJoiner.Instance;
             string notice = joiner != null ? joiner.Status ?? "" : "";
             bool error = joiner != null && joiner.IsError;
@@ -70,7 +114,7 @@ namespace MyGame.Network
             string summary = running ? launcher.ConnectionSummary + "|" + launcher.PodSummary : "";
             int boardVersion = joiner != null ? joiner.BoardVersion : 0;
             int socialVersion = joiner != null ? joiner.SocialVersion : 0;
-            string signature = $"{running}|{MatchSession.FromLobby}|{MatchSession.Room}|{summary}|{notice}|{error}|{boardVersion}|{socialVersion}";
+            string signature = $"{running}|{menuOpen}|{MatchSession.FromLobby}|{MatchSession.Room}|{summary}|{notice}|{error}|{boardVersion}|{socialVersion}";
             if (signature == lastSignature)
             {
                 return;

@@ -2,6 +2,7 @@
     <Style src="Lobby.uss" />
     <Style src="MatchHud.uss" />
     <ui:VisualElement name="root" class="root hud-root">
+        <ui:Label name="hud-hint" text="Esc / Tab: menu và bảng điểm  ·  Space: nhảy  ·  Chuột phải hoặc Q / E: xoay camera" class="hud-hint" />
         <ui:VisualElement name="hud-card" class="card hud-card">
             <!-- Đang trong trận -->
             <ui:VisualElement name="match-panel" class="panel">
