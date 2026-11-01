@@ -1,5 +1,7 @@
 # 01 - Chuẩn bị môi trường (Ubuntu / WSL2)
 
+English version: [en/01-PREPARE-ENVIRONMENT.md](en/01-PREPARE-ENVIRONMENT.md)
+
 Mục tiêu của tài liệu này: máy của bạn có đủ công cụ (`docker`, `kubectl`, `k3d`, `helm`, `openssl`, `git`, `.NET SDK 8`) và đã clone repo.
 Xong tài liệu này, bạn chạy được [02 - cụm giả](02-CHAY-NHANH-CUM-GIA.md) và [03 - cụm Kubernetes](03-TRIEN-KHAI-K8S.md).
 

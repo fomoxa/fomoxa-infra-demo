@@ -6,7 +6,7 @@ Hạ tầng game server nhiều người chơi phân tán (Distributed Multiplay
 
 ## Tài liệu hướng dẫn & Kế hoạch
 
-- 📖 **[Tài liệu từng bước (docs/README.md)](docs/README.md)**: hướng dẫn chi tiết bằng lệnh bash copy-paste được, từ máy trắng đến game chạy: [chuẩn bị môi trường](docs/01-CHUAN-BI-MOI-TRUONG.md) → [cụm giả](docs/02-CHAY-NHANH-CUM-GIA.md) → [triển khai Kubernetes](docs/03-TRIEN-KHAI-K8S.md) → [client Unity](docs/04-CLIENT-UNITY.md) → [vận hành](docs/05-VAN-HANH.md); kèm [kiểm thử](docs/06-KIEM-THU.md), [xử lý sự cố](docs/07-XU-LY-SU-CO.md), [tham khảo](docs/08-THAM-KHAO.md).
+- 📖 **[Tài liệu từng bước (docs/README.md)](docs/README.md)** (English: [docs/en/README.md](docs/en/README.md)): hướng dẫn chi tiết bằng lệnh bash copy-paste được, từ máy trắng đến game chạy: [chuẩn bị môi trường](docs/01-CHUAN-BI-MOI-TRUONG.md) → [cụm giả](docs/02-CHAY-NHANH-CUM-GIA.md) → [triển khai Kubernetes](docs/03-TRIEN-KHAI-K8S.md) → [client Unity](docs/04-CLIENT-UNITY.md) → [vận hành](docs/05-VAN-HANH.md); kèm [kiểm thử](docs/06-KIEM-THU.md), [xử lý sự cố](docs/07-XU-LY-SU-CO.md), [tham khảo](docs/08-THAM-KHAO.md).
 - 📋 **[Kế hoạch phát triển (PLAN.md)](PLAN.md)**: Toàn bộ lộ trình từ P1 đến P6 (kiến trúc, quyết định kỹ thuật, DoD, và nhật ký các bước).
 - 🧪 **[Cụm giả (tools/MockCluster)](tools/MockCluster/README.md)**: chạy thử cả hệ thống trên một máy, không cần K8s: `./scripts/run-mock-cluster.sh`.
 - 🎮 **[Dự án Unity Game Client (MyGame/README.md)](MyGame/README.md)**: Hướng dẫn về scene Unity, cấu trúc prefab, package dependencies và chạy client.

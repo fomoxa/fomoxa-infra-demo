@@ -1,5 +1,7 @@
 # 07 - Xử lý sự cố
 
+English version: [en/07-TROUBLESHOOTING.md](en/07-TROUBLESHOOTING.md)
+
 Cách dùng: tìm **triệu chứng** của bạn → đọc **nguyên nhân** → chạy **cách xử lý**. Nếu chưa biết lỗi nằm ở đâu, chạy [bộ lệnh chẩn đoán nhanh](#bộ-lệnh-chẩn-đoán-nhanh) trước.
 
 Mục lục: [Chẩn đoán nhanh](#bộ-lệnh-chẩn-đoán-nhanh) · [Docker, k3d, kubectl](#1-docker-k3d-kubectl) · [Pod và image](#2-pod-và-image) · [Agones và game server](#3-agones-và-game-server) ·

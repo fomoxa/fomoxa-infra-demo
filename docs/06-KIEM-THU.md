@@ -1,5 +1,7 @@
 # 06 - Kiểm thử
 
+English version: [en/06-TESTING.md](en/06-TESTING.md)
+
 Danh sách các bài kiểm thử của repo: mỗi bài **kiểm cái gì**, **chạy thế nào (lệnh tay + script)**, **kết quả mong đợi**, và **cái gì chưa được kiểm**.
 Tất cả bài dưới đây có kết quả đánh dấu *(thật)* đã được chạy khi viết tài liệu, trừ khi ghi khác.
 

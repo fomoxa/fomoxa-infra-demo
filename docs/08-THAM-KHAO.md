@@ -1,5 +1,7 @@
 # 08 - Tham khảo
 
+English version: [en/08-REFERENCE.md](en/08-REFERENCE.md)
+
 Tra cứu nhanh: cổng và dịch vụ, cấu hình `directory`/`gateway`, secrets, biến môi trường, giao diện RPC, hằng số gameplay, và **bảng đối chiếu từng script với lệnh tay tương đương**.
 
 Mục lục: [1. Cổng và dịch vụ](#1-cổng-và-dịch-vụ) · [2. Cấu hình directory và gateway](#2-cấu-hình-directory-và-gateway) · [3. Secrets](#3-secrets) ·

@@ -1,5 +1,7 @@
 # 03 - Triển khai cụm Kubernetes (k3d + Agones) từng bước
 
+English version: [en/03-DEPLOY-KUBERNETES.md](en/03-DEPLOY-KUBERNETES.md)
+
 Tài liệu này dựng **cụm thật** trên máy bạn: Postgres, Nakama, directory, gateway, backend và Fleet game server của Agones, chạy trong k3d.
 Làm tay từng bước để hiểu; cuối tài liệu có đường tắt **một lệnh** (`./scripts/k8s-up.sh --build`) và bảng cho biết script đó đã làm những bước nào.
 

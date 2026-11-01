@@ -1,5 +1,7 @@
 # Tài liệu Fomoxa - từ máy trắng đến game chạy được
 
+English version: [en/README.md](en/README.md)
+
 Bộ tài liệu này hướng dẫn **từng bước, bằng lệnh bash copy-paste được**, để dựng toàn bộ hạ tầng game server nhiều người chơi
 (Fomoxa + Nakama + Agones trên Kubernetes) và chạy client Unity kết nối vào. Người chưa biết Kubernetes vẫn làm theo được.
 

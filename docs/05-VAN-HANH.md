@@ -1,5 +1,7 @@
 # 05 - Vận hành cụm
 
+English version: [en/05-OPERATIONS.md](en/05-OPERATIONS.md)
+
 Các việc hằng ngày và các tính năng vận hành: xem log, scale, cập nhật, tắt an toàn (drain), tài khoản, TLS, khoá Nakama, giám sát, autoscaling, NetworkPolicy, sao lưu.
 Giả định bạn đã có cụm chạy theo [03](03-TRIEN-KHAI-K8S.md) và đang đứng ở `~/fomoxa-infra-demo` với `kubectl config use-context k3d-fomoxa`.
 

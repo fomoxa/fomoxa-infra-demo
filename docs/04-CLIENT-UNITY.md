@@ -1,5 +1,7 @@
 # 04 - Client Unity: mở project, dựng scene, build, chạy
 
+English version: [en/04-UNITY-CLIENT.md](en/04-UNITY-CLIENT.md)
+
 Tài liệu này hướng dẫn mở project Unity trong repo (`MyGame/`), dựng hai scene **Lobby** và **Game**, build bản chạy Windows và kết nối vào cụm
 ([02 - cụm giả](02-CHAY-NHANH-CUM-GIA.md) hoặc [03 - cụm Kubernetes](03-TRIEN-KHAI-K8S.md)).
 

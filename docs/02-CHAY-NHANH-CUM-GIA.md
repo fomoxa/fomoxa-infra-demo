@@ -1,5 +1,7 @@
 # 02 - Chạy nhanh bằng cụm giả (không cần Kubernetes)
 
+English version: [en/02-QUICKSTART-MOCK-CLUSTER.md](en/02-QUICKSTART-MOCK-CLUSTER.md)
+
 **Cụm giả** (`tools/MockCluster`) dựng trên **một máy, không Docker, không k3d, không Agones, không Nakama** đủ những gì client Unity cần:
 backend, directory và các game server thật. Dùng để: thử client, phát triển tính năng, chạy kiểm thử nhanh, hoặc xem hệ thống hoạt động trước khi dựng cụm thật.
 
