@@ -55,6 +55,9 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
+      - name: Liên kết nội bộ trong docs/ còn đúng
+        run: python3 scripts/check-docs-links.py
+
       - name: Cú pháp script bash
         run: |
           for f in scripts/*.sh; do bash -n "$f" && echo "ok $f"; done
