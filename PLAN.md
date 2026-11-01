@@ -28,11 +28,12 @@ Cập nhật: đã clone repos về `D:\Documents\fomoxa`, đã kiểm tra môi 
 | `backend` | Backend template gốc (bản `MyGame.Backend` là clone của nó) | ✅ clone, git ignore |
 | `gateway` | **`fomoxa-directory` + `fomoxa-gateway`** (Rust, tag `0.2.0`) | ✅ clone, git ignore |
 | `unity-docs` | Docs offline, có bản tiếng Việt ở `unity-docs/vi/` | ✅ clone, git ignore |
-| `implementation-guide` | Mô tả handshake/transport ở mức khái niệm — chỉ để tra khi debug sâu | ⚪ còn, xóa được |
 
 Đã xóa: `RedRunner`, `networking-rapier`, `unity-codecs`, `fomoxac`, `csharp`,
-`attributes-csharp`, `csharp-websocket`, và `specification` — wire format đã
-được fomoxac + codec sinh sẵn thể hiện, không cần đọc RFC khi làm P1–P3.
+`attributes-csharp`, `csharp-websocket`, `specification` và `implementation-guide`
+— hai repo cuối chỉ là tài liệu khái niệm, không build/runtime nào đọc; fomoxac +
+codec sinh sẵn đã là bản thực thi của wire format. Cần lại thì clone từ
+`https://github.com/fomoxa/<tên-repo>`.
 
 Bỏ qua (không cần): `rust`, `go`, `typescript`, `c`, `interop`, `fomoxa-codec-bench`, `fomoxa-example-game`, `attributes-rust`, `fomoxa.github.io`, `.github`, `community`.
 
