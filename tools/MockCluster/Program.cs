@@ -384,15 +384,26 @@ namespace MockCluster
                     await gate.ReportScoresAsync(new ScoreReport { Room = "arena:1", Entries = { new PodScore { Player = me, Steps = steps }, new PodScore { Player = "guestx", Steps = 1 } } }, Within);
 
                 await Report(3);
-                await Task.Delay(500);
+                // Pod reports are processed in the background (they read and write storage), so poll for up to 10 seconds.
                 ScoreboardState board = await lobby.ScoreboardAsync(new ScoreboardRequest { Room = "arena:1" }, Within);
+                for (int attempt = 0; attempt < 40 && board.Entries.Count != 2; attempt++)
+                {
+                    await Task.Delay(250);
+                    board = await lobby.ScoreboardAsync(new ScoreboardRequest { Room = "arena:1" }, Within);
+                }
+
                 Check("Bang diem xep hang", board.Entries.Count == 2 && board.Entries[0].Name == me && board.Entries[0].Steps == 3,
                     $"({string.Join(", ", board.Entries.Select(e => $"{e.Name}:{e.Steps}/{e.Best}"))})");
 
                 await Report(2);
                 await Report(5);
-                await Task.Delay(500);
                 PlayerProfile profile = await lobby.GetProfileAsync(new ProfileRequest(), Within);
+                for (int attempt = 0; attempt < 40 && profile.BestSteps != 5; attempt++)
+                {
+                    await Task.Delay(250);
+                    profile = await lobby.GetProfileAsync(new ProfileRequest(), Within);
+                }
+
                 Check("Ky luc luu lai la bac cao nhat", profile.BestSteps == 5 && profile.Matches >= 1, $"(best={profile.BestSteps}, matches={profile.Matches})");
 
                 // --- bạn bè + lời mời
