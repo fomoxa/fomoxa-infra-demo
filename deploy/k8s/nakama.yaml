@@ -1,0 +1,279 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: nakama-modules
+  namespace: fomoxa
+data:
+  main.lua: |
+    -- Module cho Nakama: ghép 2 người chơi vào cùng một room rồi phát ticket.
+    --
+    -- Nakama nạp file này như một script (không có InitModule); RPC đăng ký khi nạp.
+    -- Chạy trong Nakama, mount từ deploy/nakama -> /nakama/data.
+    --
+    -- RPC cho client (Bearer token):
+    --   find_match  { "room": "arena:1" }  -> { status = "waiting" }
+    --                                        { status = "matched", room, ticket, exp }
+    --   poll_match  { "room": "arena:1" }  -> như trên
+    -- RPC cho backend (http_key), không lộ ra client:
+    --   verify_ticket { "ticket": "...", "room": "arena:1", "user_id": "..." }
+    --     -> { ok = true, room = "...", exp = <unix> }
+
+    local nk = require("nakama")
+
+    local SYSTEM = "00000000-0000-0000-0000-000000000000"
+    local QUEUE = "match_queue"
+    local RESULT = "match_result"
+    local TICKET = "match_ticket"
+    local TICKET_TTL = 120
+    local QUEUE_TTL = 30
+
+    local function decode(payload)
+        if payload == nil or payload == "" then
+            return {}
+        end
+        local ok, value = pcall(nk.json_decode, payload)
+        if not ok then
+            error({ message = "payload phai la JSON", code = 3 })
+        end
+        return value
+    end
+
+    local function respond(value)
+        return nk.json_encode(value)
+    end
+
+    local function read_one(collection, key)
+        local records = nk.storage_read({ { collection = collection, key = key, user_id = SYSTEM } })
+        if records == nil or #records == 0 then
+            return nil
+        end
+        return records[1]
+    end
+
+    local function write_one(collection, key, value, version)
+        local record = {
+            collection = collection,
+            key = key,
+            user_id = SYSTEM,
+            value = value,
+            permission_read = 1,
+            permission_write = 1,
+        }
+
+        if version ~= nil and version ~= "" then
+            record.version = version
+        end
+
+        nk.storage_write({ record })
+    end
+
+    local function ticket_for(room, first, second)
+        local ticket = nk.uuid_v4()
+        local exp = os.time() + TICKET_TTL
+
+        write_one(TICKET, ticket, { room = room, users = { first, second }, exp = exp }, "")
+
+        local result = { status = "matched", room = room, ticket = ticket, exp = exp }
+        write_one(RESULT, room .. ":" .. first, result, "")
+        write_one(RESULT, room .. ":" .. second, result, "")
+
+        return result
+    end
+
+    local function find_match(ctx, payload)
+        local data = decode(payload)
+        local room = data.room or "arena:1"
+        local user = ctx.user_id
+        local stamp = os.time()
+
+        for _ = 1, 5 do
+            local record = read_one(QUEUE, room)
+            local waiting = nil
+
+            if record and record.value and record.value.user_id and record.value.user_id ~= "" then
+                if stamp - (record.value.since or 0) <= QUEUE_TTL then
+                    waiting = record.value.user_id
+                end
+            end
+
+            local version = record and record.version or ""
+
+            if waiting == user then
+                return respond({ status = "waiting", room = room })
+            end
+
+            if waiting then
+                local cleared, clearError = pcall(write_one, QUEUE, room, { user_id = "", since = 0 }, version)
+                if cleared then
+                    local result = ticket_for(room, waiting, user)
+                    nk.logger_info("match: " .. waiting .. " + " .. user .. " -> " .. result.ticket)
+                    return respond(result)
+                end
+
+                nk.logger_info("find_match: xoa queue loi: " .. tostring(clearError))
+            else
+                local queued, queueError = pcall(write_one, QUEUE, room, { user_id = user, since = stamp }, version)
+                if queued then
+                    return respond({ status = "waiting", room = room })
+                end
+
+                nk.logger_info("find_match: ghi queue loi: " .. tostring(queueError))
+            end
+        end
+
+        error({ message = "match_queue ban, thu lai", code = 14 })
+    end
+
+    local function poll_match(ctx, payload)
+        local data = decode(payload)
+        local room = data.room or "arena:1"
+        local record = read_one(RESULT, room .. ":" .. ctx.user_id)
+
+        if record and record.value then
+            if record.value.exp and record.value.exp < os.time() then
+                nk.storage_delete({ { collection = RESULT, key = room .. ":" .. ctx.user_id, user_id = SYSTEM } })
+                return respond({ status = "waiting", room = room })
+            end
+
+            return respond(record.value)
+        end
+
+        return respond({ status = "waiting", room = room })
+    end
+
+    local function verify_ticket(ctx, payload)
+        local data = decode(payload)
+
+        if data.ticket == nil or data.user_id == nil then
+            return respond({ ok = false, message = "can ticket va user_id" })
+        end
+
+        local record = read_one(TICKET, data.ticket)
+        if record == nil then
+            return respond({ ok = false, message = "ticket khong ton tai" })
+        end
+
+        local value = record.value
+        if value.exp == nil or value.exp < os.time() then
+            return respond({ ok = false, message = "ticket het han" })
+        end
+
+        if data.room and value.room ~= data.room then
+            return respond({ ok = false, message = "ticket cua room khac" })
+        end
+
+        local member = false
+        if value.users then
+            for _, uid in ipairs(value.users) do
+                if uid == data.user_id then
+                    member = true
+                end
+            end
+        end
+
+        if not member then
+            return respond({ ok = false, message = "ticket khong thuoc user nay" })
+        end
+
+        return respond({ ok = true, room = value.room, exp = value.exp })
+    end
+
+    local function reset_match(ctx, payload)
+        local data = decode(payload)
+        local room = data.room or "arena:1"
+        nk.storage_delete({ { collection = QUEUE, key = room, user_id = SYSTEM } })
+        return respond({ ok = true })
+    end
+
+    local function health(ctx, payload)
+        return respond({ ok = true, now = os.time() })
+    end
+
+    nk.register_rpc(find_match, "find_match")
+    nk.register_rpc(poll_match, "poll_match")
+    nk.register_rpc(verify_ticket, "verify_ticket")
+    nk.register_rpc(reset_match, "reset_match")
+    nk.register_rpc(health, "health")
+
+    nk.logger_info("fomoxa match module da nap")
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: nakama
+  namespace: fomoxa
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: nakama
+  template:
+    metadata:
+      labels:
+        app: nakama
+    spec:
+      initContainers:
+        - name: migrate
+          image: registry.heroiclabs.com/heroiclabs/nakama:3.41.0
+          command:
+            - /nakama/nakama
+            - migrate
+            - up
+            - --database.address
+            - postgres:localdb@postgres:5432/nakama
+      containers:
+        - name: nakama
+          image: registry.heroiclabs.com/heroiclabs/nakama:3.41.0
+          args:
+            - --name
+            - fomoxa
+            - --database.address
+            - postgres:localdb@postgres:5432/nakama
+            - --logger.level
+            - INFO
+            - --session.token_expiry_sec
+            - "7200"
+            - --console.username
+            - admin
+            - --console.password
+            - admin
+          ports:
+            - containerPort: 7350
+              name: api
+            - containerPort: 7351
+              name: console
+          volumeMounts:
+            - name: modules
+              mountPath: /nakama/data/modules
+              readOnly: true
+          readinessProbe:
+            exec:
+              command: ["/nakama/nakama", "healthcheck"]
+            initialDelaySeconds: 10
+            periodSeconds: 5
+          livenessProbe:
+            exec:
+              command: ["/nakama/nakama", "healthcheck"]
+            initialDelaySeconds: 20
+            periodSeconds: 10
+      volumes:
+        - name: modules
+          configMap:
+            name: nakama-modules
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: nakama
+  namespace: fomoxa
+spec:
+  selector:
+    app: nakama
+  ports:
+    - name: api
+      port: 7350
+      targetPort: 7350
+    - name: console
+      port: 7351
+      targetPort: 7351
+

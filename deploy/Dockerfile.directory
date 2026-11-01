@@ -17,3 +17,4 @@ EXPOSE 9500 9501
 
 ENTRYPOINT ["fomoxa-directory"]
 CMD ["directory.toml"]
+

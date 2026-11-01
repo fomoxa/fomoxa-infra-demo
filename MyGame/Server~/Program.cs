@@ -134,9 +134,16 @@ namespace MyGame.Server
                     Console.WriteLine($"[Pod] listening on udp {runtime.ServerManager.Port}");
                 }
 
-                foreach (string room in config.Rooms)
+                if (config.ClaimOne)
                 {
-                    _ = AcquireRoom(room);
+                    _ = AcquireFirstAvailable(config.Rooms);
+                }
+                else
+                {
+                    foreach (string room in config.Rooms)
+                    {
+                        _ = AcquireRoom(room);
+                    }
                 }
             };
 
@@ -154,6 +161,42 @@ namespace MyGame.Server
             };
 
             pod.OnError += error => Console.Error.WriteLine("[Pod] " + error);
+
+            async Task AcquireFirstAvailable(IReadOnlyList<string> candidateRooms)
+            {
+                while (!draining && !stopping.IsSet)
+                {
+                    foreach (string candidate in candidateRooms)
+                    {
+                        if (draining || stopping.IsSet)
+                        {
+                            return;
+                        }
+
+                        try
+                        {
+                            await pod.AcquireRoom(candidate);
+                            Console.WriteLine($"[Pod] claimed room from pool: {candidate}");
+                            await agones.OnRoomAcquiredAsync(candidate);
+                            return;
+                        }
+                        catch (Exception error)
+                        {
+                            Console.WriteLine($"[Pod] pool candidate {candidate} busy: {error.Message}");
+                        }
+                    }
+
+                    // Tạm thời các room trong pool đều bận, thử lại sau 2 giây
+                    try
+                    {
+                        await Task.Delay(2000);
+                    }
+                    catch
+                    {
+                        return;
+                    }
+                }
+            }
 
             async Task AcquireRoom(string room)
             {

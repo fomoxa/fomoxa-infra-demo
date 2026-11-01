@@ -20,3 +20,4 @@ COPY --from=build --chown=app:app /app .
 EXPOSE 7778/udp
 
 ENTRYPOINT ["dotnet", "MyGame.Server.dll"]
+

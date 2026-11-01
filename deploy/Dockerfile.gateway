@@ -17,3 +17,4 @@ EXPOSE 7777/udp
 
 ENTRYPOINT ["fomoxa-gateway"]
 CMD ["gateway.toml"]
+

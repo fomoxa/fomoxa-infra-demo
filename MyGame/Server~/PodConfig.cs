@@ -44,6 +44,8 @@ namespace MyGame.Server
 
         public bool Agones { get; private set; }
 
+        public bool ClaimOne { get; private set; }
+
         public string KeyFile { get; private set; } = "";
 
         public static PodConfig Read(string[] argv)
@@ -71,6 +73,7 @@ namespace MyGame.Server
             config.Trace = config.Flag("trace", "FOMOXA_TRACE", false);
             bool agonesDefault = !string.IsNullOrEmpty(Environment.GetEnvironmentVariable("AGONES_SDK_GRPC_PORT"));
             config.Agones = config.Flag("agones", "FOMOXA_AGONES", agonesDefault);
+            config.ClaimOne = config.Flag("claim-one", "FOMOXA_CLAIM_ONE", false);
 
             var rooms = new List<string>();
             foreach (string room in config.Value("room", "FOMOXA_ROOM", "arena:1").Split(','))

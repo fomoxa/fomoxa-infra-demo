@@ -1,0 +1,100 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: directory-config
+  namespace: fomoxa
+data:
+  directory.toml: |
+    listen = "0.0.0.0:9500"
+    admin_listen = "0.0.0.0:9501"
+
+    # Client kết nối gateway qua k3d host port -> 127.0.0.1:7777
+    public_address = "127.0.0.1:7777"
+
+    grace_seconds = 30
+    report_interval_seconds = 5
+    drain_seconds = 300
+    ticket_seconds = 30
+
+    [keys]
+    backend = { file = "/secrets/directory/backend" }
+    pod     = { file = "/secrets/directory/pod" }
+    gateway = { file = "/secrets/directory/gateway" }
+    admin   = { file = "/secrets/directory/admin" }
+    root    = { file = "/secrets/directory/root" }
+
+    [[placement]]
+    filter = "pod.version == client.version"
+
+    [[placement]]
+    prefer = "pod.region == client.region"
+    weight = 10
+
+    [[placement]]
+    sort = "packed"
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: directory
+  namespace: fomoxa
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: directory
+  template:
+    metadata:
+      labels:
+        app: directory
+    spec:
+      containers:
+        - name: directory
+          image: fomoxa-directory:latest
+          imagePullPolicy: IfNotPresent
+          args: ["/config/directory.toml"]
+          ports:
+            - name: directory
+              containerPort: 9500
+            - name: admin
+              containerPort: 9501
+          volumeMounts:
+            - name: config
+              mountPath: /config
+              readOnly: true
+            - name: secrets
+              mountPath: /secrets/directory
+              readOnly: true
+          readinessProbe:
+            tcpSocket:
+              port: 9500
+            initialDelaySeconds: 2
+            periodSeconds: 3
+          livenessProbe:
+            tcpSocket:
+              port: 9500
+            initialDelaySeconds: 5
+            periodSeconds: 5
+      volumes:
+        - name: config
+          configMap:
+            name: directory-config
+        - name: secrets
+          secret:
+            secretName: fomoxa-directory-keys
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: directory
+  namespace: fomoxa
+spec:
+  selector:
+    app: directory
+  ports:
+    - name: directory
+      port: 9500
+      targetPort: 9500
+    - name: admin
+      port: 9501
+      targetPort: 9501

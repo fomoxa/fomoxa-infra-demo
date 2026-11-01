@@ -1,0 +1,27 @@
+listen = "0.0.0.0:9500"
+admin_listen = "0.0.0.0:9501"
+
+# Client thay gateway qua k3d host port -> 127.0.0.1:7777
+public_address = "127.0.0.1:7777"
+
+grace_seconds = 30
+report_interval_seconds = 5
+drain_seconds = 300
+ticket_seconds = 30
+
+[keys]
+backend = { file = "/secrets/directory/backend" }
+pod     = { file = "/secrets/directory/pod" }
+gateway = { file = "/secrets/directory/gateway" }
+admin   = { file = "/secrets/directory/admin" }
+root    = { file = "/secrets/directory/root" }
+
+[[placement]]
+filter = "pod.version == client.version"
+
+[[placement]]
+prefer = "pod.region == client.region"
+weight = 10
+
+[[placement]]
+sort = "packed"

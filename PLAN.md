@@ -324,7 +324,7 @@ không dồn vào 1 room) — làm ở P5.5, kèm test ≥4 client.
 | 1 | Vendor source 2 package vào `server-deps/`; tạo `MyGame/Server~` (csproj, `PodConfig`, `PodTransport`, `PlayerEntity`, `Program`); `-Server console` cho `start-cluster.ps1`/`run-pod.ps1`; `scripts/test-console-server.ps1` | `P5: console server chay local` | ✅ |
 | 2 | Wrapper Agones SDK (`Ready/Health/Allocate/Shutdown`) + `OnDrain`/`OnDrainDeadline`, no-op ngoài cluster | `P5: Agones lifecycle` | ✅ |
 | 3 | 3 Dockerfile: game server, directory, gateway | `P5: dong goi image` | ✅ |
-| 4 | `deploy/k8s/`: manifest + `directory.toml`/`gateway.toml` bản K8s + script sinh Secret | `P5: manifest k8s + agones fleet` | |
+| 4 | `deploy/k8s/`: manifest + `directory.toml`/`gateway.toml` bản K8s + script sinh Secret | `P5: manifest k8s + agones fleet` | ✅ |
 | 5 | `scripts/k8s-up.ps1`, `k8s-down.ps1`, `test-p5.ps1` | `P5: script cum k8s` | |
 | 6 | Cập nhật `PLAN.md` + `MyGame/README.md` | `P5: tai lieu` | |
 
@@ -382,6 +382,18 @@ Ghi chú đã gặp và cách xử lý:
 - `deploy/Dockerfile.gateway`: multi-stage build cho `fomoxa-gateway` trên `rust:1.88-bookworm` và runtime `debian:bookworm-slim`, expose 7777/udp.
 - `.dockerignore`: lọc bỏ các file rác, `.git`, cache Unity, và secrets.
 - `scripts/build-images.ps1`: script tiện ích tự động đóng gói cả 4 images (`fomoxa-server`, `fomoxa-directory`, `fomoxa-gateway`, `fomoxa-backend`).
+
+##### Bước 4 — đã xong
+
+- `deploy/k8s/namespace.yaml`: namespace `fomoxa`.
+- `deploy/k8s/postgres.yaml`: PVC 1Gi + Deployment `postgres:15` + Service ClusterIP 5432.
+- `deploy/k8s/nakama.yaml`: ConfigMap nhúng `main.lua` matchmaking module + initContainer migrate up + Deployment `nakama:3.41.0` + Service 7350/7351.
+- `deploy/k8s/directory.yaml` & `deploy/k8s/directory.k8s.toml`: ConfigMap + Deployment `fomoxa-directory` + Service 9500/9501.
+- `deploy/k8s/gateway.yaml` & `deploy/k8s/gateway.k8s.toml`: ConfigMap + Deployment `fomoxa-gateway` + Service LoadBalancer UDP 7777.
+- `deploy/k8s/backend.yaml`: Deployment `fomoxa-backend` cấu hình đầy đủ env vars nối directory, nakama + Service LoadBalancer TCP 9600 / WS 9601.
+- `deploy/k8s/fleet.yaml`: Agones Fleet `fomoxa-server` 2 replicas, `terminationGracePeriodSeconds: 360`, `portPolicy: None`, tự động gán Pod IP và claim room trong pool (`arena:1..arena:4`).
+- `MyGame/Server~/PodConfig.cs` & `Program.cs`: thêm hỗ trợ `--claim-one` (`FOMOXA_CLAIM_ONE`) để pod trong Fleet tự nhận 1 room trống trong pool.
+- `scripts/gen-k8s-secrets.ps1`: script tự động sinh K8s secrets `fomoxa-directory-keys`, `fomoxa-backend-keys`, `fomoxa-pod-key`.
 
 
 #### DoD

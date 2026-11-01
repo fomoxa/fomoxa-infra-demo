@@ -1,0 +1,83 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: backend
+  namespace: fomoxa
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: backend
+  template:
+    metadata:
+      labels:
+        app: backend
+    spec:
+      containers:
+        - name: backend
+          image: fomoxa-backend:latest
+          imagePullPolicy: IfNotPresent
+          env:
+            - name: Fomoxa__Directory__Address
+              value: "directory.fomoxa.svc.cluster.local:9500"
+            - name: Fomoxa__Directory__Key__File
+              value: "/secrets/backend/backend"
+            - name: Fomoxa__Pods__Key__File
+              value: "/secrets/backend/backend-pod"
+            - name: Fomoxa__Nakama__Url
+              value: "http://nakama.fomoxa.svc.cluster.local:7350"
+            - name: Fomoxa__Nakama__ServerKey
+              value: "defaultkey"
+            - name: Fomoxa__Nakama__HttpKey
+              value: "defaulthttpkey"
+            - name: Fomoxa__Players__Tcp
+              value: "0.0.0.0:9600"
+            - name: Fomoxa__Players__WebSocket
+              value: "0.0.0.0:9601"
+            - name: Fomoxa__Pods__Tcp
+              value: "0.0.0.0:9602"
+          ports:
+            - name: tcp
+              containerPort: 9600
+            - name: ws
+              containerPort: 9601
+            - name: pods
+              containerPort: 9602
+          volumeMounts:
+            - name: secrets
+              mountPath: /secrets/backend
+              readOnly: true
+          readinessProbe:
+            tcpSocket:
+              port: 9600
+            initialDelaySeconds: 5
+            periodSeconds: 5
+          livenessProbe:
+            tcpSocket:
+              port: 9600
+            initialDelaySeconds: 15
+            periodSeconds: 10
+      volumes:
+        - name: secrets
+          secret:
+            secretName: fomoxa-backend-keys
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: backend
+  namespace: fomoxa
+spec:
+  type: LoadBalancer
+  selector:
+    app: backend
+  ports:
+    - name: tcp
+      port: 9600
+      targetPort: 9600
+    - name: ws
+      port: 9601
+      targetPort: 9601
+    - name: pods
+      port: 9602
+      targetPort: 9602

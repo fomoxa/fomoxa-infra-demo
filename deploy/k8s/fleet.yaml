@@ -1,0 +1,58 @@
+apiVersion: "agones.dev/v1"
+kind: Fleet
+metadata:
+  name: fomoxa-server
+  namespace: fomoxa
+spec:
+  replicas: 2
+  template:
+    spec:
+      ports:
+        - name: default
+          containerPort: 7778
+          protocol: UDP
+          portPolicy: None
+      health:
+        initialDelaySeconds: 10
+        periodSeconds: 5
+        failureThreshold: 3
+      template:
+        spec:
+          terminationGracePeriodSeconds: 360
+          containers:
+            - name: fomoxa-server
+              image: fomoxa-server:latest
+              imagePullPolicy: IfNotPresent
+              env:
+                - name: FOMOXA_DIRECTORY
+                  value: "directory.fomoxa.svc.cluster.local:9500"
+                - name: POD_KEY_FILE
+                  value: "/secrets/pod/pod"
+                - name: POD_IP
+                  valueFrom:
+                    fieldRef:
+                      fieldPath: status.podIP
+                - name: FOMOXA_POD_NAME
+                  valueFrom:
+                    fieldRef:
+                      fieldPath: metadata.name
+                - name: FOMOXA_POD_PORT
+                  value: "7778"
+                - name: FOMOXA_VERSION
+                  value: "1.0"
+                - name: FOMOXA_REGION
+                  value: "local"
+                - name: FOMOXA_AGONES
+                  value: "true"
+                - name: FOMOXA_CLAIM_ONE
+                  value: "true"
+                - name: FOMOXA_ROOM
+                  value: "arena:1,arena:2,arena:3,arena:4"
+              volumeMounts:
+                - name: pod-key
+                  mountPath: /secrets/pod
+                  readOnly: true
+          volumes:
+            - name: pod-key
+              secret:
+                secretName: fomoxa-pod-key

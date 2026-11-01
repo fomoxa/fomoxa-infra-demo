@@ -1,0 +1,7 @@
+listen = "0.0.0.0:7777"
+pod_bind = "0.0.0.0:0"
+directory = "directory.fomoxa.svc.cluster.local:9500"
+retry_seconds = 1
+
+[keys]
+gateway = { file = "/secrets/directory/gateway" }
