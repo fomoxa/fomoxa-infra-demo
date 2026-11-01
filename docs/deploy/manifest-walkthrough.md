@@ -26,7 +26,7 @@ The `*.k8s.toml` files are the source copies of the config embedded in the Confi
 
 Read these once and the rest only differ in detail.
 
-**The identity block.** Every resource starts with:
+The identity block. Every resource starts with:
 
 ```yaml
 apiVersion: apps/v1     # API group; Deployment is apps/v1, Service is v1
@@ -36,7 +36,7 @@ metadata:
   namespace: fomoxa
 ```
 
-**Labels and selectors.** A Deployment finds its pods by label, and so does a Service:
+Labels and selectors. A Deployment finds its pods by label, and so does a Service:
 
 ```yaml
 selector:
@@ -48,9 +48,9 @@ template:
 
 A Service selector (`app: backend`) must match the pod label. If it does not, `kubectl get endpoints` is empty and connections are refused.
 
-**Resources.** `requests` is the reservation used to place the pod on a node, `limits` is the ceiling. Going over the memory limit kills the container (`OOMKilled`). Going over the CPU limit slows it down.
+Resources. `requests` is the reservation used to place the pod on a node, `limits` is the ceiling. Going over the memory limit kills the container (`OOMKilled`). Going over the CPU limit slows it down.
 
-**Container hardening.** `directory`, `gateway`, `backend`, `tls-proxy` and the game server all have (postgres and nakama do not):
+Container hardening. `directory`, `gateway`, `backend`, `tls-proxy` and the game server all have (postgres and nakama do not):
 
 ```yaml
 securityContext:
@@ -59,9 +59,9 @@ securityContext:
   seccompProfile: { type: RuntimeDefault }   # filter syscalls with the runtime default
 ```
 
-**`imagePullPolicy: IfNotPresent`.** Use the image already on the node. The `fomoxa-*:latest` images only exist because you ran `k3d image import`. With the default policy and the `latest` tag, Kubernetes would try to pull from a registry and fail with `ImagePullBackOff`.
+`imagePullPolicy: IfNotPresent`. Use the image already on the node. The `fomoxa-*:latest` images only exist because you ran `k3d image import`. With the default policy and the `latest` tag, Kubernetes would try to pull from a registry and fail with `ImagePullBackOff`.
 
-**Mounting secrets and config.** Always a pair: `volumes` (the source) and `volumeMounts` (the path inside the container), with `readOnly: true`.
+Mounting secrets and config. Always a pair: `volumes` (the source) and `volumeMounts` (the path inside the container), with `readOnly: true`.
 
 ## `namespace.yaml`
 
@@ -84,11 +84,11 @@ Postgres only reads `POSTGRES_PASSWORD` the first time, while the data directory
 
 This is the longest file (475 lines) because it embeds all of `main.lua` in the ConfigMap `nakama-modules`. The rest is short.
 
-**Two copies of `main.lua`.** The original is `deploy/nakama/modules/main.lua` (used by docker compose). The copy in the ConfigMap must be identical, and CI checks that. To change the Lua, edit the original, copy it into the YAML, run `kubectl apply`, then `rollout restart deployment/nakama`.
+Two copies of `main.lua`. The original is `deploy/nakama/modules/main.lua` (used by docker compose). The copy in the ConfigMap must be identical, and CI checks that. To change the Lua, edit the original, copy it into the YAML, run `kubectl apply`, then `rollout restart deployment/nakama`.
 
-**The `migrate` init container.** It runs `nakama migrate up` before the main container to create or update tables. If Postgres is not ready it retries until it passes. The pod shows `Init:0/1`, and `Init:Error` or `Init:CrashLoopBackOff` when something is wrong (read it with `kubectl logs <pod> -c migrate`).
+The `migrate` init container. It runs `nakama migrate up` before the main container to create or update tables. If Postgres is not ready it retries until it passes. The pod shows `Init:0/1`, and `Init:Error` or `Init:CrashLoopBackOff` when something is wrong (read it with `kubectl logs <pod> -c migrate`).
 
-**Nakama command-line arguments.** Keys enter through environment variables, then `$(NAME)` substitutes them into the arguments:
+Nakama command-line arguments. Keys enter through environment variables, then `$(NAME)` substitutes them into the arguments:
 
 | Argument | Source |
 |---|---|
@@ -100,9 +100,9 @@ This is the longest file (475 lines) because it embeds all of `main.lua` in the 
 | `--session.token_expiry_sec` | 7200 (two hours) |
 | `--metrics.prometheus_port` | 9100 |
 
-**Two Services.** `nakama` (7350, `LoadBalancer`) lets your machine call the API. `nakama-console` (7351, `ClusterIP`) is only reachable through `port-forward`, because the admin console should not be exposed.
+Two Services. `nakama` (7350, `LoadBalancer`) lets your machine call the API. `nakama-console` (7351, `ClusterIP`) is only reachable through `port-forward`, because the admin console should not be exposed.
 
-**Changing the Nakama version.** The tag `3.41.0` appears twice (init container and main container). Change both.
+Changing the Nakama version. The tag `3.41.0` appears twice (init container and main container). Change both.
 
 ## `directory.yaml`
 

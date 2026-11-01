@@ -1,17 +1,6 @@
 # Fomoxa Game Server Architecture
 
-Hạ tầng game server nhiều người chơi phân tán (Distributed Multiplayer Game Server Infrastructure) kết hợp **Fomoxa Networking**, **Nakama Matchmaking** và **Agones GameServer Orchestration** trên **Kubernetes**.
-
----
-
-## Tài liệu hướng dẫn & Kế hoạch
-
-- 📖 **[Tài liệu từng bước (docs/vi/README.md)](docs/vi/README.md)** (English: [docs/README.md](docs/README.md)): hướng dẫn chi tiết bằng lệnh bash copy-paste được, từ máy trắng đến game chạy: [chuẩn bị môi trường](docs/vi/getting-started/prepare-environment.md) → [cụm giả](docs/vi/getting-started/quickstart-mock-cluster.md) → [triển khai Kubernetes](docs/vi/deploy/README.md) → [client Unity](docs/vi/unity-client.md) → [vận hành](docs/vi/operations/README.md); kèm [kiểm thử](docs/vi/testing.md), [xử lý sự cố](docs/vi/troubleshooting.md), [tham khảo](docs/vi/reference.md).
-- 📋 **[Kế hoạch phát triển (PLAN.md)](PLAN.md)**: Toàn bộ lộ trình từ P1 đến P6 (kiến trúc, quyết định kỹ thuật, DoD, và nhật ký các bước).
-- 🧪 **[Cụm giả (tools/MockCluster)](tools/MockCluster/README.md)**: chạy thử cả hệ thống trên một máy, không cần K8s: `./scripts/run-mock-cluster.sh`.
-- 🎮 **[Dự án Unity Game Client (MyGame/README.md)](MyGame/README.md)**: Hướng dẫn về scene Unity, cấu trúc prefab, package dependencies và chạy client.
-
----
+Hạ tầng game server nhiều người chơi phân tán (Distributed Multiplayer Game Server Infrastructure) kết hợp Fomoxa Networking, Nakama Matchmaking và Agones GameServer Orchestration trên Kubernetes.
 
 ## Bắt đầu nhanh (Quick Start)
 

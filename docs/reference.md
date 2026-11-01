@@ -182,7 +182,7 @@ Priority order: the command-line flag `--name=value`, then the environment varia
 | `Fomoxa__Pods__Tcp` and `Fomoxa__Pods__Key__File` | `0.0.0.0:9602` and required | the pod port, and the file with the `backend-pod` key (at least 16 bytes) |
 | `Fomoxa__Nakama__Url` | empty | the Nakama URL. Empty means no Nakama: instant matchmaking and in-memory accounts |
 | `Fomoxa__Nakama__ServerKey` and `HttpKey` | `defaultkey` and `defaulthttpkey` | the Nakama keys (Kubernetes takes them from the secret) |
-| `Fomoxa__Data__File` | empty | a JSON file for accounts **when there is no Nakama** |
+| `Fomoxa__Data__File` | empty | a JSON file for accounts when there is no Nakama |
 | `Fomoxa__Metrics__Listen` | `0.0.0.0:9610` | the HTTP `/metrics` address (empty turns it off) |
 
 ### Unity client

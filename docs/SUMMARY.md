@@ -35,6 +35,16 @@
   * [Monitoring](operations/04-monitoring.md)
   * [Autoscaling, NetworkPolicy, backups and the public address](operations/05-scaling-security-backup.md)
 
+## Architecture
+
+* [Overview](architecture/overview.md)
+* [Backend](architecture/backend.md)
+* [Nakama module](architecture/nakama-module.md)
+* [Game server (pod)](architecture/game-server.md)
+* [Unity client code](architecture/client-code.md)
+* [RPC interface](architecture/rpc-api.md)
+* [Development guide](architecture/development.md)
+
 ## Testing and problems
 
 * [Testing](testing.md)

@@ -70,6 +70,7 @@ Cổng của máy bạn được đưa vào cluster qua một container "load ba
 | Chạy các bài kiểm thử, hiểu từng test kiểm cái gì | [06: Kiểm thử](testing.md) |
 | Gặp lỗi | [07: Xử lý sự cố](troubleshooting.md) |
 | Tra cứu cổng, secrets, biến môi trường, script làm gì | [08: Tham khảo](reference.md) |
+| Hiểu các thành phần và mã nguồn khớp nhau thế nào, hoặc sửa chúng | [Kiến trúc](architecture/overview.md) |
 
 Thứ tự đề xuất cho người mới: 01 → 02 (thấy game chạy) → 03 (dựng cụm thật) → 04 → 05.
 
@@ -81,7 +82,7 @@ Mỗi bước trong các tài liệu có cùng khuôn:
 
 Quy ước:
 
-- Lệnh nằm trong khối ` ```bash ` và **copy-paste chạy được**. Chạy từ thư mục gốc repo nếu không ghi khác (`cd ~/fomoxa-infra-demo`).
+- Lệnh nằm trong khối ` ```bash ` và copy-paste chạy được. Chạy từ thư mục gốc repo nếu không ghi khác (`cd ~/fomoxa-infra-demo`).
 - Script chỉ là đường tắt. Mọi script (`./scripts/xxx.sh`) đều được bung ra thành các lệnh tay ngay cạnh. Bạn có thể làm bằng tay để hiểu,
   hoặc chạy script cho gọn: *"Hoặc chạy gọn: `./scripts/xxx.sh`"*. Bảng đối chiếu đầy đủ ở [08](reference.md#4-script--lệnh-tay-tương-đương).
 - Khối "Kết quả mong đợi" cho biết định dạng; giá trị như tên pod, tuổi, hash, thời gian của bạn sẽ khác, và khác ở những chỗ đó là bình thường.

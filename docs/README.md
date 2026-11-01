@@ -66,6 +66,7 @@ k3d runs k3s, a compact Kubernetes distribution, inside Docker containers. The w
 | Run the tests and see what each one checks | [06 Testing](testing.md) |
 | Fix an error | [07 Troubleshooting](troubleshooting.md) |
 | Look up ports, secrets, settings, or what a script runs | [08 Reference](reference.md) |
+| Understand how the components and the code fit together, or change them | [Architecture](architecture/overview.md) |
 
 New readers should go 01, 02 (see the game run), 03 (the real cluster), 04, 05.
 

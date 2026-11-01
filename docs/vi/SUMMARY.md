@@ -35,6 +35,16 @@
   * [Giám sát](operations/04-monitoring.md)
   * [Autoscaling, NetworkPolicy, sao lưu, địa chỉ công khai](operations/05-scaling-security-backup.md)
 
+## Kiến trúc
+
+* [Tổng quan kiến trúc](architecture/overview.md)
+* [Backend](architecture/backend.md)
+* [Module Nakama](architecture/nakama-module.md)
+* [Game server (pod)](architecture/game-server.md)
+* [Mã client Unity](architecture/client-code.md)
+* [Giao diện RPC](architecture/rpc-api.md)
+* [Hướng dẫn phát triển](architecture/development.md)
+
 ## Kiểm thử và sự cố
 
 * [Kiểm thử](testing.md)

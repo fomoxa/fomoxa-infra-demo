@@ -274,7 +274,7 @@ Go to Connections, Data sources, Prometheus, and choose Save & test. Look at Pro
 | Symptom | Fix |
 |---|---|
 | `Address already in use` when starting the mock cluster | `ss -ltnp \| grep -E '9600\|9500\|9643\|9602'`; stop the running mock or k3d cluster, or change ports with `--players=`, `--directory=` and the like |
-| `--selftest` fails at "register a duplicate name" against a **real** backend | accounts persist; the selftest already uses random names, so rerun it |
+| `--selftest` fails at "register a duplicate name" against a real backend | accounts persist; the selftest already uses random names, so rerun it |
 | `test-nakama.sh` stops: "port 7350 points at a compose container" | You would be testing the compose Nakama. Stop compose, or do it on purpose: `ALLOW_COMPOSE=1 ./scripts/test-nakama.sh` |
 | `test-p5`: "Truoc khi join da co N pod Allocated" (N pods were already Allocated) | Old players remain; wait for empty pods to shut down in 30 seconds, or `kubectl delete gs --all -n fomoxa` |
 | `test-p5` reports "Ky vong 2 pod Allocated nhung thuc te la 0" (expected 2, got 0) | The clients did not reach a pod: see [section 6](#6-client-connection) and read `logs/p5-k8s-*.log` |

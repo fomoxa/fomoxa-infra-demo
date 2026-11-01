@@ -1,7 +1,7 @@
 ﻿# server-deps
 
 Bản vendor của phần source 2 package Fomoxa mà MyGame\Server~ biên dịch.
-**Sinh tự động** bằng scripts\sync-server-deps.ps1 - đừng sửa tay.
+Sinh tự động bằng scripts\sync-server-deps.ps1 - đừng sửa tay.
 
 | Package | Version | Nguồn |
 |---|---|---|

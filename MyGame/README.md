@@ -1,7 +1,7 @@
 # MyGame - demo Fomoxa: sàn + di chuyển + thấy nhau
 
 Demo nhỏ nhất chứng minh tầng mạng Fomoxa chạy được: một sàn, vài cột mốc, mỗi
-người chơi là một capsule, di chuyển bằng WASD/mũi tên và **thấy nhau di chuyển**.
+người chơi là một capsule, di chuyển bằng WASD/mũi tên và thấy nhau di chuyển.
 
 - Server authoritative: client chỉ gửi input, server mới là bên di chuyển.
 - Input đi qua hệ thống input của Fomoxa (`NetworkInput.Use`), không dự đoán
@@ -42,10 +42,10 @@ MyGame/
 | Scene | Có gì | Khi nào tải |
 |---|---|---|
 | `Assets/Scenes/Lobby.unity` | camera nền tối, `RoomJoiner` (kết nối backend, giữ phiên đăng nhập), `BootRouter`, giao diện sảnh | scene đầu tiên của bản build |
-| `Assets/Scenes/Game.unity` | sàn, cột mốc, camera bám người chơi, `NetworkManager`, `Launcher`, HUD trong trận | **chỉ sau khi** người chơi bấm vào một phòng và đã có ticket |
+| `Assets/Scenes/Game.unity` | sàn, cột mốc, camera bám người chơi, `NetworkManager`, `Launcher`, HUD trong trận | chỉ sau khi người chơi bấm vào một phòng và đã có ticket |
 
 Luồng: `Lobby` (đăng nhập → danh sách phòng + người online) → bấm phòng → `RoomJoiner` lấy ticket → `MatchSession.Begin` tải scene `Game` →
-`Launcher` lấy ticket ra và nối vào pod → bấm **Thoát phòng** (hoặc mất kết nối) → quay về `Lobby`, vẫn đăng nhập.
+`Launcher` lấy ticket ra và nối vào pod → bấm Thoát phòng (hoặc mất kết nối) → quay về `Lobby`, vẫn đăng nhập.
 `RoomJoiner` sống xuyên hai scene nên danh sách online vẫn cập nhật khi đang chơi.
 
 Dòng lệnh `-pod`, `-host`, `-client` bỏ qua sảnh và vào thẳng scene `Game` như trước (`BootRouter`). `-autojoin` vẫn đi qua sảnh để đăng nhập và lấy ticket.
@@ -63,7 +63,7 @@ Assets/Network/MatchSession.cs          chuyển ticket từ sảnh sang scene G
 Assets/Editor/LobbyUiSetup.cs           gắn UI vào scene
 ```
 
-**Tools → Demo → Rebuild Scene** dựng lại cả hai scene và đặt Build Settings (`Lobby` trước, `Game` sau).
+Tools → Demo → Rebuild Scene dựng lại cả hai scene và đặt Build Settings (`Lobby` trước, `Game` sau).
 Sửa giao diện: mở `.uxml` bằng UI Builder hoặc chỉnh `.uss`, không đụng code.
 
 ## Package
@@ -82,10 +82,10 @@ Unity clone về `Library/PackageCache/` và ghim đúng commit trong
 ## Chạy đủ cụm: directory + gateway + backend + pod (P3/P4)
 
 Cần 5 thành phần: `fomoxa-directory` (9500), `fomoxa-gateway` (UDP 7777), backend
-(9600), pod (UDP 7778), client. Nakama (7350) là **tuỳ chọn**: bật thì backend bắt buộc
+(9600), pod (UDP 7778), client. Nakama (7350) là tuỳ chọn: bật thì backend bắt buộc
 ghép trận trước khi cấp ticket; tắt thì ai cũng vào được room.
 
-Lần đầu chạy, sinh key (file key nằm ở `deploy/secrets/`, **không commit**):
+Lần đầu chạy, sinh key (file key nằm ở `deploy/secrets/`, không commit):
 
 ```powershell
 cd D:\Documents\fomoxa
@@ -148,13 +148,13 @@ Ai chạy ở đâu:
 | client | - | login → join → nối gateway bằng grant (encrypted UDP) |
 
 Luồng: client → backend (fRPC/TCP) → directory (allocate) → ticket {address, port,
-grant} → client nối **gateway :7777** bằng grant; gateway bọc datagram trong
+grant} → client nối gateway :7777 bằng grant; gateway bọc datagram trong
 envelope 20 byte rồi chuyển tới pod :7778. Pod đã `AcquireRoom("arena:1")` nên
 directory biết room nằm ở pod nào, còn gateway học bảng pod từ directory.
 
 ## Console server (P5)
 
-Từ P5, pod mặc định là `MyGame/Server~` - bản .NET 8 của server, **không cần Unity**,
+Từ P5, pod mặc định là `MyGame/Server~` - bản .NET 8 của server, không cần Unity,
 để đóng image Linux cho Agones. Nó khớp prefab `Player.prefab` từng behaviour
 (`PlayerTransform` rồi `Player`, `syncPosition/Rotation` bật, `syncScale` tắt,
 ngưỡng `0.01 / 0.1 / 0.01`), nên client Unity join vào không cần sửa gì.
@@ -211,11 +211,11 @@ powershell -NoProfile -ExecutionPolicy Bypass -File scripts\test-console-server.
 
 ## Chạy nhanh trong Editor (không cần cụm)
 
-1. Mở project bằng Unity **6000.5.7f1**, mở `Assets/Scenes/Game.unity`.
-2. Bấm **Play**, rồi bấm **Host (local server + player)** - server + client trong
+1. Mở project bằng Unity 6000.5.7f1, mở `Assets/Scenes/Game.unity`.
+2. Bấm Play, rồi bấm Host (local server + player) - server + client trong
    cùng tiến trình, tự sinh token, không cần backend/directory.
-3. Chạy `Builds\MyGame.exe` **khi cụm đã chạy** (xem trên) để thấy 2 người thật.
-4. Trong cụm, nút **Join room arena:1 via backend** làm đúng việc client headless
+3. Chạy `Builds\MyGame.exe` khi cụm đã chạy (xem trên) để thấy 2 người thật.
+4. Trong cụm, nút Join room arena:1 via backend làm đúng việc client headless
    làm: login → join → connect pod.
 
 ## Chạy bằng dòng lệnh (không GUI)
@@ -260,7 +260,7 @@ Trong Editor: chọn `Network Manager`, sửa các ô trên component `Launcher`
 
 ## Dựng lại scene từ đầu
 
-Menu **Tools > Demo > Rebuild Scene** hoặc chạy batchmode:
+Menu Tools > Demo > Rebuild Scene hoặc chạy batchmode:
 
 ```powershell
 & "C:\Program Files\Unity\Hub\Editor\6000.5.7f1\Editor\Unity.exe" `
@@ -278,7 +278,7 @@ Build player:
 
 ## Đã kiểm chứng
 
-**P1 - host + client (UDP thường):**
+P1 - host + client (UDP thường):
 
 ```
 HOST    [Player] spawn on server id=1 owner=1
@@ -289,7 +289,7 @@ HOST    [Player] spawn on client id=2 owner=2 mine=False   <- host thấy player
 HOST    [Pos] id=2 pos=(2.28, 1.00, 12.82)                 <- và thấy nó di chuyển
 ```
 
-**P2 - directory + backend + pod (encrypted UDP), 2 client headless:**
+P2 - directory + backend + pod (encrypted UDP), 2 client headless:
 
 ```
 ANA   [Join] logged in as ana
@@ -307,7 +307,7 @@ POD   peer 1: Stopped Timeout                              <- thư viện tự d
 Client không bật prediction, nên vị trí của chính nó chỉ đổi khi server gửi -
 đó là bằng chứng dữ liệu đã đi đúng vòng client → server → client.
 
-**P3 - thêm gateway, ticket trỏ 7777, pod vẫn 7778:**
+P3 - thêm gateway, ticket trỏ 7777, pod vẫn 7778:
 
 ```
 ANA   [Join] room arena:1 -> 127.0.0.1:7777, grant 217 bytes
@@ -320,7 +320,7 @@ GW    clients on UDP 0.0.0.0:7777, pods from UDP 0.0.0.0:57535, directory at 127
 Pod chạy `BehindGateway = true` mà client vẫn vào được, nghĩa là datagram tới pod
 đúng là có envelope 20 byte do gateway thêm vào (thiếu envelope thì listener từ chối).
 
-**P4 - thêm Nakama matchmaking (device auth + ticket):**
+P4 - thêm Nakama matchmaking (device auth + ticket):
 
 ```
 ANA   [Join] logged in as ana -> room arena:1 -> 127.0.0.1:7777, grant 250 bytes
@@ -333,7 +333,7 @@ BE    [Nakama] authenticated fomoxa-device-ana as 761d6e7a...
 
 `test-nakama.ps1` xác nhận: 2 user nhận cùng ticket, user ngoài và ticket bịa bị từ chối.
 
-**P5 bước 1 - pod là console server (`MyGame.Server.exe`), client vẫn là Unity:**
+P5 bước 1 - pod là console server (`MyGame.Server.exe`), client vẫn là Unity:
 
 ```
 POD   [Pod] registering pod-1 (127.0.0.1:7778, version 1.0) at 127.0.0.1:9500
@@ -401,40 +401,40 @@ powershell -ExecutionPolicy Bypass -File scripts\k8s-down.ps1
 
 ## Ghi chú kỹ thuật đã gặp
 
-- **Không cài `fomoxa.unity` (unity-codecs)** cùng `com.fomoxa.networking`: cả hai
+- Không cài `fomoxa.unity` (unity-codecs) cùng `com.fomoxa.networking`: cả hai
   có asmdef tên `Fomoxa.Unity.Editor` → Unity báo "Assembly with name ... already
-  exists" và **không compile gì cả**. Chỉ cần nó khi model dùng `Vector3`,
+  exists" và không compile gì cả. Chỉ cần nó khi model dùng `Vector3`,
   `Quaternion`... Demo này dùng `float` nên bỏ.
-- `Packages/manifest.json` phải là UTF-8 **không BOM**; PowerShell 5.1 ghi BOM
+- `Packages/manifest.json` phải là UTF-8 không BOM; PowerShell 5.1 ghi BOM
   làm Unity báo `JSON parse error ... char 65279`.
-- Model dùng `float` (wire type `f32`) để sau này **console server** (P2) compile
+- Model dùng `float` (wire type `f32`) để sau này console server (P2) compile
   được ngoài Unity - model chứa `UnityEngine.Vector3` sẽ không build được ở đó.
 - Thứ tự component trên prefab phải là `NetworkObject` → `NetworkTransform` →
   `Player`; console server sau này phải khai báo behaviour cùng thứ tự.
 - `NetworkManager` tự thêm `UdpNetworkTransport` nếu chưa gán. Ở P2 scene gán sẵn
   `EncryptedUdpNetworkTransport` (đặt bằng `SerializedObject` trong `DemoScene.cs`
   vì field `transport` là private).
-- **Encrypted UDP là bắt buộc khi có directory**: pod chỉ nhận client có grant.
+- Encrypted UDP là bắt buộc khi có directory: pod chỉ nhận client có grant.
   Vì vậy host mode phải tự đặt `ConnectTokens` (key random) trước
   `StartConnection`, nếu không `ServerManager` ném lỗi; client cùng máy bỏ qua grant.
-- **Thứ tự sinh code khi thêm model rpc**: `FRPC003 ... is not a [Network] model
+- Thứ tự sinh code khi thêm model rpc: `FRPC003 ... is not a [Network] model
   with an rpc codec` xuất hiện nếu compile `Services.cs` trước khi có codec. Cách
   làm: copy `Models/` vào project → chạy generate (fomoxac sinh `*RpcCodec.cs`) →
   rồi mới thêm `Services.cs` → compile lại. fomoxac chạy sau compile nên phải 2 lượt.
-- `-logFile -` của Unity player **không** ghi ra stdout (bị buffer) → luôn dùng
+- `-logFile -` của Unity player không ghi ra stdout (bị buffer) → luôn dùng
   `-logFile <đường dẫn>`; muốn xem log thì `Get-Content -Tail`.
-- Directory giữ mapping room → pod **cho tới khi nó reap pod đã chết**, nên pod mới
+- Directory giữ mapping room → pod cho tới khi nó reap pod đã chết, nên pod mới
   `AcquireRoom` cùng key sẽ bị `FAILED_PRECONDITION`. Khi test lại: restart
   directory (hoặc đổi `-room:`).
 - `Version` của pod và client đều lấy `Application.version` (bundleVersion, đang là
   `1.0`); placement có `filter = "pod.version == client.version"` nên đổi
   bundleVersion phải build lại cả pod lẫn client.
-- Key: `root` phải đúng **64 ký tự hex**, các role key ≥ 16 byte. Windows không
+- Key: `root` phải đúng 64 ký tự hex, các role key ≥ 16 byte. Windows không
   set được biến môi trường rỗng nên `Fomoxa__Directory__Key__File` phải trỏ thẳng
   vào file key (không dùng `= ` để xoá).
 - Backend template là `net8.0` mà máy chỉ có .NET 9 → đặt `RollForward=Major`
   trong `MyGame.Backend.csproj`, nếu không app báo "You must install or update .NET".
-- **`BehindGateway` là cấu hình của listener phía server**, không phải của client: pod
+- `BehindGateway` là cấu hình của listener phía server, không phải của client: pod
   qua gateway đặt `true`, host mode (không gateway) phải đặt `false`, nếu không
   client local không vào được.
 - Gateway không cần biết trước pod: nó lấy bảng pod từ directory và route theo 4 byte
