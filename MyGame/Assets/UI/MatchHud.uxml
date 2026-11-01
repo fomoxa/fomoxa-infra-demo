@@ -7,7 +7,8 @@
             <ui:VisualElement name="match-panel" class="panel">
                 <ui:Label name="match-title" text="" class="subtitle" />
                 <ui:Label name="match-state" text="" class="hint" />
-                <ui:Label text="Di chuyển: WASD / mũi tên  ·  Nhảy: Space" class="hint" />
+                <ui:Label text="Di chuyển: WASD / mũi tên (theo hướng camera)  ·  Nhảy: Space" class="hint" />
+                <ui:Label text="Camera: giữ chuột phải kéo hoặc Q / E để xoay  ·  lăn chuột để zoom" class="hint" />
 
                 <ui:Label text="Bảng điểm (số bậc cao nhất)" class="subtitle small" />
                 <ui:ScrollView name="score-list" class="score-list" />

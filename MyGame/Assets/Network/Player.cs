@@ -63,8 +63,10 @@ namespace MyGame.Network
                 return;
             }
 
-            input.X = Input.GetAxisRaw("Horizontal");
-            input.Z = Input.GetAxisRaw("Vertical");
+            // Di chuyển theo hướng camera: W = tiến về phía camera đang nhìn. Server vẫn nhận hướng theo trục thế giới.
+            Vector3 move = Quaternion.Euler(0f, PlayerCamera.Yaw, 0f) * new Vector3(Input.GetAxisRaw("Horizontal"), 0f, Input.GetAxisRaw("Vertical"));
+            input.X = move.x;
+            input.Z = move.z;
             input.Jump = Input.GetKey(KeyCode.Space);
         }
 
