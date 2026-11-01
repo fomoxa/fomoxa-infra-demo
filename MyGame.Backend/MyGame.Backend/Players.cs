@@ -103,6 +103,8 @@ namespace MyGame.Backend
     public sealed class Lobby : ILobby
     {
         private static readonly TimeSpan MatchTimeout = TimeSpan.FromSeconds(15);
+        private static readonly TimeSpan IdempotentWindow = TimeSpan.FromSeconds(5);
+        private readonly System.Collections.Concurrent.ConcurrentDictionary<string, (RoomTicket Ticket, DateTime Expire)> recentTickets = new();
 
         private readonly DirectoryLink directory;
         private readonly NakamaLink nakama;
@@ -123,11 +125,29 @@ namespace MyGame.Backend
             }
 
             string principal = context.Session!.Principal;
+            string cacheKey = $"{principal}:{request.RoomKey}";
+
+            // Idempotent: neu vua cap ticket cho cung user va room trong vong 5 giay thi tra ve ngay
+            if (recentTickets.TryGetValue(cacheKey, out var cached) && DateTime.UtcNow < cached.Expire)
+            {
+                Console.WriteLine($"[Lobby] {principal} asks for {request.RoomKey} (idempotent cache hit)");
+                return cached.Ticket;
+            }
+
             Console.WriteLine($"[Lobby] {principal} asks for {request.RoomKey}");
-            string matchedRoom = await WaitForMatch(principal, request.RoomKey);
-            RoomTicket ticket = await directory.Ticket(principal, matchedRoom, request.Version);
-            Console.WriteLine($"[Lobby] {principal} -> {ticket.Address}:{ticket.Port} (room: {matchedRoom})");
-            return ticket;
+            try
+            {
+                string matchedRoom = await WaitForMatch(principal, request.RoomKey);
+                RoomTicket ticket = await directory.Ticket(principal, matchedRoom, request.Version);
+                recentTickets[cacheKey] = (ticket, DateTime.UtcNow + IdempotentWindow);
+                Console.WriteLine($"[Lobby] {principal} -> {ticket.Address}:{ticket.Port} (room: {matchedRoom})");
+                return ticket;
+            }
+            catch (FormatException formatProblem)
+            {
+                Console.Error.WriteLine($"[Lobby] FormatException: {formatProblem.Message}");
+                throw new RpcException(new Status(StatusCode.Unavailable, $"du lieu khong hop le: {formatProblem.Message}"));
+            }
         }
 
         private async Task<string> WaitForMatch(string principal, string roomKey)

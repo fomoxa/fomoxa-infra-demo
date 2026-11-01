@@ -461,11 +461,29 @@ pod-2 `Shutdown` → Fleet tạo pod thay thế.
 
 ---
 
-### P6 — Hardening (tuỳ chọn)
+### P5.5 — Tối ưu Matchmaking Room Pool ✅
 
-- TLS ingress trước 9600/9601, `limit_conn`.
-- Probe bằng `fomoxa-rpc-health` (exec, không HTTP).
-- Vá 5 điểm backend: try/catch `Backend.Start`, log `Status.Internal`, giữ `Details`, `Idempotent` cho `JoinRoom`, `FormatException → Unavailable`.
+- `deploy/nakama/modules/main.lua` & `deploy/k8s/nakama.yaml`:
+  - Thêm hỗ trợ room `"auto"` / rỗng: người chơi vào hàng đợi chung `pool:auto`.
+  - Tự động luân chuyển cấp room trong pool `arena:1 .. arena:4` (round-robin atomic lưu trong Nakama storage `pool:counter`).
+  - Hỗ trợ lưu và tra cứu kết quả theo assigned room, queue key và user id.
+- `MyGame.Backend/MyGame.Backend/Players.cs`:
+  - `JoinRoom` nhận room được Nakama chỉ định từ pool (`assignedRoom`) và cấp ticket đúng room đó từ directory.
+- `scripts/test-nakama-pool.ps1`:
+  - Kịch bản test 4 người chơi (`ana`, `bo`, `chi`, `dung`) cùng gửi matchmaker `auto`: Cặp 1 được phân vào `arena:1`, Cặp 2 được phân vào `arena:2`, cả 4 đều nhận ticket hợp lệ.
+
+---
+
+### P6 — Hardening ✅
+
+- **TLS / Ingress**: `deploy/k8s/ingress.yaml` cấu hình Ingress với `limit-connections: 50` và `limit-rps: 20` cho WebSocket (`/ws` -> 9601) và TCP (`/` -> 9600).
+- **fRPC Health Probe**: `deploy/k8s/backend.yaml` đổi `tcpSocket` sang `exec` probe bằng tool `fomoxa-rpc-health` (`dotnet /app/health/fomoxa-rpc-health.dll 127.0.0.1:9600`).
+- **Vá 5 điểm Backend**:
+  1. `Backend.Start`: bọc `try / catch` trong `Program.cs`, log nguyên nhân và trả mã thoát an toàn thay vì crash unhandled.
+  2. `log Status.Internal`: ghi log chi tiết lỗi internal và details từ Directory trong `DirectoryLink.cs`.
+  3. `giữ Details`: khi forward `RpcException`, giữ nguyên `problem.Status` kèm `Details` thay vì tạo `new Status` làm mất metadata.
+  4. `Idempotent cho JoinRoom`: cache ticket vừa cấp theo `(principal, roomKey)` trong cửa sổ 5s (`recentTickets`) để tránh gọi lặp Nakama/Directory khi client retry.
+  5. `FormatException → Unavailable`: bắt `FormatException` ở cả `DirectoryLink` và `Players.cs`, trả về `StatusCode.Unavailable` chuẩn fRPC.
 
 ---
 

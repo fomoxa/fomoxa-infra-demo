@@ -39,3 +39,4 @@ kubectl create secret generic fomoxa-pod-key `
     --dry-run=client -o yaml | kubectl apply -f -
 
 Write-Host "[gen-k8s-secrets] Hoàn tất tạo K8s secrets!" -ForegroundColor Green
+

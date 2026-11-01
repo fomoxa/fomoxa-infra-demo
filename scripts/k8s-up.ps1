@@ -115,3 +115,4 @@ Write-Host "`nKiem tra GameServers:" -ForegroundColor Cyan
 kubectl get gs -n fomoxa
 
 Write-Host "`n=== Cum K8s Fomoxa da san sang! ===" -ForegroundColor Green
+

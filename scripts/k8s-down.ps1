@@ -15,3 +15,4 @@ else {
     k3d cluster delete $clusterName
     Write-Host "Da xoa cum k3d $clusterName." -ForegroundColor Green
 }
+

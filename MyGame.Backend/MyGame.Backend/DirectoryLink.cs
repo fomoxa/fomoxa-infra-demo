@@ -46,7 +46,17 @@ namespace MyGame.Backend
             }
             catch (RpcException problem)
             {
-                throw new RpcException(new Status(problem.Status.Code, problem.Status.Message));
+                if (problem.Status.Code == StatusCode.Internal)
+                {
+                    Console.Error.WriteLine($"[Directory] Status.Internal: {problem.Status.Message} (details: {problem.Status.Details})");
+                }
+                // Giu nguyen status kem Details thay vi tao status moi lam mat Details
+                throw new RpcException(problem.Status);
+            }
+            catch (FormatException problem)
+            {
+                Console.Error.WriteLine($"[Directory] FormatException: {problem.Message}");
+                throw new RpcException(new Status(StatusCode.Unavailable, $"du lieu directory khong hop le: {problem.Message}"));
             }
             catch (ConnectException problem)
             {

@@ -48,13 +48,13 @@ spec:
               mountPath: /secrets/backend
               readOnly: true
           readinessProbe:
-            tcpSocket:
-              port: 9600
+            exec:
+              command: ["dotnet", "/app/health/fomoxa-rpc-health.dll", "127.0.0.1:9600"]
             initialDelaySeconds: 5
             periodSeconds: 5
           livenessProbe:
-            tcpSocket:
-              port: 9600
+            exec:
+              command: ["dotnet", "/app/health/fomoxa-rpc-health.dll", "127.0.0.1:9600"]
             initialDelaySeconds: 15
             periodSeconds: 10
       volumes:
@@ -81,3 +81,4 @@ spec:
     - name: pods
       port: 9602
       targetPort: 9602
+

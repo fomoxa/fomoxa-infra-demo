@@ -28,9 +28,23 @@ namespace MyGame.Backend
             using var stopping = new ManualResetEventSlim();
             using var terminate = PosixSignalRegistration.Create(PosixSignal.SIGTERM, Stop);
             using var interrupt = PosixSignalRegistration.Create(PosixSignal.SIGINT, Stop);
-            using Backend backend = Backend.Start(settings);
-            Console.Error.WriteLine($"backend: players on tcp {backend.PlayersTcp?.ToString() ?? "off"}, websocket {backend.PlayersWebSocket?.ToString() ?? "off"}; pods on tcp {backend.PodsTcp?.ToString() ?? "off"}; directory at {settings.DirectoryAddress}");
-            stopping.Wait();
+
+            Backend backend;
+            try
+            {
+                backend = Backend.Start(settings);
+            }
+            catch (Exception problem)
+            {
+                Console.Error.WriteLine($"backend: khoi dong that bai ({problem.GetType().Name}): {problem.Message}");
+                return 1;
+            }
+
+            using (backend)
+            {
+                Console.Error.WriteLine($"backend: players on tcp {backend.PlayersTcp?.ToString() ?? "off"}, websocket {backend.PlayersWebSocket?.ToString() ?? "off"}; pods on tcp {backend.PodsTcp?.ToString() ?? "off"}; directory at {settings.DirectoryAddress}");
+                stopping.Wait();
+            }
             return 0;
 
             void Stop(PosixSignalContext context)
