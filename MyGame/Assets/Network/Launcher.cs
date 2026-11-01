@@ -33,6 +33,12 @@ namespace MyGame.Network
         private DirectoryPod pod;
         private int slot;
 
+        // Lobby: tên người chơi + danh sách phòng chọn nhanh.
+        // "auto" = Nakama tự cấp phòng trống từ pool arena:1..4 khi đủ 2 người.
+        private static readonly string[] LobbyRooms = { "auto", "arena:1", "arena:2", "arena:3", "arena:4" };
+        private string playerName = "ana";
+        private string lobbyRoom = "";
+
         private void Start()
         {
             manager.ServerManager.OnRemoteConnectionState += OnRemoteConnectionState;
@@ -70,7 +76,7 @@ namespace MyGame.Network
 
         private void OnGUI()
         {
-            GUILayout.BeginArea(new Rect(10f, 10f, 380f, 190f));
+            GUILayout.BeginArea(new Rect(10f, 10f, 420f, 360f));
             DrawControls();
             GUILayout.EndArea();
         }
@@ -82,6 +88,11 @@ namespace MyGame.Network
 
             if (serverRunning || clientRunning)
             {
+                if (joiner != null && clientRunning)
+                {
+                    GUILayout.Label($"Người chơi: {playerName}   phòng: {lobbyRoom}");
+                }
+
                 GUILayout.Label($"server: {manager.ServerManager.State}  peers: {manager.ServerManager.PeerCount}  client: {manager.ClientManager.State}");
                 if (pod != null)
                 {
@@ -93,6 +104,7 @@ namespace MyGame.Network
                 {
                     manager.ClientManager.StopConnection();
                     manager.ServerManager.StopConnection();
+                    joiner?.ClearStatus();
                 }
 
                 return;
@@ -103,14 +115,50 @@ namespace MyGame.Network
                 StartHost();
             }
 
-            if (GUILayout.Button($"Join room {roomKey} via backend"))
-            {
-                _ = joiner.Join("ana", roomKey);
-            }
+            DrawLobby();
 
+            GUILayout.Space(8f);
+            GUILayout.Label("Công cụ dev:");
             if (GUILayout.Button("Start pod (register with directory)"))
             {
                 StartPod(Environment.GetCommandLineArgs());
+            }
+        }
+
+        private void DrawLobby()
+        {
+            GUILayout.Space(8f);
+            GUILayout.Label("=== Lobby ===");
+
+            GUILayout.BeginHorizontal();
+            GUILayout.Label("Tên:", GUILayout.Width(40f));
+            playerName = GUILayout.TextField(playerName ?? "", 24);
+            GUILayout.EndHorizontal();
+
+            bool busy = joiner != null && joiner.Busy;
+            GUI.enabled = !busy;
+            GUILayout.Label("Chọn phòng (mỗi phòng cần 2 người để ghép trận):");
+            foreach (string room in LobbyRooms)
+            {
+                string label = room == "auto" ? "Tự động ghép trận (auto)" : $"Vào phòng {room}";
+                if (GUILayout.Button(label))
+                {
+                    lobbyRoom = room;
+                    if (joiner != null)
+                    {
+                        _ = joiner.Join(playerName, room);
+                    }
+                }
+            }
+
+            GUI.enabled = true;
+
+            if (joiner != null && !string.IsNullOrEmpty(joiner.Status))
+            {
+                Color previous = GUI.color;
+                GUI.color = joiner.IsError ? new Color(1f, 0.4f, 0.4f) : Color.white;
+                GUILayout.Label(joiner.Status);
+                GUI.color = previous;
             }
         }
 

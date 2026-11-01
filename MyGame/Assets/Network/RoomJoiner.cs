@@ -24,6 +24,25 @@ namespace MyGame.Network
         private TaskCompletionSource<ITransport> connecting;
         private RpcConnection connection;
 
+        /// <summary>Trạng thái hiện tại để lobby (Launcher) hiển thị.</summary>
+        public string Status { get; private set; } = "";
+        public bool IsError { get; private set; }
+        public bool Busy { get; private set; }
+
+        public void ClearStatus()
+        {
+            if (!Busy)
+            {
+                SetStatus("");
+            }
+        }
+
+        private void SetStatus(string text, bool error = false)
+        {
+            Status = text;
+            IsError = error;
+        }
+
         private void Start()
         {
             string[] args = Environment.GetCommandLineArgs();
@@ -70,38 +89,73 @@ namespace MyGame.Network
 
         public async Task Join(string player, string roomKey)
         {
-            connecting = new TaskCompletionSource<ITransport>();
-            Debug.Log($"[Join] connecting to {backendAddress}:{backendPort}");
-            connector = backendTransport.CreateFactory().CreateConnector(backendAddress, backendPort);
-            ITransport transport = await connecting.Task;
-
-            string[] args = Environment.GetCommandLineArgs();
-            var options = new ConnectOptions
+            if (Busy)
             {
-                Credential = Credential.Of(PlayersMethods.Login, new PlayerLogin { Player = player, DeviceId = DeviceId(args, player) }),
-            };
+                return;
+            }
 
-            connection = RpcConnection.Driven(transport, NetSchema.Build(), LobbyClient.Declare(PlayersClient.Registry()).Build(), options);
-            await connection.Opened;
-            Debug.Log($"[Join] logged in as {player}");
+            player = (player ?? "").Trim();
+            if (player.Length == 0)
+            {
+                SetStatus("Hãy nhập tên người chơi", true);
+                return;
+            }
 
+            Busy = true;
             try
             {
+                // Bỏ kết nối cũ (nếu người chơi vào lại phòng khác).
+                connection?.Dispose();
+                connection = null;
+
+                connecting = new TaskCompletionSource<ITransport>();
+                SetStatus($"Đang kết nối backend {backendAddress}:{backendPort}...");
+                Debug.Log($"[Join] connecting to {backendAddress}:{backendPort}");
+                connector = backendTransport.CreateFactory().CreateConnector(backendAddress, backendPort);
+                ITransport transport = await connecting.Task;
+
+                string[] args = Environment.GetCommandLineArgs();
+                var options = new ConnectOptions
+                {
+                    Credential = Credential.Of(PlayersMethods.Login, new PlayerLogin { Player = player, DeviceId = DeviceId(args, player) }),
+                };
+
+                SetStatus($"Đang đăng nhập '{player}'...");
+                connection = RpcConnection.Driven(transport, NetSchema.Build(), LobbyClient.Declare(PlayersClient.Registry()).Build(), options);
+                await connection.Opened;
+                Debug.Log($"[Join] logged in as {player}");
+
+                SetStatus(roomKey == "auto"
+                    ? "Đã đăng nhập. Đang ghép trận (chờ người chơi khác, tối đa 30 giây)..."
+                    : $"Đã đăng nhập. Đang vào phòng {roomKey} (cần 2 người cùng phòng)...");
+
                 RoomTicket ticket = await JoinWithRetry(new LobbyClient(connection), new JoinRoomRequest
                 {
                     RoomKey = roomKey,
                     Version = Application.version,
                 });
                 Debug.Log($"[Join] room {roomKey} -> {ticket.Address}:{ticket.Port}, grant {ticket.Connection.Length} bytes");
+                SetStatus($"Đã nhận ticket phòng {roomKey}. Đang kết nối game server {ticket.Address}:{ticket.Port}...");
                 manager.ClientManager.StartConnection(ticket.Address, ticket.Port, ticket.Connection);
             }
             catch (RpcException failed) when (failed.Status.Details is NoRoomForVersion missing)
             {
                 Debug.LogWarning($"[Join] no pod runs version {missing.Version}");
+                SetStatus($"Không có game server chạy phiên bản {missing.Version}", true);
             }
             catch (RpcException failed)
             {
                 Debug.LogError($"[Join] failed: {failed.Status}");
+                SetStatus($"Vào phòng thất bại: {failed.Status.Message}", true);
+            }
+            catch (Exception error)
+            {
+                Debug.LogError($"[Join] error: {error.Message}");
+                SetStatus($"Lỗi: {error.Message}", true);
+            }
+            finally
+            {
+                Busy = false;
             }
         }
 
