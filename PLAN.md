@@ -22,7 +22,7 @@ Cập nhật: đã clone repos về `D:\Documents\fomoxa`, đã kiểm tra môi 
 
 | Thứ | Vai trò | Trạng thái |
 |---|---|---|
-| `MyGame` | Project Unity 6000.5.7f1, game demo (P1 xong) | ✅ trong repo git |
+| `MyGame` | Project Unity 6000.5.7f1, game demo (P1–P4 xong) | ✅ trong repo git |
 | `com.fomoxa.networking` | Netcode Unity + `Standalone~/` (console server cho P2) | ✅ package git `#0.2.0`, không clone |
 | `com.fomoxa.rpc` | fRPC phía Unity/pod: `DirectoryPod`, `TransferPlayer` | ✅ package git `#0.1.0`, không clone |
 | `gateway` | **`fomoxa-directory` + `fomoxa-gateway`** (Rust, tag `0.2.0`) | ✅ clone, git ignore |
@@ -199,13 +199,55 @@ phải đặt `false`, nếu không client local không vào được — `Launc
 
 ---
 
-### P4 — Nakama (1–2 ngày)
+### P4 — Nakama (1–2 ngày) ✅ XONG
 
-- Postgres + Nakama (compose).
-- Module: device auth → matchmaker 2 người → storage `match:xxx → [userIds]` → ký `proof = HMAC(hmac, userId|roomKey|exp)`.
-- Backend: `Players.Authenticate` verify token Nakama + verify `proof` trong `JoinRoom`.
+- `deploy/compose.yaml`: Postgres 15 + Nakama 3.41.0, cổng 7350/7351, console `admin/admin`.
+- Module Lua `deploy/nakama/modules/main.lua` (mount vào `/nakama/data/modules`):
+  - `find_match` / `poll_match`: ghép 2 người theo room, state trong storage
+    (`match_queue`, `match_result`), phát ticket UUID TTL **120 s** (`match_ticket`).
+  - `verify_ticket`: chỉ backend gọi được (http_key), kiểm tra ticket tồn tại, chưa hết hạn,
+    đúng room và đúng user.
+  - `reset_match`, `health` để test.
+- Backend (`NakamaLink` + `Players` + `Lobby`):
+  - `Players.Authenticate` bắt buộc `DeviceId` khi bật Nakama → `POST /v2/account/authenticate/device`,
+    giữ session token theo user id (`PlayerSessions`).
+  - `Lobby.JoinRoom` gọi `find_match`/`poll_match` (chờ tối đa 15 s) rồi `verify_ticket`
+    **trước khi** xin ticket từ directory. Không ghép được hoặc ticket sai/không thuộc user
+    → `FAILED_PRECONDITION`; Nakama không trả lời → `UNAVAILABLE`.
+- Client Unity chỉ gửi `-device:<id>` (mặc định `fomoxa-device-<tên>`); toàn bộ gọi Nakama
+  nằm ở backend nên client không cần biết http_key và không lộ server key.
 
-**DoD**: 2 client match → cùng roomKey → cùng pod; roomKey giả/hết hạn bị `FAILED_PRECONDITION`.
+**Khác PLAN ban đầu**: không dùng `proof = HMAC(...)`. Ticket UUID lưu server-side rồi verify
+bằng http_key chặt hơn (có state, chống replay, thu hồi được bằng TTL) và không phải chia sẻ
+secret HMAC cho client. Cũng vì vậy client **không** gọi Nakama trực tiếp như mục 4 cũ.
+
+**DoD**: 2 client match → cùng roomKey → cùng pod; roomKey giả/hết hạn bị `FAILED_PRECONDITION`. ✅
+
+**Kết quả đo được** (`logs/`):
+
+```
+ANA  [Join] logged in as ana -> room arena:1 -> 127.0.0.1:7777, grant 250 bytes
+BO   [Join] logged in as bo  -> room arena:1 -> 127.0.0.1:7777, grant 250 bytes
+ANA  [Player] spawn id=3 mine=False / id=4 mine=True
+BO   [Player] spawn id=3 mine=True  / id=4 mine=False
+FAKE [Join] failed: không ghép được trận cho fake:1 trong 15 giây (FAILED_PRECONDITION)
+BE   [Nakama] authenticated fomoxa-device-ana as 761d6e7a... / ...-bo as b9a707e5...
+```
+
+`scripts/test-nakama.ps1` kiểm tra riêng module: 2 user nhận cùng ticket, user ngoài và
+ticket bịa bị từ chối.
+
+**Bẫy của P4**
+
+- Deadline mặc định của fRPC là **5 s**, trong khi match chờ tới 15 s → client phải gọi
+  `JoinRoomAsync(request, CallOptions.Within(30s))`, nếu không sẽ thấy `DEADLINE_EXCEEDED`
+  thay vì `FAILED_PRECONDITION`.
+- Hai client cùng `-name:` dùng chung device id → cùng user Nakama → `find_match` coi là
+  "đang chờ" và không bao giờ ghép; mỗi client phải một tên (hoặc `-device:` riêng).
+- `start-cluster.ps1` / `run-backend.ps1` tự dò `http://127.0.0.1:7350/healthcheck`; Nakama
+  không chạy thì backend tắt matchmaking (vẫn chơi được, nhưng ai cũng vào được room).
+- Nakama ghi `deploy/nakama/.cookie` → đã ignore, đừng commit.
+
 
 ---
 
@@ -244,6 +286,8 @@ D:\Documents\fomoxa\
 ├─ deploy\
 │  ├─ directory.toml
 │  ├─ gateway.toml             (P3)
+│  ├─ compose.yaml             (P4 — Postgres + Nakama)
+│  ├─ nakama\modules\main.lua  (P4 — matchmaking 2 người)
 │  └─ secrets\                 ← sinh bởi gen-keys.ps1, KHÔNG commit
 └─ scripts\
    ├─ gen-keys.ps1
@@ -264,6 +308,8 @@ D:\Documents\fomoxa\
 | Lệch model giữa Unity và console server → `SchemaConflict` | Luôn generate lại + build lại cả hai; ghi vào `up.ps1` |
 | Pod phải `behindGateway=true` mới đi qua gateway | Chỉ bật ở P3, đừng bật sớm |
 | Nakama matchmaker async | Log match id; fallback set roomKey tay để test P2/P3 |
+| Deadline fRPC mặc định 5 s < match timeout 15 s | `JoinRoomAsync` phải truyền `CallOptions.Within(30s)` |
+| Hai client trùng device id → không ghép được | Mỗi client một `-name:` / `-device:` riêng |
 | Agones + Directory cùng placement | Agones chỉ giữ pod sống, không gọi `GameServerAllocation` |
 | Windows/Docker Desktop + UDP + kind | P5 dùng WSL2 + k3d |
 
@@ -280,12 +326,11 @@ D:\Documents\fomoxa\
 
 ---
 
-## 8. Việc tiếp theo (P4 — Nakama)
+## 8. Việc tiếp theo (P5 — Agones)
 
-1. `deploy/compose.yaml`: Postgres + Nakama 3.x, port 7350/7351, module Go (hoặc Lua) build trong image.
-2. Module: device auth → matchmaker 2 người → storage `match:<id> → [userId]` → ký `proof = HMAC(secret, userId|roomKey|exp)`.
-3. Backend: `Players.Login` đổi thành nhận token Nakama + `proof`; `JoinRoom` verify chữ ký và hạn trước khi gọi directory.
-4. Client Unity: gọi Nakama (HTTP/WebSocket) trước, rồi mới login backend như hiện tại.
-5. Kiểm chứng: 2 client match → cùng roomKey → cùng pod; roomKey giả/hết hạn bị `FAILED_PRECONDITION`.
+1. WSL2 + k3d, Agones helm, Fleet 2 replicas (image = console server ở `MyGame/Server~`, P5).
+2. Directory/gateway/backend/Nakama chạy trong cluster; gateway là địa chỉ công khai.
+3. Pod đọc env Agones → register với pod IP.
+4. Kiểm chứng: scale fleet → pod mới tự register; drain 1 pod → relocate.
 
 

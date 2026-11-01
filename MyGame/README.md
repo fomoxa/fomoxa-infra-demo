@@ -44,10 +44,11 @@ Unity clone về `Library/PackageCache/` và ghim đúng commit trong
 `Packages/packages-lock.json`. Máy cần có `git` trong PATH (máy này có 2.52.0).
 Đổi version chỉ cần sửa tag sau dấu `#` rồi để Unity resolve lại.
 
-## Chạy đủ cụm: directory + gateway + backend + pod (P3)
+## Chạy đủ cụm: directory + gateway + backend + pod (P3/P4)
 
 Cần 5 thành phần: `fomoxa-directory` (9500), `fomoxa-gateway` (UDP 7777), backend
-(9600), pod (UDP 7778), client.
+(9600), pod (UDP 7778), client. Nakama (7350) là **tuỳ chọn**: bật thì backend bắt buộc
+ghép trận trước khi cấp ticket; tắt thì ai cũng vào được room.
 
 Lần đầu chạy, sinh key (file key nằm ở `deploy/secrets/`, **không commit**):
 
@@ -55,6 +56,25 @@ Lần đầu chạy, sinh key (file key nằm ở `deploy/secrets/`, **không co
 cd D:\Documents\fomoxa
 powershell -NoProfile -File scripts\gen-keys.ps1
 ```
+
+Bật Nakama + Postgres cho matchmaking (P4):
+
+```powershell
+cd D:\Documents\fomoxa\deploy
+docker compose up -d
+cd ..
+# kiểm tra module ghép trận (2 user, ticket, user ngoài, ticket bịa)
+powershell -NoProfile -ExecutionPolicy Bypass -File scripts\test-nakama.ps1
+```
+
+Sau khi cụm đã chạy, kiểm chứng đầu-cuối P4 (2 client + room giả):
+
+```powershell
+powershell -NoProfile -ExecutionPolicy Bypass -File scripts\test-p4.ps1
+```
+
+`start-cluster.ps1` tự dò `http://127.0.0.1:7350/healthcheck`: có Nakama thì bật
+matchmaking, không có thì in cảnh báo và chạy tiếp.
 
 Build `fomoxa-directory` + `fomoxa-gateway` (chỉ cần lại khi sửa code Rust):
 
@@ -86,7 +106,8 @@ Ai chạy ở đâu:
 |---|---|---|
 | `fomoxa-directory` | 9500 (admin 9501) | biết pod nào giữ room nào, phát grant |
 | `fomoxa-gateway` | UDP 7777 | địa chỉ công khai duy nhất cho mọi pod, route theo session id |
-| `MyGame.Backend` | TCP 9600, WS 9601, pod 9602 | đăng nhập, `JoinRoom` → ticket + grant |
+| `MyGame.Backend` | TCP 9600, WS 9601, pod 9602 | đăng nhập (Nakama), `JoinRoom` → ticket + grant |
+| Nakama + Postgres | 7350 / 7351, 5432 | ghép 2 người, phát & verify ticket (tuỳ chọn) |
 | pod (`MyGame.exe -pod`) | UDP 7778 | giữ room `arena:1`, chạy game |
 | client | — | login → join → nối gateway bằng grant (encrypted UDP) |
 
@@ -129,7 +150,8 @@ $env:POD_KEY_FILE = "D:\Documents\fomoxa\deploy\secrets\directory\pod"
 | `-room:<key>` | room pod giữ / room client xin vào (mặc định `arena:1`) |
 | `-directory:<ip:cổng>` | địa chỉ directory (mặc định `127.0.0.1:9500`) |
 | `-autojoin` | client tự login backend rồi join room |
-| `-name:<tên>` | tên người chơi gửi lên backend |
+| `-name:<tên>` | tên người chơi gửi lên backend (mỗi client một tên) |
+| `-device:<id>` | device id Nakama (mặc định `fomoxa-device-<tên>`; phải khác nhau giữa 2 client) |
 | `-host` | server + client trong cùng tiến trình (không cần cụm) |
 | `-bot` | thay bàn phím bằng chuyển động tròn (test tự động) |
 | `-trace` | log vị trí mỗi 2 giây |
@@ -206,6 +228,19 @@ GW    clients on UDP 0.0.0.0:7777, pods from UDP 0.0.0.0:57535, directory at 127
 Pod chạy `BehindGateway = true` mà client vẫn vào được, nghĩa là datagram tới pod
 đúng là có envelope 20 byte do gateway thêm vào (thiếu envelope thì listener từ chối).
 
+**P4 — thêm Nakama matchmaking (device auth + ticket):**
+
+```
+ANA   [Join] logged in as ana -> room arena:1 -> 127.0.0.1:7777, grant 250 bytes
+BO    [Join] logged in as bo  -> room arena:1 -> 127.0.0.1:7777, grant 250 bytes
+ANA   [Player] spawn id=3 mine=False / id=4 mine=True
+BO    [Player] spawn id=3 mine=True  / id=4 mine=False
+FAKE  [Join] failed: không ghép được trận cho fake:1 trong 15 giây (FAILED_PRECONDITION)
+BE    [Nakama] authenticated fomoxa-device-ana as 761d6e7a...
+```
+
+`test-nakama.ps1` xác nhận: 2 user nhận cùng ticket, user ngoài và ticket bịa bị từ chối.
+
 
 ## Ghi chú kỹ thuật đã gặp
 
@@ -248,4 +283,11 @@ Pod chạy `BehindGateway = true` mà client vẫn vào được, nghĩa là dat
 - Gateway không cần biết trước pod: nó lấy bảng pod từ directory và route theo 4 byte
   id trong session id. `pod_bind = 0.0.0.0:0` để OS chọn cổng nói chuyện với pod.
 - Trong script PowerShell, `"$Name:"` bị hiểu là ổ đĩa → viết `"${Name}:"`.
+- Deadline mặc định của fRPC là 5 s; match Nakama chờ tới 15 s nên `JoinRoomAsync` phải
+  truyền `CallOptions.Within(30s)`, nếu không client nhận `DEADLINE_EXCEEDED` thay vì
+  `FAILED_PRECONDITION`.
+- Mỗi client phải một `-name:` (hoặc `-device:`); hai client cùng device id là cùng user
+  Nakama nên `find_match` không bao giờ ghép được.
+- Nakama chạy bằng `docker compose` trong `deploy/`; backend tự dò `:7350/healthcheck`,
+  không có Nakama thì tắt matchmaking.
 

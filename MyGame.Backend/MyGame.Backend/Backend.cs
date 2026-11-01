@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.Net;
+using System.Threading.Tasks;
 using Fomoxa.Net.WebSockets;
 using Fomoxa.Rpc;
 using Fomoxa.Rpc.Net;
@@ -12,10 +13,12 @@ namespace MyGame.Backend
     {
         private readonly List<RpcServer> servers = new List<RpcServer>();
         private readonly DirectoryLink directory;
+        private readonly NakamaLink nakama;
 
-        private Backend(DirectoryLink directory)
+        private Backend(DirectoryLink directory, NakamaLink nakama)
         {
             this.directory = directory;
+            this.nakama = nakama;
         }
 
         public IPEndPoint? PlayersTcp { get; private set; }
@@ -26,7 +29,26 @@ namespace MyGame.Backend
 
         public static Backend Start(BackendSettings settings)
         {
-            var backend = new Backend(new DirectoryLink(settings.DirectoryAddress, settings.DirectoryKey));
+            NakamaLink nakama = string.IsNullOrEmpty(settings.NakamaUrl)
+                ? null!
+                : new NakamaLink(settings.NakamaUrl, settings.NakamaServerKey, settings.NakamaHttpKey);
+            var backend = new Backend(new DirectoryLink(settings.DirectoryAddress, settings.DirectoryKey), nakama);
+            if (nakama != null)
+            {
+                Console.WriteLine($"[Nakama] cấu hình {settings.NakamaUrl}");
+                _ = Task.Run(async () =>
+                {
+                    try
+                    {
+                        NakamaSession probe = await nakama.AuthenticateDevice("fomoxa-selftest-00001");
+                        Console.WriteLine($"[Nakama] self test ok {probe.UserId}");
+                    }
+                    catch (Exception problem)
+                    {
+                        Console.WriteLine($"[Nakama] self test lỗi: {problem.GetType().Name} {problem.Message}");
+                    }
+                });
+            }
             try
             {
                 backend.Listen(settings);
@@ -48,12 +70,14 @@ namespace MyGame.Backend
 
             servers.Clear();
             directory.Dispose();
+            nakama?.Dispose();
         }
 
         private void Listen(BackendSettings settings)
         {
             var schema = Generated.NetSchema.Build();
-            Registry players = new LobbyServer(new Lobby(directory)).Registry().Authenticate(new Players()).Build();
+            var sessions = new PlayerSessions();
+            Registry players = new LobbyServer(new Lobby(directory, nakama, sessions)).Registry().Authenticate(new Players(nakama, sessions)).Build();
             if (!string.IsNullOrEmpty(settings.PlayersTcp))
             {
                 RpcServer server = Started(RpcServer.Bind(settings.PlayersTcp, schema, players));

@@ -1,8 +1,8 @@
 {
   "schema_version": 1,
   "generator": "fomoxac 0.2.2",
-  "fingerprint": "sha256:f0d218b53eb30ad8b6ce2333491c586e314e1bf648ae7ae47c1d6b0154e07284",
-  "fingerprint_u64": "0xF0D218B53EB30AD8",
+  "fingerprint": "sha256:e51e1b8259622c21e24bc63602be68df0ed4083c7e59f62f87145f9b04f64cee",
+  "fingerprint_u64": "0xE51E1B8259622C21",
   "models": {
     "AnimatorState": {
       "source": "FomoxaSystemModels/AnimatorState.cs",
@@ -1951,13 +1951,20 @@
     },
     "PlayerLogin": {
       "source": "Assets/Network/Models/Backend/Players.cs",
-      "fingerprint": "sha256:b483378c0bfee01c184766133943bae6b1d926ccc1a2d8d7cccd83f5977d3bb8",
+      "fingerprint": "sha256:8e1df98060d2a42932c79f3258cd42445f0444288e87f9c552ac7dac9324ea77",
       "codecs": [
         "rpc"
       ],
       "fields": [
         {
           "name": "Player",
+          "type": "string",
+          "codecs": [
+            "rpc"
+          ]
+        },
+        {
+          "name": "DeviceId",
           "type": "string",
           "codecs": [
             "rpc"
@@ -1974,19 +1981,25 @@
       "messages": {
         "rpc": {
           "id": "0xA458A75D",
-          "fingerprint": "sha256:53a65473fcce212f82ed492268f53b65b801d26f2bd32d0fb8b16877ee3fda35",
-          "fingerprint_u64": "0x53A65473FCCE212F",
+          "fingerprint": "sha256:38ad643c414405aa97f06d51672a4dccd7fff5ac1be16af45a0ef84247c5f858",
+          "fingerprint_u64": "0x38AD643C414405AA",
           "prefixes": [
             "sha256:85bf3c66cec72290ab4fd328de0fc0fae44602148a12b155ee3e48f46ab2e568",
-            "sha256:53a65473fcce212f82ed492268f53b65b801d26f2bd32d0fb8b16877ee3fda35"
+            "sha256:7a67c804c11ea3da82cad4333654dff9a8f1e7ca5ce34317a75bde317cf5965e",
+            "sha256:38ad643c414405aa97f06d51672a4dccd7fff5ac1be16af45a0ef84247c5f858"
           ],
           "prefixes_u64": [
             "0x85BF3C66CEC72290",
-            "0x53A65473FCCE212F"
+            "0x7A67C804C11EA3DA",
+            "0x38AD643C414405AA"
           ],
           "fields": [
             {
               "name": "Player",
+              "type": "string"
+            },
+            {
+              "name": "DeviceId",
               "type": "string"
             },
             {

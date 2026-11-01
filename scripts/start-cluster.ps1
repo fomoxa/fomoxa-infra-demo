@@ -54,6 +54,17 @@ $env:DOTNET_ROLL_FORWARD = "Major"
 $env:Fomoxa__Directory__Address = "127.0.0.1:9500"
 $env:Fomoxa__Directory__Key__File = Join-Path $repoRoot "deploy/secrets/directory/backend"
 $env:Fomoxa__Pods__Key__File = Join-Path $repoRoot "deploy/secrets/backend-pod"
+
+# Nakama là tuỳ chọn: có thì backend bắt buộc ghép trận trước khi cấp ticket.
+$nakama = "http://127.0.0.1:7350"
+try {
+    $null = Invoke-WebRequest "$nakama/healthcheck" -UseBasicParsing -TimeoutSec 2
+    $env:Fomoxa__Nakama__Url = $nakama
+    Write-Host "    nakama: $nakama"
+}
+catch {
+    Write-Warning "Nakama chưa chạy, backend bỏ qua matchmaking (bật: docker compose -f deploy/compose.yaml up -d)"
+}
 Start-Process -FilePath $backendExe `
     -WorkingDirectory (Split-Path -Parent $backendExe) `
     -RedirectStandardOutput (Join-Path $logs "backend.log") `

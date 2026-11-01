@@ -1,7 +1,7 @@
 {
   "schema_version": 1,
   "generator": "fomoxac 0.2.3",
-  "schema_fingerprint": "sha256:68f6e9be6c4e31f1b01bd2bbe69b0b37d5432df329a494c562280902a6b1423f",
+  "schema_fingerprint": "sha256:7c007d6fc94431b7af3373bc1b767d011b6ce2295e3957e087891b4bddc6cb58",
   "sha256_of": "each file with its `// generated-at:` line emptied, so an unchanged schema keeps an unchanged digest",
   "sources": {
     "../fomoxa-rpc/Fomoxa.Rpc/SystemModels/FRpc.cs": {
@@ -77,8 +77,8 @@
           "path": "Generated/PlayerLoginRpcCodec.cs",
           "model": "PlayerLogin",
           "codec": "rpc",
-          "fingerprint": "sha256:53a65473fcce212f82ed492268f53b65b801d26f2bd32d0fb8b16877ee3fda35",
-          "sha256": "350bdb54ff89a40f4059f7b1122b3bc2dae93883da16069d929eade0d701abf4"
+          "fingerprint": "sha256:38ad643c414405aa97f06d51672a4dccd7fff5ac1be16af45a0ef84247c5f858",
+          "sha256": "9cd5cfac8b5877b8d486a7a4b03bcfe2831a13399f9f0fcced2ecc4f0df32d91"
         },
         {
           "path": "Generated/PlayerWelcomeRpcCodec.cs",
@@ -128,12 +128,12 @@
     {
       "path": "Generated/Handshake.cs",
       "kind": "handshake",
-      "sha256": "ce3dec6b3fb2a1845fb40af66c0085272b7c8521d79d547caec229fada329634"
+      "sha256": "6727bf1585193a31f0872769a199edcbbc3ef5364a355618d1cfc55b2b271cf0"
     },
     {
       "path": "Generated/NetSchema.cs",
       "kind": "net_schema",
-      "sha256": "3dcd30a415bd3f9675384ecfb9305c1041c7db2c95a882841937abf7b40abf91"
+      "sha256": "41017acda13ee63fd38f8ddbba90f866ecf0e948964ed9f761352fea7e320e74"
     }
   ]
 }

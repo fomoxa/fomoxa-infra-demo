@@ -55,15 +55,30 @@ namespace MyGame.Network
             return "player";
         }
 
+        private static string DeviceId(string[] args, string player)
+        {
+            foreach (string arg in args)
+            {
+                if (arg.StartsWith("-device:", StringComparison.Ordinal))
+                {
+                    return arg.Substring("-device:".Length);
+                }
+            }
+
+            return $"fomoxa-device-{player}";
+        }
+
         public async Task Join(string player, string roomKey)
         {
             connecting = new TaskCompletionSource<ITransport>();
+            Debug.Log($"[Join] connecting to {backendAddress}:{backendPort}");
             connector = backendTransport.CreateFactory().CreateConnector(backendAddress, backendPort);
             ITransport transport = await connecting.Task;
 
+            string[] args = Environment.GetCommandLineArgs();
             var options = new ConnectOptions
             {
-                Credential = Credential.Of(PlayersMethods.Login, new PlayerLogin { Player = player }),
+                Credential = Credential.Of(PlayersMethods.Login, new PlayerLogin { Player = player, DeviceId = DeviceId(args, player) }),
             };
 
             connection = RpcConnection.Driven(transport, NetSchema.Build(), LobbyClient.Declare(PlayersClient.Registry()).Build(), options);
@@ -72,12 +87,11 @@ namespace MyGame.Network
 
             try
             {
-                RoomTicket ticket = await new LobbyClient(connection).JoinRoomAsync(new JoinRoomRequest
+                RoomTicket ticket = await JoinWithRetry(new LobbyClient(connection), new JoinRoomRequest
                 {
                     RoomKey = roomKey,
                     Version = Application.version,
                 });
-
                 Debug.Log($"[Join] room {roomKey} -> {ticket.Address}:{ticket.Port}, grant {ticket.Connection.Length} bytes");
                 manager.ClientManager.StartConnection(ticket.Address, ticket.Port, ticket.Connection);
             }
@@ -88,6 +102,23 @@ namespace MyGame.Network
             catch (RpcException failed)
             {
                 Debug.LogError($"[Join] failed: {failed.Status}");
+            }
+        }
+
+        private static readonly TimeSpan MatchBudget = TimeSpan.FromSeconds(30);
+
+        private static async Task<RoomTicket> JoinWithRetry(LobbyClient lobby, JoinRoomRequest request)
+        {
+            for (int attempt = 1; ; attempt++)
+            {
+                try
+                {
+                    return await lobby.JoinRoomAsync(request, CallOptions.Within(MatchBudget));
+                }
+                catch (RpcException failed) when (failed.Status.Code == StatusCode.Unavailable && attempt < 3)
+                {
+                    Debug.Log($"[Join] {failed.Status.Message} (thử lại lần {attempt})");
+                }
             }
         }
 

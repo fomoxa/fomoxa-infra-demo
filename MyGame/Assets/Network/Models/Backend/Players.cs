@@ -11,6 +11,10 @@ namespace MyGame.Backend.Models
         [Codec("rpc")]
         public string Player { get; set; } = "";
 
+        [Network("string")]
+        [Codec("rpc")]
+        public string DeviceId { get; set; } = "";
+
         [Network("bytes")]
         [Codec("rpc")]
         public byte[] Secret { get; set; } = Array.Empty<byte>();

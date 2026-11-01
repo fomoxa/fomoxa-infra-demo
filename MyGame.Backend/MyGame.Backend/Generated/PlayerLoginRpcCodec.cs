@@ -4,9 +4,9 @@
 // source: Models/Players.cs
 // model: PlayerLogin
 // codec: rpc
-// fingerprint: sha256:53a65473fcce212f82ed492268f53b65b801d26f2bd32d0fb8b16877ee3fda35
+// fingerprint: sha256:38ad643c414405aa97f06d51672a4dccd7fff5ac1be16af45a0ef84247c5f858
 // fomoxac-version: 0.2.3
-// generated-at: 2026-10-31T09:57:15Z
+// generated-at: 2026-11-01T03:24:15Z
 
 namespace Generated
 {
@@ -16,6 +16,7 @@ namespace Generated
 /// The wire layout, in declaration order (RFC-0002 §5.1):
 /// <list type="number">
 /// <item><description><c>Player</c>: <c>string</c></description></item>
+/// <item><description><c>DeviceId</c>: <c>string</c></description></item>
 /// <item><description><c>Secret</c>: <c>bytes</c></description></item>
 /// </list>
 /// </remarks>
@@ -29,12 +30,13 @@ public static class PlayerLoginRpcCodec
 
     /// <summary>This message's wire-contract fingerprint - the same value
     /// <c>Handshake.cs</c> publishes, and the one a peer compares against.</summary>
-    public const ulong Fingerprint = 0x53A65473FCCE212F;
+    public const ulong Fingerprint = 0x38AD643C414405AA;
 
     /// <summary>Writes the <c>rpc</c> fields of <paramref name="value"/>, in declaration order.</summary>
     public static void Encode(Writer writer, MyGame.Backend.Models.PlayerLogin value)
     {
         writer.WriteString(value.Player);
+        writer.WriteString(value.DeviceId);
         writer.WriteBytes(value.Secret);
     }
 
@@ -59,6 +61,16 @@ public static class PlayerLoginRpcCodec
             reader.ReadString(ref playerValue);
         }
         value.Player = playerValue;
+        var deviceIdValue = value.DeviceId;
+        if (reader.FieldAbsent())
+        {
+            deviceIdValue = "";
+        }
+        else
+        {
+            reader.ReadString(ref deviceIdValue);
+        }
+        value.DeviceId = deviceIdValue;
         var secretValue = value.Secret;
         if (reader.FieldAbsent())
         {

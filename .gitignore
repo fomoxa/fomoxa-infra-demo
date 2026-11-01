@@ -8,8 +8,13 @@
 # Key sinh bởi scripts/gen-keys.ps1 (không bao giờ commit)
 /deploy/secrets/
 
+# Nakama ghi cookie/phiên cục bộ khi chạy compose
+/deploy/nakama/.cookie
+
 # Log/rác ngoài project Unity
 /*.log
+/MyGame/build.log
+/MyGame/generate.log
 /.vscode/
 /.idea/
 

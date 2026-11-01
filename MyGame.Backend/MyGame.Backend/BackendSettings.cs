@@ -28,6 +28,12 @@ namespace MyGame.Backend
 
         public byte[] PodKey { get; set; } = Array.Empty<byte>();
 
+        public string NakamaUrl { get; set; } = "";
+
+        public string NakamaServerKey { get; set; } = "defaultkey";
+
+        public string NakamaHttpKey { get; set; } = "defaulthttpkey";
+
         public static BackendSettings Read(IConfiguration fomoxa) => Read(fomoxa, Environment.GetEnvironmentVariable);
 
         public static BackendSettings Read(IConfiguration fomoxa, Func<string, string?> environment)
@@ -39,6 +45,9 @@ namespace MyGame.Backend
                 PlayersTcp = fomoxa["Players:Tcp"] ?? "0.0.0.0:9600",
                 PlayersWebSocket = fomoxa["Players:WebSocket"] ?? "0.0.0.0:9601",
                 PodsTcp = fomoxa["Pods:Tcp"] ?? "0.0.0.0:9602",
+                NakamaUrl = fomoxa["Nakama:Url"] ?? "",
+                NakamaServerKey = fomoxa["Nakama:ServerKey"] ?? "defaultkey",
+                NakamaHttpKey = fomoxa["Nakama:HttpKey"] ?? "defaulthttpkey",
             };
             if (string.IsNullOrEmpty(settings.DirectoryAddress))
             {
