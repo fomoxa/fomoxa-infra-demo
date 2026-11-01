@@ -25,15 +25,24 @@ Cập nhật: đã clone repos về `D:\Documents\fomoxa`, đã kiểm tra môi 
 | `MyGame` | Project Unity 6000.5.7f1, game demo (P1 xong) | ✅ trong repo git |
 | `com.fomoxa.networking` | Netcode Unity + `Standalone~/` (console server cho P2) | ✅ package git `#0.2.0`, không clone |
 | `com.fomoxa.rpc` | fRPC phía Unity/pod: `DirectoryPod`, `TransferPlayer` | ✅ package git `#0.1.0`, không clone |
-| `backend` | Backend template gốc (bản `MyGame.Backend` là clone của nó) | ✅ clone, git ignore |
 | `gateway` | **`fomoxa-directory` + `fomoxa-gateway`** (Rust, tag `0.2.0`) | ✅ clone, git ignore |
 | `unity-docs` | Docs offline, có bản tiếng Việt ở `unity-docs/vi/` | ✅ clone, git ignore |
 
 Đã xóa: `RedRunner`, `networking-rapier`, `unity-codecs`, `fomoxac`, `csharp`,
-`attributes-csharp`, `csharp-websocket`, `specification` và `implementation-guide`
-— hai repo cuối chỉ là tài liệu khái niệm, không build/runtime nào đọc; fomoxac +
-codec sinh sẵn đã là bản thực thi của wire format. Cần lại thì clone từ
-`https://github.com/fomoxa/<tên-repo>`.
+`attributes-csharp`, `csharp-websocket`, `specification`, `implementation-guide`
+và `backend`.
+
+`specification` + `implementation-guide` chỉ là tài liệu khái niệm, không
+build/runtime nào đọc — fomoxac và codec sinh sẵn đã là bản thực thi của wire format.
+
+Backend tái tạo bằng template NuGet (đã kiểm chứng `0.1.0` có trên nuget.org):
+
+```
+dotnet new install Fomoxa.Backend.Templates
+dotnet new fomoxa-backend -n MyGame.Backend
+```
+
+Repo khác khi cần: `git clone https://github.com/fomoxa/<tên-repo>`.
 
 Bỏ qua (không cần): `rust`, `go`, `typescript`, `c`, `interop`, `fomoxa-codec-bench`, `fomoxa-example-game`, `attributes-rust`, `fomoxa.github.io`, `.github`, `community`.
 
