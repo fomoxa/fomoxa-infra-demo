@@ -4,9 +4,9 @@ Lên đầu tài liệu: [03-TRIEN-KHAI-K8S](README.md) · Trước: [06-kiem-tr
 
 ## Bước 12. Test Nakama bằng `curl`
 
-**Mục tiêu:** chứng minh Nakama ghép đúng hai người vào cùng một phòng, phát ticket hợp lệ, và **chặn người ngoài**. Đây là bài test **đã chạy thật** (trên Nakama của docker compose có cùng module `main.lua`).
+Mục tiêu: chứng minh Nakama ghép đúng hai người vào cùng một phòng, phát ticket hợp lệ, và chặn người ngoài. Đây là bài test đã chạy thật (trên Nakama của docker compose có cùng module `main.lua`).
 
-**Lấy khoá Nakama của cụm:**
+Lấy khoá Nakama của cụm:
 
 ```bash
 BASE=http://127.0.0.1:7350
@@ -15,7 +15,7 @@ HTTP_KEY=$(kubectl get secret fomoxa-nakama -n fomoxa -o jsonpath='{.data.http-k
 echo "server-key=${SERVER_KEY:0:6}...  http-key=${HTTP_KEY:0:6}..."
 ```
 
-**Ý nghĩa:** `server-key` dùng để người chơi đăng nhập Nakama; `http-key` chỉ dành cho backend gọi RPC nội bộ. Lệnh `base64 -d` giải mã giá trị trong secret.
+Ý nghĩa: `server-key` dùng để người chơi đăng nhập Nakama; `http-key` chỉ dành cho backend gọi RPC nội bộ. Lệnh `base64 -d` giải mã giá trị trong secret.
 (Nếu bạn test Nakama của `docker compose` thay vì cụm: `SERVER_KEY=defaultkey; HTTP_KEY=defaulthttpkey`.)
 
 ### 12.1 Đăng nhập hai người chơi (device) và lấy token
@@ -32,7 +32,7 @@ TOKEN_B=$(login fomoxa-test-bo)
 echo "token A: ${TOKEN_A:0:20}...   token B: ${TOKEN_B:0:20}..."
 ```
 
-**Ý nghĩa:** `authenticate/device` tạo (nếu chưa có) tài khoản gắn với "device id" và trả về JWT `token`. Header `Authorization: Basic <base64(server_key:)>` là cách Nakama xác thực *ứng dụng*.
+Ý nghĩa: `authenticate/device` tạo (nếu chưa có) tài khoản gắn với "device id" và trả về JWT `token`. Header `Authorization: Basic <base64(server_key:)>` là cách Nakama xác thực *ứng dụng*.
 
 ### 12.2 Làm sạch hàng chờ, rồi hai người xin vào `arena:1`
 
@@ -54,7 +54,7 @@ echo "$RESP_B"
 TICKET=$(echo "$RESP_B" | grep -o '"ticket":"[^"]*' | cut -d'"' -f4)
 ```
 
-**Kết quả mong đợi (thật):**
+Kết quả mong đợi (thật):
 
 ```
 {"ok":true}
@@ -62,7 +62,7 @@ TICKET=$(echo "$RESP_B" | grep -o '"ticket":"[^"]*' | cut -d'"' -f4)
 {"exp":1793533330,"room":"arena:1","status":"matched","ticket":"f32f69a2-72cc-4ecb-b7ee-5c23eb0fa788"}
 ```
 
-**Ý nghĩa:** người đầu tiên vào hàng chờ (`waiting`); người thứ hai làm đủ cặp nên Nakama tạo ticket (`matched`, hết hạn sau `exp`).
+Ý nghĩa: người đầu tiên vào hàng chờ (`waiting`); người thứ hai làm đủ cặp nên Nakama tạo ticket (`matched`, hết hạn sau `exp`).
 
 ### 12.3 Backend xác minh ticket (và từ chối người ngoài)
 
@@ -82,7 +82,7 @@ curl -s -X POST "$BASE/v2/rpc/verify_ticket?unwrap" -H "Authorization: Basic $HT
      -d "{\"ticket\":\"$TICKET\",\"room\":\"arena:1\",\"user_id\":\"00000000-0000-0000-0000-000000000001\"}"; echo
 ```
 
-**Kết quả mong đợi (thật):**
+Kết quả mong đợi (thật):
 
 ```
 {"exp":1793533330,"ok":true,"room":"arena:1"}
@@ -96,7 +96,7 @@ curl -s -X POST "$BASE/v2/rpc/verify_ticket?unwrap" -H "Authorization: Bearer $T
      -H 'Content-Type: application/json' -d '{}'; echo
 ```
 
-**Kết quả mong đợi (thật):**
+Kết quả mong đợi (thật):
 
 ```
 {"code":7,"error":{},"message":"chi backend duoc goi RPC nay"}
@@ -104,10 +104,10 @@ curl -s -X POST "$BASE/v2/rpc/verify_ticket?unwrap" -H "Authorization: Bearer $T
 
 `code 7` = `PERMISSION_DENIED`. Các RPC `verify_ticket`, `reset_match`, `list_rooms`, `kv_get`, `kv_put` chỉ backend (có `http_key`) gọi được.
 
-**Hoặc chạy gọn:** `./scripts/test-nakama.sh` làm đúng các bước 12.1-12.3 và kiểm tra tự động; script tự đọc khoá từ secret `fomoxa-nakama` khi Nakama chạy trong k3d.
-`./scripts/test-nakama-pool.sh` thử **4 người chơi vào "auto"** (phải ra 2 phòng khác nhau).
+Hoặc chạy gọn: `./scripts/test-nakama.sh` làm đúng các bước 12.1-12.3 và kiểm tra tự động; script tự đọc khoá từ secret `fomoxa-nakama` khi Nakama chạy trong k3d.
+`./scripts/test-nakama-pool.sh` thử 4 người chơi vào "auto" (phải ra 2 phòng khác nhau).
 
-**Kết quả mong đợi của `test-nakama.sh` (thật, đoạn cuối):**
+Kết quả mong đợi của `test-nakama.sh` (thật, đoạn cuối):
 
 ```
 3) ana find_match...
@@ -124,7 +124,7 @@ curl -s -X POST "$BASE/v2/rpc/verify_ticket?unwrap" -H "Authorization: Bearer $T
 OK: 2 client ghep dung room, ticket dung, user ngoai bi chan!
 ```
 
-**Kết quả mong đợi của `test-nakama-pool.sh` (thật, đoạn cuối):**
+Kết quả mong đợi của `test-nakama-pool.sh` (thật, đoạn cuối):
 
 ```
    -> Cap 1 matched vao room: arena:1 (ticket: e0d102e4-...)
@@ -133,13 +133,12 @@ Chung minh thanh cong: Cap 1 (arena:1) va Cap 2 (arena:2) duoc cap 2 room khac n
 === DoD P5.5 HOAN TAT THANH CONG! ===
 ```
 
-**Lỗi thường gặp:**
+Lỗi thường gặp:
 
 | Triệu chứng | Cách xử lý |
 |---|---|
 | Script dừng với "cổng 7350 đang trỏ tới container ... compose" | còn `docker compose` đang giữ 7350: `docker compose -f deploy/compose.yaml down`. Muốn cố ý test compose: `ALLOW_COMPOSE=1 ./scripts/test-nakama.sh` |
 | `401 Unauthorized` khi `authenticate/device` | sai `SERVER_KEY` (dùng `defaultkey` cho cụm đã đổi khoá, hoặc ngược lại) |
 | `lua runtime error` | module Lua lỗi: `kubectl logs deploy/nakama -n fomoxa \| grep -i lua` |
-| Người thứ hai vẫn `waiting` | hai người xin **hai phòng khác nhau**, hoặc hàng chờ cũ chưa xoá (chạy lại `reset_match`) |
+| Người thứ hai vẫn `waiting` | hai người xin hai phòng khác nhau, hoặc hàng chờ cũ chưa xoá (chạy lại `reset_match`) |
 
----

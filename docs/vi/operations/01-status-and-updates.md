@@ -4,7 +4,7 @@ Lên đầu tài liệu: [05-VAN-HANH](README.md) · Tiếp: [02-drain-va-tai-kh
 
 ## 1. Xem trạng thái và log
 
-**Mục tiêu:** biết cụm đang ra sao và vì sao một thứ không chạy.
+Mục tiêu: biết cụm đang ra sao và vì sao một thứ không chạy.
 
 ```bash
 # Tổng quan
@@ -31,9 +31,9 @@ kubectl get events -n fomoxa --sort-by=.lastTimestamp | tail -20
 kubectl top pods -n fomoxa
 ```
 
-**Ý nghĩa:** `deploy/<tên>` cho `kubectl logs` chọn một pod bất kỳ của deployment đó. Game server có **2 container**, nên phải chỉ rõ `-c fomoxa-server` (container còn lại là sidecar của Agones).
+Ý nghĩa: `deploy/<tên>` cho `kubectl logs` chọn một pod bất kỳ của deployment đó. Game server có 2 container, nên phải chỉ rõ `-c fomoxa-server` (container còn lại là sidecar của Agones).
 
-**Kết quả mong đợi `kubectl top` (mẫu):**
+Kết quả mong đợi `kubectl top` (mẫu):
 
 ```
 NAME                        CPU(cores)   MEMORY(bytes)
@@ -41,8 +41,6 @@ backend-7f9d8c6b5-4hq2l     12m          95Mi
 fomoxa-server-hl9fz-2xkpq   6m           48Mi
 nakama-79c8d6b5f4-9rt6w     25m          180Mi
 ```
-
----
 
 ## 2. Truy cập dịch vụ nội bộ
 
@@ -62,7 +60,7 @@ curl -s http://127.0.0.1:9610/metrics | head -20
 kill %1
 ```
 
-**Kết quả `/metrics` (thật, từ backend):**
+Kết quả `/metrics` (thật, từ backend):
 
 ```
 # HELP fomoxa_online_players Số người chơi online (báo có mặt trong 20 giây gần nhất)
@@ -74,11 +72,9 @@ fomoxa_joins_total{result="ok"} 2
 fomoxa_score_reports_total 3
 ```
 
----
-
 ## 3. Scale Fleet thủ công
 
-**Mục tiêu:** thêm/bớt game server bằng tay (khi **chưa** bật autoscaler).
+Mục tiêu: thêm/bớt game server bằng tay (khi chưa bật autoscaler).
 
 ```bash
 kubectl scale fleet fomoxa-server -n fomoxa --replicas=6
@@ -86,12 +82,10 @@ kubectl get gs -n fomoxa                    # đợi các GameServer mới lên 
 kubectl scale fleet fomoxa-server -n fomoxa --replicas=4
 ```
 
-**Ý nghĩa:** Agones tạo/xoá GameServer cho khớp `replicas`. Khi giảm, nó **ưu tiên xoá pod `Ready` (chưa có người)**, giữ lại pod `Allocated`.
+Ý nghĩa: Agones tạo/xoá GameServer cho khớp `replicas`. Khi giảm, nó ưu tiên xoá pod `Ready` (chưa có người), giữ lại pod `Allocated`.
 Mỗi pod giữ một phòng trong `arena:1..16` nên tối đa 16 pod hữu ích (xem `FOMOXA_ROOM` trong `deploy/k8s/fleet.yaml`).
 
-**Lưu ý:** nếu `FleetAutoscaler` đang chạy, nó sẽ ghi đè `replicas` bạn đặt. Muốn scale tay thì tắt autoscaler trước: `kubectl delete -f deploy/k8s/fleet-autoscaler.yaml`.
-
----
+Lưu ý: nếu `FleetAutoscaler` đang chạy, nó sẽ ghi đè `replicas` bạn đặt. Muốn scale tay thì tắt autoscaler trước: `kubectl delete -f deploy/k8s/fleet-autoscaler.yaml`.
 
 ## 4. Khởi động lại một dịch vụ
 
@@ -101,14 +95,12 @@ kubectl rollout restart deployment/directory -n fomoxa
 kubectl rollout status  deployment/backend   -n fomoxa
 ```
 
-**Ý nghĩa:** `rollout restart` thay pod lần lượt (không gián đoạn nếu có nhiều bản sao; ở đây mỗi dịch vụ 1 bản nên có khoảng gián đoạn ngắn).
-**Thứ tự khi phải restart nhiều thứ:** `postgres` → `nakama` → `directory` → `backend` → `gateway`. Khi `directory` restart, các game server tự đăng ký lại.
-
----
+Ý nghĩa: `rollout restart` thay pod lần lượt (không gián đoạn nếu có nhiều bản sao; ở đây mỗi dịch vụ 1 bản nên có khoảng gián đoạn ngắn).
+Thứ tự khi phải restart nhiều thứ: `postgres` → `nakama` → `directory` → `backend` → `gateway`. Khi `directory` restart, các game server tự đăng ký lại.
 
 ## Cập nhật sau khi build lại image
 
-**Mục tiêu:** đưa mã mới (backend, server, directory, gateway) vào cụm đang chạy.
+Mục tiêu: đưa mã mới (backend, server, directory, gateway) vào cụm đang chạy.
 
 ```bash
 # 1) Build lại image đã đổi (ví dụ backend và game server)
@@ -127,9 +119,8 @@ kubectl apply -f deploy/k8s/fleet.yaml
 kubectl wait --for=jsonpath='{.status.state}'=Ready gs -l agones.dev/fleet=fomoxa-server -n fomoxa --timeout=300s
 ```
 
-**Vì sao bước 4 khác bước 3:** `Deployment` có lệnh `rollout restart`; `Fleet` thì chỉ tự thay pod khi *spec* đổi. Cùng tag `:latest` nghĩa là spec không đổi, nên phải xoá và tạo lại. **Người đang chơi sẽ bị ngắt** khi xoá Fleet;
-để cập nhật nhẹ nhàng hơn, dùng tag phiên bản (`fomoxa-server:1.1`), sửa `image:` và `FOMOXA_VERSION` trong `fleet.yaml` rồi `kubectl apply` - Agones sẽ cuốn chiếu (rolling) thay pod.
+Vì sao bước 4 khác bước 3: `Deployment` có lệnh `rollout restart`; `Fleet` thì chỉ tự thay pod khi *spec* đổi. Cùng tag `:latest` nghĩa là spec không đổi, nên phải xoá và tạo lại. Người đang chơi sẽ bị ngắt khi xoá Fleet;
+để cập nhật nhẹ nhàng hơn, dùng tag phiên bản (`fomoxa-server:1.1`), sửa `image:` và `FOMOXA_VERSION` trong `fleet.yaml` rồi `kubectl apply`, Agones sẽ cuốn chiếu (rolling) thay pod.
 
-**Quan trọng khi đổi giao thức mạng** (model/RPC): client (`MyGame.exe`), backend và game server phải build **cùng lúc** ([04, Sinh lại mã](../unity-client.md#sinh-lại-mã-khi-đổi-model-hoặc-rpc)).
+Quan trọng khi đổi giao thức mạng (model/RPC): client (`MyGame.exe`), backend và game server phải build cùng lúc ([04, Sinh lại mã](../unity-client.md#sinh-lại-mã-khi-đổi-model-hoặc-rpc)).
 
----

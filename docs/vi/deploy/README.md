@@ -1,11 +1,11 @@
-# 03 - Triển khai cụm Kubernetes (k3d + Agones) từng bước
+# 03: Triển khai cụm Kubernetes (k3d + Agones) từng bước
 
-Tài liệu này dựng **cụm thật** trên máy bạn: Postgres, Nakama, directory, gateway, backend và Fleet game server của Agones, chạy trong k3d.
-Làm tay từng bước để hiểu; cuối tài liệu có đường tắt **một lệnh** (`./scripts/k8s-up.sh --build`) và bảng cho biết script đó đã làm những bước nào.
+Tài liệu này dựng cụm thật trên máy bạn: Postgres, Nakama, directory, gateway, backend và Fleet game server của Agones, chạy trong k3d.
+Làm tay từng bước để hiểu; cuối tài liệu có đường tắt một lệnh (`./scripts/k8s-up.sh --build`) và bảng cho biết script đó đã làm những bước nào.
 
-> **Điều kiện:** đã xong [01 - Chuẩn bị môi trường](../getting-started/prepare-environment.md) (`docker`, `kubectl`, `k3d`, `helm`, `openssl`, `git`).
-> **Thời gian:** lần đầu 30-60 phút, phần lớn là build image Rust (directory, gateway) và kéo image.
-> **Chưa kiểm chứng:** các bước 4 (build image Rust), 5-11 (k3d/Agones/manifest) chưa được chạy lại khi viết tài liệu; lệnh lấy nguyên từ `scripts/k8s-up.sh`,
+> Điều kiện: đã xong [01, Chuẩn bị môi trường](../getting-started/prepare-environment.md) (`docker`, `kubectl`, `k3d`, `helm`, `openssl`, `git`).
+> Thời gian: lần đầu 30-60 phút, phần lớn là build image Rust (directory, gateway) và kéo image.
+> Chưa kiểm chứng: các bước 4 (build image Rust), 5-11 (k3d/Agones/manifest) chưa được chạy lại khi viết tài liệu; lệnh lấy nguyên từ `scripts/k8s-up.sh`,
 > `scripts/build-images.sh`, `scripts/gen-*.sh` và manifest. Output ghi *(mẫu)*. Các bước 2 và 12 đã chạy thật.
 
 ## Nên đọc trước
@@ -42,7 +42,7 @@ Sau khi hiểu các bước trên, chạy gọn:
 ./scripts/k8s-up.sh --build
 ```
 
-**Script làm đúng những bước nào:**
+Script làm đúng những bước nào:
 
 | Phần của `k8s-up.sh` | Tương ứng |
 |---|---|
@@ -66,8 +66,6 @@ Biến môi trường tuỳ chọn (đặt trước lệnh, ví dụ `AUTOSCALE=
 | `TLS_ONLY=1` | đóng cổng 9600 không mã hoá, chỉ còn TLS 9643 | [05](../operations/03-tls-and-keys.md#tls-giữa-client-và-backend) |
 | `APPLY_INGRESS=1` | áp dụng Ingress thử nghiệm | [08](../reference.md) |
 
----
-
 ## Checklist cuối
 
 - [ ] `deploy/secrets/` có 14 file; `root` đúng 64 ký tự
@@ -82,4 +80,4 @@ Biến môi trường tuỳ chọn (đặt trước lệnh, ví dụ `AUTOSCALE=
 - [ ] Client Unity vào được phòng, GameServer chuyển `Allocated`
 - [ ] `public_address` trong `directory-config` là `127.0.0.1:7777` (chạy local)
 
-Tiếp theo: [04 - Client Unity](../unity-client.md), [05 - Vận hành](../operations/README.md).
+Tiếp theo: [04: Client Unity](../unity-client.md), [05, Vận hành](../operations/README.md).

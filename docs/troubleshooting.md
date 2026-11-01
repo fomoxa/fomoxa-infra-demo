@@ -74,7 +74,7 @@ Fix: delete and recreate it: `k3d cluster delete fomoxa`, then repeat [03, Steps
 | `Init:Error` (nakama) | the `migrate` init container cannot reach Postgres | see [Nakama](#4-nakama) |
 | `Evicted` or `OOMKilled` | out of memory, or over the `limits` | `kubectl describe pod ...` (Last State); add RAM or raise `limits` in the manifest |
 
-After every image rebuild, remember to import and restart. A Fleet must be deleted and applied again ([05](operations/01-status-and-updates.md#updating-after-rebuilding-an-image)). The sign that you forgot: you changed the code and the behavior did not change.
+After every image rebuild, import the image and restart the workload. A Fleet must be deleted and applied again ([05](operations/01-status-and-updates.md#updating-after-rebuilding-an-image)). The sign that you forgot: you changed the code and the behavior did not change.
 
 ## 3. Agones and game servers
 

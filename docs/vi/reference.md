@@ -1,25 +1,23 @@
-# 08 - Tham khảo
+# 08: Tham khảo
 
-Tra cứu nhanh: cổng và dịch vụ, cấu hình `directory`/`gateway`, secrets, biến môi trường, giao diện RPC, hằng số gameplay, và **bảng đối chiếu từng script với lệnh tay tương đương**.
+Tra cứu nhanh: cổng và dịch vụ, cấu hình `directory`/`gateway`, secrets, biến môi trường, giao diện RPC, hằng số gameplay, và bảng đối chiếu từng script với lệnh tay tương đương.
 
 Mục lục: [1. Cổng và dịch vụ](#1-cổng-và-dịch-vụ) · [2. Cấu hình directory và gateway](#2-cấu-hình-directory-và-gateway) · [3. Secrets](#3-secrets) ·
 [4. Script ↔ lệnh tay tương đương](#4-script--lệnh-tay-tương-đương) · [5. Biến môi trường và tham số](#5-biến-môi-trường-và-tham-số) · [6. Manifest](#6-manifest-trong-deployk8s) ·
 [7. Giao diện RPC](#7-giao-diện-rpc-của-backend) · [8. Hằng số gameplay](#8-hằng-số-gameplay)
 
----
-
 ## 1. Cổng và dịch vụ
 
-**Phía client thấy:**
+Phía client thấy:
 
 | Cổng máy bạn | Giao thức | Vào | Mục đích |
 |---|---|---|---|
 | `9600` | TCP | `backend` | đăng nhập, phòng, bạn bè, bảng điểm (fRPC) |
 | `7777` | UDP | `gateway` | chơi game |
 | `9643` | TCP | `tls-proxy` → `backend:9600` | cùng như 9600 nhưng mã hoá TLS (tuỳ chọn, khuyến nghị cho môi trường thật) |
-| `7350` | TCP | `nakama` | **chỉ để chạy script test**, client không dùng |
+| `7350` | TCP | `nakama` | chỉ để chạy script test, client không dùng |
 
-**Trong cluster (namespace `fomoxa`), client không nối trực tiếp:**
+Trong cluster (namespace `fomoxa`), client không nối trực tiếp:
 
 | Thành phần | Kiểu Service | Cổng | Ai nối vào | Image / nguồn |
 |---|---|---|---|---|
@@ -36,8 +34,6 @@ Mục lục: [1. Cổng và dịch vụ](#1-cổng-và-dịch-vụ) · [2. Cấu
 Cổng metrics (chỉ Prometheus): backend `9610`, game server `9611`, Nakama `9100`.
 
 Namespace khác: `agones-system` (Agones), `monitoring` (tuỳ chọn).
-
----
 
 ## 2. Cấu hình directory và gateway
 
@@ -74,9 +70,9 @@ sort = "packed"                              # dồn người vào pod đã có 
 
 | Khoá | Ý nghĩa | Ràng buộc |
 |---|---|---|
-| `public_address` | Khi có gateway phía trước, `Allocate` trả địa chỉ này **thay cho địa chỉ thật của pod**. Phải là địa chỉ UDP mà *client* tới được | local: `127.0.0.1:7777`; xem [05, mục 14](operations/05-scaling-security-backup.md#14-đổi-địa-chỉ-công-khai-public_address) |
-| `drain_seconds` | Thời gian tối đa pod được chờ hết người khi drain | `terminationGracePeriodSeconds` của Fleet (360) phải **lớn hơn** |
-| `[keys].root` | khoá gốc | đúng **64 ký tự hex** (32 byte); các khoá còn lại ≥ 16 byte |
+| `public_address` | Khi có gateway phía trước, `Allocate` trả địa chỉ này thay cho địa chỉ thật của pod. Phải là địa chỉ UDP mà *client* tới được | local: `127.0.0.1:7777`; xem [05, mục 14](operations/05-scaling-security-backup.md#14-đổi-địa-chỉ-công-khai-public_address) |
+| `drain_seconds` | Thời gian tối đa pod được chờ hết người khi drain | `terminationGracePeriodSeconds` của Fleet (360) phải lớn hơn |
+| `[keys].root` | khoá gốc | đúng 64 ký tự hex (32 byte); các khoá còn lại ≥ 16 byte |
 
 ### `gateway.toml` (ConfigMap `gateway-config`, file `deploy/k8s/gateway.yaml`)
 
@@ -92,13 +88,11 @@ gateway = { file = "/secrets/directory/gateway" }       # gateway chỉ cần kh
 
 Sửa ConfigMap xong phải `kubectl rollout restart deployment/<directory|gateway> -n fomoxa` mới đọc lại.
 
----
-
 ## 3. Secrets
 
 Sinh bằng `scripts/gen-keys.sh` + `scripts/gen-tls-cert.sh` (bung ra ở [03, Bước 2](deploy/01-prepare-and-keys.md#bước-2-sinh-khoá-và-chứng-chỉ-secrets)); nạp vào cluster bằng `scripts/gen-k8s-secrets.sh` ([Bước 8](deploy/04-secrets.md#bước-8-namespace-và-secrets)).
 
-**File trong `deploy/secrets/` (không commit):**
+File trong `deploy/secrets/` (không commit):
 
 | File | Độ dài hex | Dùng cho |
 |---|---|---|
@@ -115,23 +109,21 @@ Sinh bằng `scripts/gen-keys.sh` + `scripts/gen-tls-cert.sh` (bung ra ở [03, 
 | `nakama/db-password` | 32 | mật khẩu Postgres |
 | `tls/tls.crt`, `tls/tls.key` | (PEM) | chứng chỉ TLS của `tls-proxy` |
 
-**Secret trong cluster (namespace `fomoxa`), pod nào được thấy gì:**
+Secret trong cluster (namespace `fomoxa`), pod nào được thấy gì:
 
 | Secret | Chứa | Mount/đọc bởi |
 |---|---|---|
 | `fomoxa-directory-keys` | backend, pod, gateway, admin, root | `directory` (đủ 5); `gateway` chỉ mount khoá `gateway` |
 | `fomoxa-backend-keys` | backend, backend-pod | `backend` |
 | `fomoxa-pod-key` | pod | game server |
-| `fomoxa-backend-pod-key` | backend-pod | game server (tách riêng, **không** kèm khoá backend→directory) |
+| `fomoxa-backend-pod-key` | backend-pod | game server (tách riêng, không kèm khoá backend→directory) |
 | `fomoxa-nakama` | 6 giá trị Nakama/Postgres | `nakama`, `postgres`, `backend` |
 | `fomoxa-tls` | `tls.crt`, `tls.key` | `tls-proxy` |
 | `grafana-admin` (ns `monitoring`) | password | `grafana` |
 
----
-
 ## 4. Script ↔ lệnh tay tương đương
 
-Mọi script chỉ là đường tắt. Bảng dưới cho biết mỗi script **thực sự chạy những lệnh gì** và đoạn tài liệu có phiên bản bung ra.
+Mọi script chỉ là đường tắt. Bảng dưới cho biết mỗi script thực sự chạy những lệnh gì và đoạn tài liệu có phiên bản bung ra.
 
 | Script | Việc script làm (bung ra) | Lệnh tay ở |
 |---|---|---|
@@ -146,17 +138,15 @@ Mọi script chỉ là đường tắt. Bảng dưới cho biết mỗi script *
 | `scripts/test-p5.sh [phòng1 phòng2]` | `kubectl get gs` → gọi `powershell.exe test-p5.ps1` (4 client `MyGame.exe -autojoin`) với `FOMOXA_KUBECTL_WSL=1` → kiểm đúng 2 pod `Allocated` | [03 Bước 13](deploy/08-test-client-and-cleanup.md#bước-13-test-bằng-client-unity-người-chơi-thật) |
 | `scripts/run-mock-cluster.sh [tuỳ chọn]` | `dotnet publish` game server + MockCluster vào `.mock/` → `dotnet .mock/cluster/MockCluster.dll --server=... [tuỳ chọn]` | [02 Bước 1-2](getting-started/quickstart-mock-cluster.md) |
 | `scripts/test-real-backend.sh` | `docker compose up -d` → 3× `dotnet publish` → chạy backend thật với biến `Fomoxa__*` → `MockCluster --selftest-target=9600,9602 --selftest` → `curl /metrics` → dọn | [06 §4](testing.md#4-backend-thật--nakama-thật) |
-| `scripts/stop-all.sh` | `pkill -9 -f` các tiến trình tên `fomoxa-directory`, `fomoxa-gateway`, `MyGame.Server`, `MyGame.Backend`, `MyGame` (và `taskkill.exe` trên Windows); dùng cho cách chạy **không K8s** | — |
+| `scripts/stop-all.sh` | `pkill -9 -f` các tiến trình tên `fomoxa-directory`, `fomoxa-gateway`, `MyGame.Server`, `MyGame.Backend`, `MyGame` (và `taskkill.exe` trên Windows); dùng cho cách chạy không K8s | (không có) |
 
-**Bản PowerShell (`.ps1`)** cho Windows: `gen-keys.ps1`, `gen-tls-cert.ps1`, `gen-k8s-secrets.ps1`, `build-images.ps1`, `k8s-up.ps1`, `k8s-down.ps1`, `test-nakama.ps1`, `test-nakama-pool.ps1`, `test-p5.ps1`, `run-mock-cluster.ps1` làm cùng việc với bản `.sh`.
+Bản PowerShell (`.ps1`) cho Windows: `gen-keys.ps1`, `gen-tls-cert.ps1`, `gen-k8s-secrets.ps1`, `build-images.ps1`, `k8s-up.ps1`, `k8s-down.ps1`, `test-nakama.ps1`, `test-nakama-pool.ps1`, `test-p5.ps1`, `run-mock-cluster.ps1` làm cùng việc với bản `.sh`.
 
-**Cách chạy cũ trên Windows, không dùng K8s** (directory/gateway Rust build ra `.exe` và chạy trực tiếp): `start-cluster.ps1` (dựng cả cụm cục bộ), `run-directory.ps1`, `run-backend.ps1`, `run-pod.ps1`, `run-client.ps1`, `stop-all.ps1`,
+Cách chạy cũ trên Windows, không dùng K8s (directory/gateway Rust build ra `.exe` và chạy trực tiếp): `start-cluster.ps1` (dựng cả cụm cục bộ), `run-directory.ps1`, `run-backend.ps1`, `run-pod.ps1`, `run-client.ps1`, `stop-all.ps1`,
 kiểm thử `test-p4.ps1`, `test-console-server.ps1`. Chúng không được dùng trong tài liệu này vì cụm giả ([02](getting-started/quickstart-mock-cluster.md)) thay thế được mà không cần build Rust.
 
-**`scripts/sync-server-deps.ps1`** (Windows): chép phần mã nguồn của hai package Fomoxa từ `MyGame/Library/PackageCache/` vào `server-deps/` để game server console build không phụ thuộc Unity.
-Chạy lại **mỗi khi đổi phiên bản package** trong `MyGame/Packages/manifest.json` (sau khi Unity đã tải package).
-
----
+`scripts/sync-server-deps.ps1` (Windows): chép phần mã nguồn của hai package Fomoxa từ `MyGame/Library/PackageCache/` vào `server-deps/` để game server console build không phụ thuộc Unity.
+Chạy lại mỗi khi đổi phiên bản package trong `MyGame/Packages/manifest.json` (sau khi Unity đã tải package).
 
 ## 5. Biến môi trường và tham số
 
@@ -174,8 +164,8 @@ Thứ tự ưu tiên: tham số dòng lệnh `--tên=giá-trị` → biến môi
 | `--region` | `FOMOXA_REGION` | `local` | vùng |
 | `--max-players` | `FOMOXA_MAX_PLAYERS` | 16 | sức chứa một pod |
 | `--room` | `FOMOXA_ROOM` | `arena:1` | danh sách phòng, cách nhau dấu phẩy |
-| `--claim-one` | `FOMOXA_CLAIM_ONE` | false | mỗi pod chỉ giữ **một** phòng trống trong danh sách (dùng với Fleet) |
-| `--behind-gateway` | `FOMOXA_BEHIND_GATEWAY` | true | pod đứng sau gateway (false: client nối thẳng pod - dùng trong cụm giả) |
+| `--claim-one` | `FOMOXA_CLAIM_ONE` | false | mỗi pod chỉ giữ một phòng trống trong danh sách (dùng với Fleet) |
+| `--behind-gateway` | `FOMOXA_BEHIND_GATEWAY` | true | pod đứng sau gateway (false: client nối thẳng pod, dùng trong cụm giả) |
 | `--agones` | `FOMOXA_AGONES` | tự bật nếu có `AGONES_SDK_GRPC_PORT` | báo trạng thái cho sidecar Agones |
 | `--key` | `POD_KEY_FILE` | (bắt buộc) | file khoá `pod` |
 | `--backend` | `FOMOXA_BACKEND` | (rỗng = tắt) | `host:9602` của backend để báo số người + bảng điểm |
@@ -193,16 +183,14 @@ Cấu hình .NET dạng `Fomoxa:Mục:Khoá`; qua biến môi trường thay `:`
 | `Fomoxa__Directory__Key__File` | (bắt buộc) | file khoá `backend` |
 | `Fomoxa__Players__Tcp` / `Fomoxa__Players__WebSocket` | `0.0.0.0:9600` / `0.0.0.0:9601` | cổng người chơi (WebSocket để rỗng `""` để tắt) |
 | `Fomoxa__Pods__Tcp` / `Fomoxa__Pods__Key__File` | `0.0.0.0:9602` / (bắt buộc) | cổng pod + file khoá `backend-pod` (≥ 16 byte) |
-| `Fomoxa__Nakama__Url` | (rỗng) | URL Nakama. **Rỗng = không Nakama**: ghép trận tức thì, tài khoản trong bộ nhớ |
+| `Fomoxa__Nakama__Url` | (rỗng) | URL Nakama. Rỗng = không Nakama: ghép trận tức thì, tài khoản trong bộ nhớ |
 | `Fomoxa__Nakama__ServerKey` / `HttpKey` | `defaultkey` / `defaulthttpkey` | khoá Nakama (K8s lấy từ secret) |
-| `Fomoxa__Data__File` | (rỗng) | file JSON lưu tài khoản **khi không có Nakama** |
+| `Fomoxa__Data__File` | (rỗng) | file JSON lưu tài khoản khi không có Nakama |
 | `Fomoxa__Metrics__Listen` | `0.0.0.0:9610` | HTTP `/metrics` (rỗng = tắt) |
 
 ### Client Unity
 
 Tham số dòng lệnh: xem bảng ở [04, Bước 5](unity-client.md#bước-5-chạy-bản-build-và-tham-số-dòng-lệnh).
-
----
 
 ## 6. Manifest trong `deploy/k8s/`
 
@@ -218,32 +206,28 @@ Tham số dòng lệnh: xem bảng ở [04, Bước 5](unity-client.md#bước-5
 | `fleet.yaml` | Agones `Fleet` `fomoxa-server`: 4 replicas, cổng 7778/UDP, 16 phòng, `terminationGracePeriodSeconds: 360` |
 | `fleet-autoscaler.yaml` | `FleetAutoscaler` Buffer 2, 4..16 (tuỳ chọn) |
 | `networkpolicy.yaml` | chặn mặc định + các luồng cần thiết (tuỳ chọn) |
-| `ingress.yaml` | **thử nghiệm**, chỉ route WebSocket `/ws`, không TLS (`APPLY_INGRESS=1`) |
+| `ingress.yaml` | thử nghiệm, chỉ route WebSocket `/ws`, không TLS (`APPLY_INGRESS=1`) |
 
 `deploy/monitoring/`: `00-namespace`, `10-prometheus` (+ luật cảnh báo), `20-alertmanager`, `30-grafana` (+ dashboard), `40-loki` (+ promtail).
-
----
 
 ## 7. Giao diện RPC của backend
 
 fRPC qua TCP 9600. Định nghĩa gốc: `MyGame.Backend/MyGame.Backend/Services.cs`; model: `Models/*.cs`.
 
-**`Players.Login(PlayerLogin) → PlayerWelcome`** - dùng làm bước xác thực khi kết nối. `PlayerLogin.Mode`:
+`Players.Login(PlayerLogin) → PlayerWelcome`: dùng làm bước xác thực khi kết nối. `PlayerLogin.Mode`:
 
 | `Mode` | Việc | Trường dùng |
 |---|---|---|
 | `register` | tạo tài khoản | `Player`, `Secret` = mật khẩu |
 | `login` | đăng nhập | `Player`, `Secret` |
-| `recover` | đặt lại mật khẩu | `Player`, `Recovery` = mã khôi phục, `Secret` = mật khẩu **mới** |
+| `recover` | đặt lại mật khẩu | `Player`, `Recovery` = mã khôi phục, `Secret` = mật khẩu mới |
 | (rỗng, không `Secret`) | khách / kiểu cũ | `DeviceId` (qua Nakama) hoặc chỉ `Player` (backend không Nakama) |
 
-**`Lobby`** (cần đăng nhập): `ListRooms`, `JoinRoom(RoomKey, Version) → RoomTicket`, `Presence(Room) → OnlineList`, `TakeRecoveryCode`, `ChangePassword`, `GetProfile`, `Social`, `FriendAction(request|accept|decline|remove|dismiss-invite)`, `Invite`, `Scoreboard(Room)`.
+`Lobby` (cần đăng nhập): `ListRooms`, `JoinRoom(RoomKey, Version) → RoomTicket`, `Presence(Room) → OnlineList`, `TakeRecoveryCode`, `ChangePassword`, `GetProfile`, `Social`, `FriendAction(request|accept|decline|remove|dismiss-invite)`, `Invite`, `Scoreboard(Room)`.
 
-**`PodGate`** (khoá `backend-pod`): `ReportRoom(RoomKey, Players, Capacity)`, `ReportScores(Room, [Player, Steps])`, `TransferPlayer` (chưa dùng).
+`PodGate` (khoá `backend-pod`): `ReportRoom(RoomKey, Players, Capacity)`, `ReportScores(Room, [Player, Steps])`, `TransferPlayer` (chưa dùng).
 
-**`Directory`** (backend/pod/gateway ↔ directory, cổng 9500): `Allocate`, `RegisterPod`, `AcquireRoom`, `ReleaseRoom`, `ReportLoad`, `WatchDrain`, `RequestDrain`, `WatchPods`; **`DirectoryAdmin`** (khoá `admin`, cổng 9501): `Drain`, `ReadPods`.
-
----
+`Directory` (backend/pod/gateway ↔ directory, cổng 9500): `Allocate`, `RegisterPod`, `AcquireRoom`, `ReleaseRoom`, `ReportLoad`, `WatchDrain`, `RequestDrain`, `WatchPods`; `DirectoryAdmin` (khoá `admin`, cổng 9501): `Drain`, `ReadPods`.
 
 ## 8. Hằng số gameplay
 
@@ -260,4 +244,4 @@ fRPC qua TCP 9600. Định nghĩa gốc: `MyGame.Backend/MyGame.Backend/Services
 | `Bounds` | 23 m | giới hạn khu chơi |
 | `PlayerRadius`, `PlayerHeight` | 0,5 m, 2 m | kích thước nhân vật |
 
-Đổi hằng số: sửa file này (một nơi), build lại **cả client và game server**; scene tự dựng lại bục khi chạy **Rebuild Scene**.
+Đổi hằng số: sửa file này (một nơi), build lại cả client và game server; scene tự dựng lại bục khi chạy Rebuild Scene.

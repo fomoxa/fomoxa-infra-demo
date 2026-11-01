@@ -4,13 +4,13 @@ Lên đầu tài liệu: [05-VAN-HANH](README.md) · Trước: [01-trang-thai-va
 
 ## 6. Tắt game server an toàn (drain)
 
-**Mục tiêu:** tắt hoặc thay một game server **mà không cắt người đang chơi**.
+Mục tiêu: tắt hoặc thay một game server mà không cắt người đang chơi.
 
-**Cách hoạt động (đã cài trong `MyGame/Server~/Program.cs`):** khi pod nhận `SIGTERM` (Kubernetes gửi khi xoá pod), game server gọi `RequestDrain` lên directory - directory **ngừng gán người/phòng mới** cho pod này -
-rồi pod **chờ hết người chơi** mới thoát. Tối đa chờ `drain_seconds = 300` giây (directory ép dừng); Kubernetes cho pod `terminationGracePeriodSeconds: 360` giây trước khi `SIGKILL` (360 > 300 là ràng buộc bắt buộc).
+Cách hoạt động (đã cài trong `MyGame/Server~/Program.cs`): khi pod nhận `SIGTERM` (Kubernetes gửi khi xoá pod), game server gọi `RequestDrain` lên directory, directory ngừng gán người/phòng mới cho pod này -
+rồi pod chờ hết người chơi mới thoát. Tối đa chờ `drain_seconds = 300` giây (directory ép dừng); Kubernetes cho pod `terminationGracePeriodSeconds: 360` giây trước khi `SIGKILL` (360 > 300 là ràng buộc bắt buộc).
 Tín hiệu `SIGTERM` lần hai thì thoát ngay.
 
-**Thử:**
+Thử:
 
 ```bash
 # Lấy tên một GameServer đang có người chơi (STATE=Allocated)
@@ -22,7 +22,7 @@ kubectl delete gs "$GS" -n fomoxa --wait=false
 kubectl logs -n fomoxa "$GS" -c fomoxa-server -f --tail=5
 ```
 
-**Kết quả mong đợi (khuôn dòng thật của chương trình):**
+Kết quả mong đợi (khuôn dòng thật của chương trình):
 
 ```
 [Pod] SIGTERM: xin drain, cho het nguoi choi (gui tin hieu lan nua de thoat ngay)
@@ -30,20 +30,18 @@ kubectl logs -n fomoxa "$GS" -c fomoxa-server -f --tail=5
 [Pod] drain: het nguoi choi, thoat
 ```
 
-Với pod **không có người** (`Ready`), dòng cuối xuất hiện gần như ngay. Fleet tạo GameServer mới thay thế.
+Với pod không có người (`Ready`), dòng cuối xuất hiện gần như ngay. Fleet tạo GameServer mới thay thế.
 
-**Lưu ý:** cơ chế này đã được kiểm chứng ở mức tiến trình (pod thoát khi hết người), **chưa thử** đầy đủ với directory thật và `kubectl delete` trên cụm.
-
----
+Lưu ý: cơ chế này đã được kiểm chứng ở mức tiến trình (pod thoát khi hết người), chưa thử đầy đủ với directory thật và `kubectl delete` trên cụm.
 
 ## 7. Tài khoản và dữ liệu người chơi
 
-Tài khoản, mật khẩu (băm PBKDF2-SHA256, 120.000 vòng, salt riêng), mã khôi phục (chỉ lưu bản băm), hồ sơ, bạn bè nằm trong **Nakama storage**
+Tài khoản, mật khẩu (băm PBKDF2-SHA256, 120.000 vòng, salt riêng), mã khôi phục (chỉ lưu bản băm), hồ sơ, bạn bè nằm trong Nakama storage
 (bảng `account`, `profile`, `social`), truy cập qua hai RPC nội bộ `kv_get`/`kv_put` mà chỉ backend (có `http_key`) gọi được.
 
-**Người dùng tự làm trong game:** đăng ký, đổi mật khẩu (thẻ *Tài khoản*), quên mật khẩu (thẻ *Quên mật khẩu* + mã khôi phục), kết bạn, mời vào phòng.
+Người dùng tự làm trong game: đăng ký, đổi mật khẩu (thẻ *Tài khoản*), quên mật khẩu (thẻ *Quên mật khẩu* + mã khôi phục), kết bạn, mời vào phòng.
 
-**Quản trị viên kiểm tra một tài khoản có tồn tại không** (không lộ mật khẩu, nhưng trả về bản băm - coi như nhạy cảm):
+Quản trị viên kiểm tra một tài khoản có tồn tại không (không lộ mật khẩu, nhưng trả về bản băm, coi như nhạy cảm):
 
 ```bash
 BASE=http://127.0.0.1:7350
@@ -54,13 +52,11 @@ curl -s -X POST "$BASE/v2/rpc/kv_get?unwrap" -H "Authorization: Basic $HTTP_CRED
      -H 'Content-Type: application/json' -d '{"collection":"profile","key":"ana"}'; echo
 ```
 
-**Kết quả mong đợi:** `{"found":false}` nếu chưa có, hoặc `{"found":true,"value":"{\"BestSteps\":5,...}","version":"..."}`. `key` là tên **chữ thường**. Collection: `account` (băm mật khẩu - nhạy cảm), `profile` (kỷ lục, số trận), `social` (bạn bè).
+Kết quả mong đợi: `{"found":false}` nếu chưa có, hoặc `{"found":true,"value":"{\"BestSteps\":5,...}","version":"..."}`. `key` là tên chữ thường. Collection: `account` (băm mật khẩu, nhạy cảm), `profile` (kỷ lục, số trận), `social` (bạn bè).
 
-**Chặn dò mật khẩu:** 5 lần sai liên tiếp → khoá tên đó 60 giây. Theo dõi bằng metric `fomoxa_logins_total{result="fail"}` và cảnh báo `HighLoginFailures`.
+Chặn dò mật khẩu: 5 lần sai liên tiếp → khoá tên đó 60 giây. Theo dõi bằng metric `fomoxa_logins_total{result="fail"}` và cảnh báo `HighLoginFailures`.
 
-**Người dùng mất cả mật khẩu lẫn mã khôi phục:** hiện không có công cụ đặt lại thủ công. Cách tạm: xoá bản ghi `account` của họ qua console Nakama (mục *Storage*, bảng `account`) để họ đăng ký lại tên đó (mất tài khoản cũ; hồ sơ `profile` vẫn còn nếu bạn không xoá).
-
----
+Người dùng mất cả mật khẩu lẫn mã khôi phục: hiện không có công cụ đặt lại thủ công. Cách tạm: xoá bản ghi `account` của họ qua console Nakama (mục *Storage*, bảng `account`) để họ đăng ký lại tên đó (mất tài khoản cũ; hồ sơ `profile` vẫn còn nếu bạn không xoá).
 
 ## Dưới nắp capô: đồng hồ của một lần drain
 

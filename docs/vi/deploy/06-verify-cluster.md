@@ -4,9 +4,9 @@ Lên đầu tài liệu: [03-TRIEN-KHAI-K8S](README.md) · Trước: [05-apply-m
 
 ## Bước 10. Kiểm tra toàn cụm
 
-**Mục tiêu:** xác nhận mọi thành phần chạy và game server đã đăng ký với directory.
+Mục tiêu: xác nhận mọi thành phần chạy và game server đã đăng ký với directory.
 
-**Lệnh:**
+Lệnh:
 
 ```bash
 kubectl get pods -n fomoxa
@@ -14,7 +14,7 @@ kubectl get svc -n fomoxa
 kubectl get fleet,gs -n fomoxa
 ```
 
-**Kết quả mong đợi (mẫu):**
+Kết quả mong đợi (mẫu):
 
 ```
 NAME                         READY   STATUS    RESTARTS   AGE
@@ -46,18 +46,18 @@ NAME                                      STATE   ADDRESS      PORT   NODE      
 gameserver.agones.dev/fomoxa-server-...   Ready   10.42.0.x    7778   k3d-fomoxa-server-0   2m
 ```
 
-**Ý nghĩa các cột/trạng thái quan trọng:**
+Ý nghĩa các cột/trạng thái quan trọng:
 - `READY 2/2` ở pod game server: 2 container (game + sidecar Agones) đều sẵn sàng.
-- `STATE` của GameServer: `Starting` → **`Ready`** (đã đăng ký, chờ người chơi) → **`Allocated`** (đã có người chơi đầu tiên) → `Shutdown` (phòng trống 30 giây thì tự tắt, Fleet tạo pod mới).
+- `STATE` của GameServer: `Starting` → `Ready` (đã đăng ký, chờ người chơi) → `Allocated` (đã có người chơi đầu tiên) → `Shutdown` (phòng trống 30 giây thì tự tắt, Fleet tạo pod mới).
 - `ALLOCATED 0 / READY 4`: 4 phòng trống đang chờ người chơi.
 
-**Xem log xác nhận game server đã đăng ký phòng:**
+Xem log xác nhận game server đã đăng ký phòng:
 
 ```bash
 kubectl logs -n fomoxa -l agones.dev/role=gameserver -c fomoxa-server --tail=20 --prefix | grep -E "registered|claimed|Ready|Backend"
 ```
 
-**Kết quả mong đợi (khuôn dòng thật của chương trình, tên pod là mẫu):**
+Kết quả mong đợi (khuôn dòng thật của chương trình, tên pod là mẫu):
 
 ```
 [pod/fomoxa-server-hl9fz-2xkpq/fomoxa-server] [Pod] registered id=1 changed=False
@@ -69,7 +69,7 @@ kubectl logs -n fomoxa -l agones.dev/role=gameserver -c fomoxa-server --tail=20 
 
 `[Backend] da ket noi` nghĩa là pod đã nối được backend (cổng 9602) để báo số người/bảng điểm.
 
-**Xem log backend:**
+Xem log backend:
 
 ```bash
 kubectl logs deploy/backend -n fomoxa | head -5
@@ -84,15 +84,13 @@ backend: players on tcp 0.0.0.0:9600, websocket 0.0.0.0:9601; pods on tcp 0.0.0.
 
 Directory và gateway (chương trình Rust) in log theo định dạng riêng; dấu hiệu tốt là không có dòng lỗi lặp lại: `kubectl logs deploy/directory -n fomoxa --tail=20`, `kubectl logs deploy/gateway -n fomoxa --tail=20`.
 
-**Lỗi thường gặp:** pod game server không có dòng `registered` → xem `kubectl logs ... -c fomoxa-server` có `Connection refused` tới `directory...:9500` không (directory chưa lên hoặc **khoá `pod` sai** giữa secret `fomoxa-pod-key` và `fomoxa-directory-keys`).
-
----
+Lỗi thường gặp: pod game server không có dòng `registered` → xem `kubectl logs ... -c fomoxa-server` có `Connection refused` tới `directory...:9500` không (directory chưa lên hoặc khoá `pod` sai giữa secret `fomoxa-pod-key` và `fomoxa-directory-keys`).
 
 ## Bước 11. Kiểm tra từ phía "client"
 
-**Mục tiêu:** xác nhận máy bạn nối được các cổng mà client sẽ dùng.
+Mục tiêu: xác nhận máy bạn nối được các cổng mà client sẽ dùng.
 
-**Lệnh:**
+Lệnh:
 
 ```bash
 # TCP 9600 (backend) và 9643 (TLS) và 7350 (Nakama, chỉ để test)
@@ -110,10 +108,10 @@ kubectl exec -n fomoxa deploy/backend -- dotnet /app/health/fomoxa-rpc-health.dl
 curl -s -o /dev/null -w "Nakama healthcheck: HTTP %{http_code}\n" http://127.0.0.1:7350/healthcheck
 ```
 
-**Ý nghĩa:** UDP không có "bắt tay" nên không thể kiểm tra bằng cách nối thử; ta kiểm tra cổng đã được k3d publish, còn việc gateway nhận gói tin thật sự được chứng minh ở Bước 13 (client chơi được).
+Ý nghĩa: UDP không có "bắt tay" nên không thể kiểm tra bằng cách nối thử; ta kiểm tra cổng đã được k3d publish, còn việc gateway nhận gói tin thật sự được chứng minh ở Bước 13 (client chơi được).
 Công cụ `fomoxa-rpc-health` in `SERVING` và thoát mã 0 khi backend khoẻ.
 
-**Kết quả mong đợi (mẫu):**
+Kết quả mong đợi (mẫu):
 
 ```
 TCP 9600: mở
@@ -125,6 +123,5 @@ exit=0
 Nakama healthcheck: HTTP 200
 ```
 
-**Lỗi thường gặp:** `TCP 9600: KHÔNG nối được` → cluster tạo thiếu `--port` (Bước 5) hoặc Service backend chưa có `EXTERNAL-IP`: `kubectl get svc backend -n fomoxa`. Nếu client Unity ở **Windows** mà cluster ở **WSL2**: cần Docker Desktop (cổng ra `localhost` Windows); xem [07](../troubleshooting.md#client-windows-không-nối-được-cụm-trong-wsl2).
+Lỗi thường gặp: `TCP 9600: KHÔNG nối được` → cluster tạo thiếu `--port` (Bước 5) hoặc Service backend chưa có `EXTERNAL-IP`: `kubectl get svc backend -n fomoxa`. Nếu client Unity ở Windows mà cluster ở WSL2: cần Docker Desktop (cổng ra `localhost` Windows); xem [07](../troubleshooting.md#client-windows-không-nối-được-cụm-trong-wsl2).
 
----

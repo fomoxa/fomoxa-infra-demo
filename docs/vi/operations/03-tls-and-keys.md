@@ -4,7 +4,7 @@ Lên đầu tài liệu: [05-VAN-HANH](README.md) · Trước: [02-drain-va-tai-
 
 ## TLS giữa client và backend
 
-fRPC của backend **không tự mã hoá**, mà mật khẩu đăng nhập đi qua đường này, nên môi trường thật phải đi qua **proxy TLS** (`tls-proxy`, nginx, cổng 9643). Đường UDP game đã được mã hoá bằng ticket của Fomoxa, không cần thêm.
+fRPC của backend không tự mã hoá, mà mật khẩu đăng nhập đi qua đường này, nên môi trường thật phải đi qua proxy TLS (`tls-proxy`, nginx, cổng 9643). Đường UDP game đã được mã hoá bằng ticket của Fomoxa, không cần thêm.
 
 ### 8.1. Kiểm tra chứng chỉ proxy đang trình ra
 
@@ -14,7 +14,7 @@ openssl s_client -connect 127.0.0.1:9643 -servername fomoxa.local </dev/null 2>/
     | openssl x509 -noout -fingerprint -sha256 -subject
 ```
 
-**Kết quả mong đợi (thật, chạy với đầu cuối TLS của cụm giả):**
+Kết quả mong đợi (thật, chạy với đầu cuối TLS của cụm giả):
 
 ```
 sha256 Fingerprint=C5:B5:02:A6:03:68:15:A3:9E:6E:60:AC:21:39:86:51:BF:FB:9A:D4:FF:19:BD:D5:C6:39:7D:9F:F7:4C:51:67
@@ -33,7 +33,7 @@ kubectl create secret tls fomoxa-tls -n fomoxa \
 kubectl rollout restart deployment/tls-proxy -n fomoxa
 ```
 
-Sau đó **cập nhật pin trong mọi client** (`-tlspin:` hoặc ô *Tls Pin Sha256* của `RoomJoiner`), nếu không client sẽ từ chối với "vân tay chứng chỉ không khớp".
+Sau đó cập nhật pin trong mọi client (`-tlspin:` hoặc ô *Tls Pin Sha256* của `RoomJoiner`), nếu không client sẽ từ chối với "vân tay chứng chỉ không khớp".
 
 ### 8.3. Chỉ cho phép đường mã hoá
 
@@ -42,22 +42,20 @@ kubectl patch svc backend -n fomoxa -p '{"spec":{"type":"ClusterIP"}}'     # đ�
 # (hoặc chạy lần đầu: TLS_ONLY=1 ./scripts/k8s-up.sh)
 ```
 
-Sau đó client **bắt buộc** dùng `-backend:127.0.0.1:9643 -tlspin:...`. Nhớ rằng cụm tạo bằng k3d vẫn map cổng 9600 vào máy (Service không còn LoadBalancer nên không có gì sau cổng đó).
+Sau đó client bắt buộc dùng `-backend:127.0.0.1:9643 -tlspin:...`. Nhớ rằng cụm tạo bằng k3d vẫn map cổng 9600 vào máy (Service không còn LoadBalancer nên không có gì sau cổng đó).
 Hoàn tác: `kubectl apply -f deploy/k8s/backend.yaml`.
 
 ### 8.4. Môi trường thật (có tên miền)
 
-Dùng chứng chỉ do CA công cộng cấp (ví dụ **cert-manager** + Let's Encrypt) cho secret `fomoxa-tls`; khi đó **không cần pin** (client dùng bộ gốc Mozilla có sẵn: chỉ truyền `-tls`).
+Dùng chứng chỉ do CA công cộng cấp (ví dụ cert-manager + Let's Encrypt) cho secret `fomoxa-tls`; khi đó không cần pin (client dùng bộ gốc Mozilla có sẵn: chỉ truyền `-tls`).
 Đặt tên miền trỏ vào IP của Service `tls-proxy`. Chứng chỉ phải có đúng tên miền trong SAN.
-
----
 
 ## 9. Khoá và mật khẩu Nakama
 
-Cụm K8s **không còn dùng** `defaultkey`, `defaulthttpkey`, `admin:admin`, mật khẩu DB `localdb`. Chúng nằm trong secret `fomoxa-nakama`; `nakama`, `backend` và `postgres` đọc từ đó.
-(`deploy/compose.yaml` — chỉ để dev local — vẫn giữ giá trị mặc định.)
+Cụm K8s không còn dùng `defaultkey`, `defaulthttpkey`, `admin:admin`, mật khẩu DB `localdb`. Chúng nằm trong secret `fomoxa-nakama`; `nakama`, `backend` và `postgres` đọc từ đó.
+(`deploy/compose.yaml`, chỉ dùng để dev local, vẫn giữ giá trị mặc định.)
 
-**Xem khoá hiện tại:**
+Xem khoá hiện tại:
 
 ```bash
 for k in server-key http-key console-password; do
@@ -65,7 +63,7 @@ for k in server-key http-key console-password; do
 done
 ```
 
-**Xoay vòng (đổi) khoá Nakama**, **không** gồm mật khẩu DB:
+Xoay vòng (đổi) khoá Nakama, không gồm mật khẩu DB:
 
 ```bash
 openssl rand -hex 24 | tr -d '\n' > deploy/secrets/nakama/http-key       # ví dụ đổi http-key
@@ -80,9 +78,8 @@ kubectl create secret generic fomoxa-nakama -n fomoxa \
 kubectl rollout restart deployment/nakama deployment/backend -n fomoxa
 ```
 
-**Lưu ý quan trọng:**
+Lưu ý quan trọng:
 - Đổi `session-key`/`refresh-key` làm mọi phiên đăng nhập hiện có mất hiệu lực (người chơi đăng nhập lại).
-- **Đổi `db-password` làm Nakama không khởi động được** trên volume Postgres đã có dữ liệu (mật khẩu được lưu trong chính dữ liệu Postgres). Muốn đổi, hoặc `ALTER USER postgres PASSWORD '...'` trong Postgres trước rồi mới đổi secret, hoặc chấp nhận xoá dữ liệu (`kubectl delete pvc postgres-data -n fomoxa`).
+- Đổi `db-password` làm Nakama không khởi động được trên volume Postgres đã có dữ liệu (mật khẩu được lưu trong chính dữ liệu Postgres). Muốn đổi, hoặc `ALTER USER postgres PASSWORD '...'` trong Postgres trước rồi mới đổi secret, hoặc chấp nhận xoá dữ liệu (`kubectl delete pvc postgres-data -n fomoxa`).
 - Các script `test-nakama*.sh` tự đọc khoá từ secret. Muốn ép khoá mặc định (khi test Nakama của `docker compose`): `NAKAMA_USE_DEFAULT_KEYS=1 ./scripts/test-nakama.sh`.
 
----

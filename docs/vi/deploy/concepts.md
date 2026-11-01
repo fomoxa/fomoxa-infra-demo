@@ -2,7 +2,7 @@
 
 Lên đầu tài liệu: [03-TRIEN-KHAI-K8S](README.md) · Tiếp: [01-chuan-bi-va-khoa.md](01-prepare-and-keys.md)
 
-Phần này giải thích ngắn các khái niệm bạn sẽ gặp ở các bước sau. Mỗi khái niệm có một lệnh để **tự nhìn thấy nó trong cụm** sau khi dựng xong (bước 9 và 10). Nếu bạn đã quen Kubernetes, bỏ qua và sang [01](01-prepare-and-keys.md).
+Phần này giải thích ngắn các khái niệm bạn sẽ gặp ở các bước sau. Mỗi khái niệm có một lệnh để tự nhìn thấy nó trong cụm sau khi dựng xong (bước 9 và 10). Nếu bạn đã quen Kubernetes, bỏ qua và sang [01](01-prepare-and-keys.md).
 
 Quy ước: kết quả ghi *(mẫu)* là ví dụ dựng từ manifest, không phải bản chụp từ một cụm đã chạy; tên pod thật sẽ có đuôi ngẫu nhiên khác.
 
@@ -28,7 +28,7 @@ Namespace là "ngăn kéo" để gom tài nguyên. Demo dùng hai ngăn: `fomoxa
 kubectl get namespaces
 ```
 
-**Kết quả mong đợi (mẫu):**
+Kết quả mong đợi (mẫu):
 
 ```
 NAME              STATUS   AGE
@@ -50,7 +50,7 @@ Lệnh này sửa file `~/.kube/config`, chỉ ảnh hưởng context hiện t�
 
 Pod là đơn vị chạy nhỏ nhất: một hoặc vài container dùng chung mạng và đĩa. Pod có IP riêng trong cụm, mất là mất IP (IP đổi khi pod được tạo lại), nên không ai gọi thẳng IP pod, mà gọi qua Service.
 
-Pod game server của Agones có **2 container** (`2/2`): container game `fomoxa-server` và sidecar `agones-gameserver-sidecar` lo kiểm tra sức khoẻ và báo trạng thái với Agones.
+Pod game server của Agones có 2 container (`2/2`): container game `fomoxa-server` và sidecar `agones-gameserver-sidecar` lo kiểm tra sức khoẻ và báo trạng thái với Agones.
 
 ```bash
 kubectl get pods -n fomoxa -o wide
@@ -99,13 +99,13 @@ Ví dụ backend gọi Nakama bằng `http://nakama.fomoxa.svc.cluster.local:735
 | `ClusterIP` (mặc định) | chỉ trong cụm | `postgres`, `directory`, `backend-pods`, `nakama-console` |
 | `LoadBalancer` | từ ngoài cụm; k3d gắn vào cổng của máy bạn | `gateway` (UDP 7777), `backend` (TCP 9600, 9601), `tls-proxy` (9643), `nakama` (7350) |
 
-Lý do cổng 9602 (pod báo cáo về backend) nằm ở Service `backend-pods` kiểu `ClusterIP` riêng: nó **không được** lộ ra ngoài, chỉ pod trong cụm gọi được.
+Lý do cổng 9602 (pod báo cáo về backend) nằm ở Service `backend-pods` kiểu `ClusterIP` riêng: nó không được lộ ra ngoài, chỉ pod trong cụm gọi được.
 
 ```bash
 kubectl get svc -n fomoxa
 ```
 
-**Kết quả mong đợi (mẫu):**
+Kết quả mong đợi (mẫu):
 
 ```
 NAME             TYPE           CLUSTER-IP     EXTERNAL-IP   PORT(S)
@@ -129,7 +129,7 @@ kubectl get endpoints backend -n fomoxa
 
 ConfigMap lưu cấu hình dạng chữ không bí mật: `directory.toml`, `gateway.toml`, `nginx.conf`, `main.lua`. Nó được gắn vào pod như một thư mục chứa file.
 
-Điểm hay quên: **sửa ConfigMap không làm pod tự đọc lại**. Sau khi sửa, restart workload đang dùng nó:
+Điểm hay quên: sửa ConfigMap không làm pod tự đọc lại. Sau khi sửa, restart workload đang dùng nó:
 
 ```bash
 kubectl rollout restart deployment/directory -n fomoxa
@@ -143,7 +143,7 @@ kubectl get configmap directory-config -n fomoxa -o jsonpath='{.data.directory\.
 
 ## Secret
 
-Secret giống ConfigMap nhưng dành cho dữ liệu nhạy cảm: khoá, mật khẩu, chứng chỉ. Giá trị được mã hoá base64 (chỉ là cách biểu diễn, **không phải** mã hoá an toàn). Ai có quyền đọc secret là đọc được.
+Secret giống ConfigMap nhưng dành cho dữ liệu nhạy cảm: khoá, mật khẩu, chứng chỉ. Giá trị được mã hoá base64 (chỉ là cách biểu diễn, không phải mã hoá an toàn). Ai có quyền đọc secret là đọc được.
 
 Demo có sáu secret (tạo ở [bước 8](04-secrets.md#bước-8-namespace-và-secrets)). Mỗi dịch vụ chỉ nhận secret nó cần; gateway còn bị giới hạn chỉ thấy khoá `gateway` bằng `items`.
 
@@ -162,7 +162,7 @@ Container mất dữ liệu khi pod bị xoá. Muốn giữ (cơ sở dữ liệ
 kubectl get pvc -n fomoxa
 ```
 
-**Kết quả mong đợi (mẫu):**
+Kết quả mong đợi (mẫu):
 
 ```
 NAME            STATUS   VOLUME                                     CAPACITY   ACCESS MODES   STORAGECLASS
@@ -173,8 +173,8 @@ postgres-data   Bound    pvc-0e1f...                                1Gi        R
 
 ## Probe: readiness và liveness
 
-- **readinessProbe:** "pod đã sẵn sàng nhận việc chưa?". Chưa sẵn sàng thì Service không gửi lưu lượng vào, và rollout đợi.
-- **livenessProbe:** "pod còn sống không?". Thất bại nhiều lần thì kubelet khởi động lại container.
+- readinessProbe: "pod đã sẵn sàng nhận việc chưa?". Chưa sẵn sàng thì Service không gửi lưu lượng vào, và rollout đợi.
+- livenessProbe: "pod còn sống không?". Thất bại nhiều lần thì kubelet khởi động lại container.
 
 Demo dùng ba kiểu: `exec` (chạy lệnh, như `pg_isready`), `tcpSocket` (mở được cổng là xong), và probe riêng của Agones cho game server.
 
@@ -201,7 +201,7 @@ Starting → Scheduled → RequestReady → Ready → Allocated → Shutdown
 ```
 
 - `Ready`: sẵn sàng nhận người chơi, chưa có ai.
-- `Allocated`: đang có người chơi, Agones **không** tự tắt nó khi thu nhỏ Fleet.
+- `Allocated`: đang có người chơi, Agones không tự tắt nó khi thu nhỏ Fleet.
 - `Shutdown`: đang tắt. Với `terminationGracePeriodSeconds: 360`, process có 6 phút để drain.
 
 Trong demo, process game server tự gọi Agones SDK để báo `Ready`, và `Allocated` khi có người vào phòng (xem [05 phần 2](../operations/02-drain-and-accounts.md)).

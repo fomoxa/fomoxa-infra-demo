@@ -4,7 +4,7 @@ Lên đầu tài liệu: [05-VAN-HANH](README.md) · Trước: [03-tls-va-khoa.m
 
 ## Giám sát
 
-**Mục tiêu:** có số liệu (Prometheus), biểu đồ (Grafana), cảnh báo (Alertmanager) và log tập trung (Loki).
+Mục tiêu: có số liệu (Prometheus), biểu đồ (Grafana), cảnh báo (Alertmanager) và log tập trung (Loki).
 
 ### 10.1. Cài đặt
 
@@ -16,11 +16,11 @@ kubectl rollout status deployment/prometheus   -n monitoring
 kubectl rollout status deployment/grafana      -n monitoring
 ```
 
-**Hoặc chạy gọn:** `INSTALL_MONITORING=1 ./scripts/k8s-up.sh` (làm đúng các lệnh trên).
+Hoặc chạy gọn: `INSTALL_MONITORING=1 ./scripts/k8s-up.sh` (làm đúng các lệnh trên).
 
-**Ý nghĩa:** namespace `monitoring` riêng; secret chứa mật khẩu admin của Grafana (ngẫu nhiên); `apply -f deploy/monitoring/` cài Prometheus, Alertmanager, Grafana, Loki và Promtail.
+Ý nghĩa: namespace `monitoring` riêng; secret chứa mật khẩu admin của Grafana (ngẫu nhiên); `apply -f deploy/monitoring/` cài Prometheus, Alertmanager, Grafana, Loki và Promtail.
 
-**Kiểm tra:** `kubectl get pods -n monitoring` → prometheus, alertmanager, grafana, loki `Running`; một pod `promtail` mỗi node.
+Kiểm tra: `kubectl get pods -n monitoring` → prometheus, alertmanager, grafana, loki `Running`; một pod `promtail` mỗi node.
 
 ### 10.2. Mở giao diện
 
@@ -31,9 +31,9 @@ kubectl port-forward -n monitoring svc/prometheus 9090:9090     # http://127.0.0
 kubectl port-forward -n monitoring svc/alertmanager 9093:9093   # http://127.0.0.1:9093
 ```
 
-Trong Grafana: thư mục **Fomoxa → "Fomoxa - tổng quan"** (người chơi online, GameServer Ready, đăng nhập/giây, người trong từng pod, số bậc cao nhất...). Xem log: *Explore* → nguồn **Loki** → `{namespace="fomoxa", app="backend"}` hoặc `{pod=~"fomoxa-server-.*"}`.
+Trong Grafana: thư mục Fomoxa → "Fomoxa, tổng quan" (người chơi online, GameServer Ready, đăng nhập/giây, người trong từng pod, số bậc cao nhất...). Xem log: *Explore* → nguồn Loki → `{namespace="fomoxa", app="backend"}` hoặc `{pod=~"fomoxa-server-.*"}`.
 
-Trong Prometheus, trang **Status → Targets** phải thấy các target `UP`: backend (`:9610`), các GameServer (`:9611`), nakama (`:9100`) và controller Agones.
+Trong Prometheus, trang Status → Targets phải thấy các target `UP`: backend (`:9610`), các GameServer (`:9611`), nakama (`:9100`) và controller Agones.
 
 ### 10.3. Chỉ số của Fomoxa
 
@@ -59,14 +59,14 @@ Trong Prometheus, trang **Status → Targets** phải thấy các target `UP`: b
 | `FleetAtMaxReplicas` | Fleet chạm trần 16 pod 10 phút | warning |
 | `PodNearlyFull` | ≥ 14 người trên một pod 5 phút | info |
 
-Mặc định Alertmanager **chỉ gom nhóm, chưa gửi đi đâu**. Để nhận thông báo, sửa `receivers` trong `deploy/monitoring/20-alertmanager.yaml` (đã có mẫu Slack/webhook, đang để comment), rồi:
+Mặc định Alertmanager chỉ gom nhóm, chưa gửi đi đâu. Để nhận thông báo, sửa `receivers` trong `deploy/monitoring/20-alertmanager.yaml` (đã có mẫu Slack/webhook, đang để comment), rồi:
 
 ```bash
 kubectl apply -f deploy/monitoring/20-alertmanager.yaml
 kubectl rollout restart deployment/alertmanager -n monitoring
 ```
 
-**Kiểm tra cấu hình trước khi áp dụng** (đã chạy thật khi viết tài liệu; cần Docker):
+Kiểm tra cấu hình trước khi áp dụng (đã chạy thật khi viết tài liệu; cần Docker):
 
 ```bash
 # trích cấu hình ra file rồi kiểm bằng công cụ chính thức
@@ -81,7 +81,7 @@ PY
 docker run --rm --entrypoint promtool -v /tmp/prom:/tmp/prom prom/prometheus:v2.55.1 check config /tmp/prom/prometheus.yml
 ```
 
-**Kết quả mong đợi (thật):**
+Kết quả mong đợi (thật):
 
 ```
 Checking /tmp/prom/prometheus.yml
@@ -89,6 +89,5 @@ Checking /tmp/prom/prometheus.yml
  SUCCESS: /tmp/prom/prometheus.yml is valid prometheus config file syntax
 ```
 
-**Lưu ý:** Prometheus/Loki/Grafana dùng `emptyDir` - dữ liệu mất khi pod khởi động lại. Đủ cho dev/demo; production cần PVC.
+Lưu ý: Prometheus/Loki/Grafana dùng `emptyDir`, dữ liệu mất khi pod khởi động lại. Đủ cho dev/demo; production cần PVC.
 
----

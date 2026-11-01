@@ -1,6 +1,6 @@
-# 06 - Kiểm thử
+# 06: Kiểm thử
 
-Danh sách các bài kiểm thử của repo: mỗi bài **kiểm cái gì**, **chạy thế nào (lệnh tay + script)**, **kết quả mong đợi**, và **cái gì chưa được kiểm**.
+Danh sách các bài kiểm thử của repo: mỗi bài kiểm cái gì, chạy thế nào (lệnh tay + script), kết quả mong đợi, và cái gì chưa được kiểm.
 Tất cả bài dưới đây có kết quả đánh dấu *(thật)* đã được chạy khi viết tài liệu, trừ khi ghi khác.
 
 ## Bản đồ kiểm thử
@@ -8,20 +8,18 @@ Tất cả bài dưới đây có kết quả đánh dấu *(thật)* đã đư�
 | # | Bài | Kiểm gì | Cần | Thời gian | Ghi chú |
 |---|---|---|---|---|---|
 | 1 | [`--selftest` cụm giả](#1-selftest-cụm-giả) | tài khoản, phòng, bạn bè, lời mời, bảng điểm, kỷ lục, TLS qua fRPC thật | .NET 8 | ~30 s | không cần Docker |
-| 2 | [`--bot-test`](#2-bot-test-bot-leo-bục-qua-udp-thật) | ticket → **UDP mã hoá** → pod → nhảy/đáp bục → bảng điểm → kỷ lục | .NET 8 | ~40 s | gần người chơi thật nhất mà không cần Unity |
+| 2 | [`--bot-test`](#2-bot-test-bot-leo-bục-qua-udp-thật) | ticket → UDP mã hoá → pod → nhảy/đáp bục → bảng điểm → kỷ lục | .NET 8 | ~40 s | gần người chơi thật nhất mà không cần Unity |
 | 3 | [`test-nakama.sh`, `test-nakama-pool.sh`](#3-module-lua-của-nakama) | module Lua: ghép cặp, ticket, chặn RPC nội bộ | Nakama (compose hoặc cụm) | ~10 s | |
-| 4 | [`test-real-backend.sh`](#4-backend-thật--nakama-thật) | **backend thật + Nakama thật + pod thật**: toàn bộ chức năng + `/metrics` | Docker, .NET 8 | ~2 phút | CI chạy bài này |
+| 4 | [`test-real-backend.sh`](#4-backend-thật--nakama-thật) | backend thật + Nakama thật + pod thật: toàn bộ chức năng + `/metrics` | Docker, .NET 8 | ~2 phút | CI chạy bài này |
 | 5 | [Kiểm tra tĩnh](#5-kiểm-tra-tĩnh-mã-sinh-yaml-shell-lua-cấu-hình-giám-sát) | mã sinh khớp model, YAML, shell, Lua = ConfigMap, cấu hình giám sát | tuỳ | vài giây | |
-| 6 | [`test-p5.sh`](#6-test-p5-gameserver-trên-k8s--agones-cần-unity-player) | Agones: `Ready` → `Allocated`, ghép cặp 4 client | cụm K8s + `MyGame.exe` | ~1 phút | **chưa chạy thật** |
-| 7 | [Kịch bản thử tay trong Unity](#7-kịch-bản-thử-tay-trong-unity) | giao diện, camera, nhảy, bạn bè | Unity | 10 phút | **chưa chạy thật** |
+| 6 | [`test-p5.sh`](#6-test-p5-gameserver-trên-k8s--agones-cần-unity-player) | Agones: `Ready` → `Allocated`, ghép cặp 4 client | cụm K8s + `MyGame.exe` | ~1 phút | chưa chạy thật |
+| 7 | [Kịch bản thử tay trong Unity](#7-kịch-bản-thử-tay-trong-unity) | giao diện, camera, nhảy, bạn bè | Unity | 10 phút | chưa chạy thật |
 
-> Mọi bài `--selftest`/`--bot-test` đều dựng **cụm giả riêng** rồi tắt, vì vậy **tắt cụm giả đang chạy** (Ctrl+C) trước khi chạy chúng - nếu không sẽ trùng cổng.
-
----
+> Mọi bài `--selftest`/`--bot-test` đều dựng cụm giả riêng rồi tắt, vì vậy tắt cụm giả đang chạy (Ctrl+C) trước khi chạy chúng, nếu không sẽ trùng cổng.
 
 ## 1. Selftest cụm giả
 
-**Lệnh tay:**
+Lệnh tay:
 
 ```bash
 cd ~/fomoxa-infra-demo
@@ -31,9 +29,9 @@ dotnet .mock/cluster/MockCluster.dll --server=.mock/server/MyGame.Server.dll --p
 echo "mã thoát: $?"
 ```
 
-**Hoặc chạy gọn:** `./scripts/run-mock-cluster.sh --selftest --pods=2`
+Hoặc chạy gọn: `./scripts/run-mock-cluster.sh --selftest --pods=2`
 
-**Nó làm gì:** khởi động directory/backend giả + 2 pod thật, rồi một "client" dùng đúng giao thức fRPC của game thực hiện lần lượt:
+Nó làm gì: khởi động directory/backend giả + 2 pod thật, rồi một "client" dùng đúng giao thức fRPC của game thực hiện lần lượt:
 
 | Nhóm | Các kiểm tra |
 |---|---|
@@ -43,7 +41,7 @@ echo "mã thoát: $?"
 | Xã hội | lời mời kết bạn đến người nhận; chấp nhận → bạn 2 chiều; mời bạn vào phòng; bạn hiện online + đang ở đâu; không mời được người chưa là bạn |
 | TLS | nối qua cổng TLS với đúng pin và gọi RPC; sai pin bị `TlsRejected` |
 
-**Kết quả mong đợi (thật):** các dòng `[selftest] OK ...`, kết thúc bằng:
+Kết quả mong đợi (thật): các dòng `[selftest] OK ...`, kết thúc bằng:
 
 ```
 [selftest] TAT CA DAT
@@ -53,25 +51,23 @@ echo "mã thoát: $?"
 
 và `mã thoát: 0`. Có dòng `FAIL`/`CO LOI` → mã thoát 3.
 
-**Không kiểm:** UDP (xem bài 2), Nakama thật (bài 4), Unity.
-
----
+Không kiểm: UDP (xem bài 2), Nakama thật (bài 4), Unity.
 
 ## 2. Bot test: bot leo bục qua UDP thật
 
-**Lệnh tay:**
+Lệnh tay:
 
 ```bash
 dotnet .mock/cluster/MockCluster.dll --server=.mock/server/MyGame.Server.dll --pods=2 --bot-test
 # thêm BOT_TRACE=1 phía trước để in vị trí bot
 ```
 
-**Hoặc chạy gọn:** `./scripts/run-mock-cluster.sh --bot-test --pods=2`
+Hoặc chạy gọn: `./scripts/run-mock-cluster.sh --bot-test --pods=2`
 
-**Nó làm gì:** (1) bot đăng ký `botjumper` qua fRPC và xin vào `arena:1` để lấy **ticket**; (2) dựng một runtime mạng Fomoxa thật (cùng thư viện với Unity), nối **UDP mã hoá** vào pod bằng ticket;
+Nó làm gì: (1) bot đăng ký `botjumper` qua fRPC và xin vào `arena:1` để lấy ticket; (2) dựng một runtime mạng Fomoxa thật (cùng thư viện với Unity), nối UDP mã hoá vào pod bằng ticket;
 (3) pod xác thực ticket và biết đây là `botjumper`; (4) bot đọc vị trí server gửi về và tự đi/nhảy lên các bục; (5) sau ~25 giây kiểm bảng điểm và hồ sơ.
 
-**Kết quả mong đợi (thật):**
+Kết quả mong đợi (thật):
 
 ```
 [bot] OK   Co ticket vao arena:1 -> 127.0.0.1:7779
@@ -85,9 +81,7 @@ dotnet .mock/cluster/MockCluster.dll --server=.mock/server/MyGame.Server.dll --p
 [bot] TAT CA DAT
 ```
 
-`steps=18` nghĩa là bot leo hết 18 bục - chứng tỏ vật lý nhảy/đáp bục của **server** cho phép leo trọn đường đi. Số bậc bot đạt có thể khác giữa các lần chạy (bot đơn giản); ngưỡng kiểm là ≥ 3.
-
----
+`steps=18` nghĩa là bot leo hết 18 bục, chứng tỏ vật lý nhảy/đáp bục của server cho phép leo trọn đường đi. Số bậc bot đạt có thể khác giữa các lần chạy (bot đơn giản); ngưỡng kiểm là ≥ 3.
 
 ## 3. Module Lua của Nakama
 
@@ -110,12 +104,12 @@ docker compose -f deploy/compose.yaml down -v
 ./scripts/test-nakama-pool.sh
 ```
 
-**Ý nghĩa của `ALLOW_COMPOSE=1`:** script từ chối chạy nếu cổng 7350 đang do `docker compose` giữ (để bạn không vô tình test nhầm Nakama của compose khi tưởng đang test cụm). Đặt biến này để xác nhận bạn *cố ý*.
+Ý nghĩa của `ALLOW_COMPOSE=1`: script từ chối chạy nếu cổng 7350 đang do `docker compose` giữ (để bạn không vô tình test nhầm Nakama của compose khi tưởng đang test cụm). Đặt biến này để xác nhận bạn *cố ý*.
 
-**Các bước script làm** (bung ra thành `curl` tay ở [03, Bước 12](deploy/07-test-nakama.md#bước-12-test-nakama-bằng-curl)): đăng nhập 2 device → `reset_match` → ana `find_match` (`waiting`) → bo `find_match` (`matched` + ticket) → ana `poll_match` → backend `verify_ticket` (đúng người `ok:true`, người lạ `ok:false`).
-Bài `pool` cho 4 người vào "auto": cặp 1 vào một phòng, cặp 2 vào phòng **khác**.
+Các bước script làm (bung ra thành `curl` tay ở [03, Bước 12](deploy/07-test-nakama.md#bước-12-test-nakama-bằng-curl)): đăng nhập 2 device → `reset_match` → ana `find_match` (`waiting`) → bo `find_match` (`matched` + ticket) → ana `poll_match` → backend `verify_ticket` (đúng người `ok:true`, người lạ `ok:false`).
+Bài `pool` cho 4 người vào "auto": cặp 1 vào một phòng, cặp 2 vào phòng khác.
 
-**Kết quả mong đợi (thật):**
+Kết quả mong đợi (thật):
 
 ```
 OK: 2 client ghep dung room, ticket dung, user ngoai bi chan!
@@ -126,15 +120,13 @@ Chung minh thanh cong: Cap 1 (arena:1) va Cap 2 (arena:2) duoc cap 2 room khac n
 
 Bản PowerShell: `scripts\test-nakama.ps1`, `scripts\test-nakama-pool.ps1`.
 
----
-
 ## 4. Backend thật + Nakama thật
 
-**Mục tiêu:** chạy **đúng mã backend của cụm thật**, nối vào **Nakama thật** (tài khoản/hồ sơ/bạn bè lưu trong Nakama storage qua RPC Lua `kv_get`/`kv_put`; ghép cặp qua Nakama), với pod thật cấp ticket. Chỉ directory được giả.
+Mục tiêu: chạy đúng mã backend của cụm thật, nối vào Nakama thật (tài khoản/hồ sơ/bạn bè lưu trong Nakama storage qua RPC Lua `kv_get`/`kv_put`; ghép cặp qua Nakama), với pod thật cấp ticket. Chỉ directory được giả.
 
-**Hoặc chạy gọn (làm trọn các bước dưới):** `./scripts/test-real-backend.sh`
+Hoặc chạy gọn (làm trọn các bước dưới): `./scripts/test-real-backend.sh`
 
-**Lệnh tay:**
+Lệnh tay:
 
 ```bash
 cd ~/fomoxa-infra-demo
@@ -176,13 +168,13 @@ kill $BACKEND_PID
 docker compose -f deploy/compose.yaml down -v
 ```
 
-**Giải thích các tham số quan trọng:**
+Giải thích các tham số quan trọng:
 - `-p:FomoxaGenerate=false`: bỏ bước chạy `fomoxac` lúc build, dùng mã sinh sẵn đã commit (CI kiểm riêng bằng `--check`).
 - `Fomoxa__X__Y=...` là cách đặt cấu hình `X:Y` của .NET bằng biến môi trường (`__` thay cho `:`). `Fomoxa__Nakama__Url` bật chế độ Nakama của backend.
-- `--selftest-target=9600,9602`: chạy selftest vào backend **ngoài** (cổng người chơi 9600, cổng pod 9602) thay vì backend giả.
-- Tên người chơi trong selftest có hậu tố ngẫu nhiên (`st1a2b3c`...) vì tài khoản **được lưu lâu dài** trong Nakama - chạy lại không bị "tên đã có người dùng".
+- `--selftest-target=9600,9602`: chạy selftest vào backend ngoài (cổng người chơi 9600, cổng pod 9602) thay vì backend giả.
+- Tên người chơi trong selftest có hậu tố ngẫu nhiên (`st1a2b3c`...) vì tài khoản được lưu lâu dài trong Nakama, chạy lại không bị "tên đã có người dùng".
 
-**Kết quả mong đợi (thật):**
+Kết quả mong đợi (thật):
 
 ```
 [selftest] OK   Dang ky tra ve ma khoi phuc (XNM7-NS5F-GBBC-QZV3)
@@ -203,11 +195,9 @@ fomoxa_score_reports_total 3
 fomoxa_online_players 2
 ```
 
-Nếu bước 6 báo `Connection refused` ngay lúc đầu selftest: backend chưa kịp lên - tăng `sleep 6`.
+Nếu bước 6 báo `Connection refused` ngay lúc đầu selftest: backend chưa kịp lên, tăng `sleep 6`.
 
-**Không kiểm:** Kubernetes, Agones, gateway, `public_address`, UDP qua k3d.
-
----
+Không kiểm: Kubernetes, Agones, gateway, `public_address`, UDP qua k3d.
 
 ## 5. Kiểm tra tĩnh: mã sinh, YAML, shell, Lua, cấu hình giám sát
 
@@ -241,11 +231,9 @@ print("main.lua == ConfigMap: ok")
 PY
 ```
 
-**Ý nghĩa:** `main.lua` tồn tại ở hai nơi (file cho docker compose và bản nhúng trong ConfigMap cho K8s). Sửa một nơi mà quên nơi kia là lỗi hay gặp, bài kiểm này bắt nó. Lệnh `promtool`/`amtool` kiểm cấu hình giám sát: xem [05, mục Giám sát](operations/04-monitoring.md#104-cảnh-báo-có-sẵn).
+Ý nghĩa: `main.lua` tồn tại ở hai nơi (file cho docker compose và bản nhúng trong ConfigMap cho K8s). Sửa một nơi mà quên nơi kia là lỗi hay gặp, bài kiểm này bắt nó. Lệnh `promtool`/`amtool` kiểm cấu hình giám sát: xem [05, mục Giám sát](operations/04-monitoring.md#104-cảnh-báo-có-sẵn).
 
-**Kết quả mong đợi (thật):** `Lien ket noi bo: OK`; `fomoxac: up to date` hai lần; `ok scripts/...`; `main.lua == ConfigMap: ok`.
-
----
+Kết quả mong đợi (thật): `Lien ket noi bo: OK`; `fomoxac: up to date` hai lần; `ok scripts/...`; `main.lua == ConfigMap: ok`.
 
 ## 6. `test-p5`: GameServer trên K8s + Agones (cần Unity Player)
 
@@ -259,9 +247,7 @@ TEST_SCALE=1 ./scripts/test-p5.sh    # thêm: scale Fleet +1 rồi về lại
 Điều kiện: cụm k3d đang chạy ([03](deploy/README.md)), có `MyGame/Builds/MyGame.exe` ([04](unity-client.md)), chạy từ WSL2 có `powershell.exe`.
 Từ PowerShell thuần: `powershell -ExecutionPolicy Bypass -File scripts\test-p5.ps1`.
 
-**Chưa chạy thật khi viết tài liệu.**
-
----
+Chưa chạy thật khi viết tài liệu.
 
 ## 7. Kịch bản thử tay trong Unity
 
@@ -271,19 +257,17 @@ Chạy một lần sau mỗi thay đổi lớn ở client (backend: cụm giả 
 |---|---|---|
 | 1 | Mở `Lobby.unity`, Play | thấy form đăng nhập; thẻ Đăng nhập / Đăng ký / Quên mật khẩu |
 | 2 | Đăng ký mật khẩu < 8 ký tự | thông báo đỏ "mật khẩu phải có ít nhất 8 ký tự" |
-| 3 | Đăng ký hợp lệ | hiện **mã khôi phục** (ô chép được); "Tôi đã lưu mã" → vào sảnh |
+| 3 | Đăng ký hợp lệ | hiện mã khôi phục (ô chép được); "Tôi đã lưu mã" → vào sảnh |
 | 4 | Đăng xuất, đăng nhập sai mật khẩu | "sai tên hoặc mật khẩu" |
 | 5 | Quên mật khẩu với mã đúng + mật khẩu mới | vào được, hiện mã khôi phục mới |
 | 6 | Thẻ Tài khoản: đổi mật khẩu | "Đã đổi mật khẩu" |
-| 7 | Bấm `arena:1` | scene `Game` chỉ tải **sau** khi có ticket; nhân vật xuất hiện |
+| 7 | Bấm `arena:1` | scene `Game` chỉ tải sau khi có ticket; nhân vật xuất hiện |
 | 8 | Camera | đứng sau lưng nhân vật; chuột phải/Q/E xoay; cuộn zoom; W đi về phía camera nhìn |
-| 9 | Space trong trận | nhảy; **không** thoát phòng; HUD ẩn |
+| 9 | Space trong trận | nhảy; không thoát phòng; HUD ẩn |
 | 10 | Nhảy lên bục 1, 2, 3... | đứng được trên mặt bục; đi ngang vào thân bục thì bị chặn |
 | 11 | Esc / Tab | hiện menu + bảng điểm (số bậc của bạn); Esc lần nữa ẩn |
 | 12 | Hai client, kết bạn nhau, mời vào phòng | lời mời hiện ở thẻ Bạn bè của người kia; "Tham gia" đưa họ vào phòng |
 | 13 | "Thoát phòng" | về sảnh, vẫn đăng nhập; kỷ lục trong hồ sơ cập nhật |
-
----
 
 ## Ánh xạ sang CI (GitHub Actions)
 

@@ -78,7 +78,7 @@ Five lines that create namespace `fomoxa`. It has to be applied before anything 
 | volumeMount | `/var/lib/postgresql/data` | where Postgres writes data |
 | probes | `pg_isready -U postgres -d nakama` | ready after 5 seconds, liveness after 15 |
 
-Remember that Postgres only reads `POSTGRES_PASSWORD` the first time, while the data directory is empty. Changing the secret later does not change the password inside an existing database. See [05 part 3](../operations/03-tls-and-keys.md) for the right way to rotate it.
+Postgres only reads `POSTGRES_PASSWORD` the first time, while the data directory is empty. Changing the secret later does not change the password inside an existing database. See [05 part 3](../operations/03-tls-and-keys.md) for the right way to rotate it.
 
 ## `nakama.yaml`
 
@@ -170,7 +170,7 @@ client ──TLS──► tls-proxy:9643 ──raw TCP──► backend:9600
 
 You need it because the backend's fRPC does not encrypt the client leg, and login passwords travel over it. Two details in `nginx.conf`:
 
-- it uses a `stream { }` block, not `http { }`, because this is raw TCP;
+- it uses a `stream { }` block because this is raw TCP;
 - `proxy_timeout 1h` keeps long play sessions open.
 
 The certificate comes from the secret `fomoxa-tls`, mounted at `/tls`. The `nginx-unprivileged` image runs without root, so its `pid` file goes to `/tmp`.
