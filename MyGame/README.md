@@ -319,6 +319,60 @@ BO    [Pos] id=3 x: 3.00 -> 3.15                       <- bot di chuyển qua se
 vẫn pass với pod console.
 
 
+## Chạy cụm Kubernetes + Agones (P5)
+
+Đưa toàn bộ game server stack lên Kubernetes với Agones:
+- Game server chạy bằng Fleet Agones (`fomoxa-server`), quản lý vòng đời Ready/Allocated/Shutdown.
+- Directory, Gateway, Backend, Nakama, Postgres chạy dạng Deployment/Service trong namespace `fomoxa`.
+- Client Unity trên Windows kết nối vào cluster qua k3d LoadBalancer ports: UDP `7777` (Gateway) và TCP `9600` (Backend).
+
+### Công cụ cần chuẩn bị
+
+- Docker Desktop (đang chạy engine Windows)
+- `kubectl`, `k3d`, `helm`:
+  ```powershell
+  winget install Kubernetes.kubectl
+  winget install k3d-io.k3d
+  winget install Helm.Helm
+  ```
+
+### Đóng gói Docker Images
+
+```powershell
+powershell -ExecutionPolicy Bypass -File scripts\build-images.ps1
+```
+Đóng gói 4 images: `fomoxa-server`, `fomoxa-directory`, `fomoxa-gateway`, `fomoxa-backend`.
+
+### Khởi động cụm K8s
+
+```powershell
+powershell -ExecutionPolicy Bypass -File scripts\k8s-up.ps1
+```
+Script tự động:
+1. Tạo cụm k3d `fomoxa` map ports 7777/udp và 9600/tcp ra host.
+2. Cài đặt Agones via Helm chart vào namespace `agones-system`.
+3. Import images vào cluster k3d.
+4. Sinh Kubernetes Secrets từ `deploy/secrets/` qua `scripts\gen-k8s-secrets.ps1`.
+5. Apply toàn bộ manifests `deploy/k8s/` và đợi các dịch vụ Ready.
+
+### Chạy kiểm chứng DoD P5
+
+```powershell
+powershell -ExecutionPolicy Bypass -File scripts\test-p5.ps1
+```
+Kiểm chứng:
+- 2 client Unity (`ana` và `bo`) join 2 room khác nhau (`arena:1`, `arena:2`) qua Gateway `127.0.0.1:7777`.
+- Cả hai nhận spawn (`mine=True`).
+- Cả hai GameServer pod chuyển sang trạng thái `Allocated`.
+- Tuỳ chọn thêm `-TestScale` để kiểm tra scale Fleet 2 → 3 pods.
+
+### Tắt cụm K8s
+
+```powershell
+powershell -ExecutionPolicy Bypass -File scripts\k8s-down.ps1
+```
+
+
 ## Ghi chú kỹ thuật đã gặp
 
 - **Không cài `fomoxa.unity` (unity-codecs)** cùng `com.fomoxa.networking`: cả hai
