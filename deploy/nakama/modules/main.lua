@@ -81,7 +81,7 @@ local function next_pool_room(pool)
     for _ = 1, 5 do
         local record = read_one(QUEUE, POOL_COUNTER_KEY)
         local cur = 0
-        local version = ""
+        local version = "*"
         if record and record.value and record.value.index then
             cur = record.value.index
             version = record.version or ""
@@ -156,7 +156,9 @@ local function find_match(ctx, payload)
             end
         end
 
-        local version = record and record.version or ""
+        -- Chưa có bản ghi: version "*" chỉ ghi khi chưa tồn tại. Với version rỗng Nakama không kiểm tra gì,
+        -- nên hai người xin cùng lúc cùng thấy hàng chờ trống và ghi đè lên nhau, không ai được ghép.
+        local version = record and record.version or "*"
 
         if waiting == user then
             return respond({ status = "waiting", room = is_auto and "auto" or requested_room })
