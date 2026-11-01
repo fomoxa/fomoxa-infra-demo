@@ -4,6 +4,10 @@
 
 listen = "0.0.0.0:9500"
 admin_listen = "0.0.0.0:9501"
+
+# Có gateway phía trước: Allocate trả địa chỉ này thay cho địa chỉ thật của pod.
+public_address = "127.0.0.1:7777"
+
 grace_seconds = 30
 report_interval_seconds = 5
 drain_seconds = 300

@@ -170,14 +170,32 @@ client: Started
 
 ---
 
-### P3 — Gateway (1–2 ngày)
+### P3 — Gateway (1–2 ngày) ✅ XONG
 
-- Chạy gateway với `deploy/gateway.toml` (UDP 7777).
+- Chạy gateway với `deploy/gateway.toml` (UDP 7777, `pod_bind = 0.0.0.0:0`).
 - Directory thêm `public_address = "127.0.0.1:7777"` → ticket trỏ gateway.
-- Pod chuyển sang **encrypted UDP + `behindGateway = true`**
-  (`EncryptedUdpNetworkTransport.behindGateway`, `EncryptedUdpTransportFactory(..., behindGateway)`).
+- Pod chuyển sang **encrypted UDP + `encryptedTransport.BehindGateway = true`**.
 
-**DoD**: ticket trỏ 7777; 2 client qua gateway vào cùng pod; datagram có envelope 20 byte; gateway không giữ state per-session.
+**DoD**: ticket trỏ 7777; 2 client qua gateway vào cùng pod; datagram có envelope 20 byte; gateway không giữ state per-session. ✅
+
+**Kết quả đo được**
+
+```
+ANA [Join] room arena:1 -> 127.0.0.1:7777, grant 217 bytes     <- trước P3 là :7778
+ANA client: Started -> [Player] spawn id=1 mine=True
+BO  [Pos] id=1 pos=(5.98, 1.00, 6.10)                          <- thấy ana qua gateway
+POD peer 1: Started / peer 2: Started
+GW  (stderr) clients on UDP 0.0.0.0:7777, pods from UDP 0.0.0.0:57535, directory at 127.0.0.1:9500
+```
+
+- `pod_bind` lấy cổng ngẫu nhiên (57535) — đây là cổng gateway dùng để nói chuyện với pod.
+- Pod chạy `BehindGateway = true` mà client vẫn vào được ⇒ datagram đi qua gateway có envelope
+  20 byte; nếu thiếu envelope, listener của pod từ chối ngay.
+- Gateway không cần biết trước pod: nó nhận bảng pod từ directory rồi route theo 4 byte id
+  trong session id.
+
+**Bẫy**: `BehindGateway` là cấu hình của **listener phía server**. Host mode (không gateway)
+phải đặt `false`, nếu không client local không vào được — `Launcher.StartHost` làm việc này.
 
 ---
 
@@ -262,11 +280,12 @@ D:\Documents\fomoxa\
 
 ---
 
-## 8. Việc tiếp theo (P3 — gateway)
+## 8. Việc tiếp theo (P4 — Nakama)
 
-1. `deploy/gateway.toml`: `listen = "0.0.0.0:7777"`, key file `secrets/directory/gateway`, trỏ directory `127.0.0.1:9500`.
-2. `deploy/directory.toml`: thêm `public_address = "127.0.0.1:7777"` để ticket trả về cổng gateway thay vì pod.
-3. Pod: `behindGateway = true` trên `EncryptedUdpNetworkTransport` + `DirectoryPodSettings.Address/Port` vẫn là địa chỉ thật của pod.
-4. Chạy lại chuỗi, xác nhận ticket trỏ `7777`, log gateway thấy datagram có envelope 20 byte và không giữ state per-session.
-5. `scripts/start-cluster.ps1` thêm gateway vào chuỗi khởi động.
+1. `deploy/compose.yaml`: Postgres + Nakama 3.x, port 7350/7351, module Go (hoặc Lua) build trong image.
+2. Module: device auth → matchmaker 2 người → storage `match:<id> → [userId]` → ký `proof = HMAC(secret, userId|roomKey|exp)`.
+3. Backend: `Players.Login` đổi thành nhận token Nakama + `proof`; `JoinRoom` verify chữ ký và hạn trước khi gọi directory.
+4. Client Unity: gọi Nakama (HTTP/WebSocket) trước, rồi mới login backend như hiện tại.
+5. Kiểm chứng: 2 client match → cùng roomKey → cùng pod; roomKey giả/hết hạn bị `FAILED_PRECONDITION`.
+
 

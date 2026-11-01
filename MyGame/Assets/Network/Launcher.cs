@@ -25,6 +25,7 @@ namespace MyGame.Network
         public string region = "local";
         public int maxPlayers = 16;
         public string roomKey = "arena:1";
+        public bool behindGateway = true;
 
         [Header("Client")]
         public RoomJoiner joiner;
@@ -120,6 +121,11 @@ namespace MyGame.Network
 
         private void StartHost()
         {
+            if (encryptedTransport != null)
+            {
+                encryptedTransport.BehindGateway = false;
+            }
+
             if (!EnsureTokens("host"))
             {
                 return;
@@ -177,6 +183,11 @@ namespace MyGame.Network
             {
                 Debug.LogError("pod: POD_KEY_FILE is not set or does not exist");
                 return;
+            }
+
+            if (encryptedTransport != null)
+            {
+                encryptedTransport.BehindGateway = behindGateway;
             }
 
             pod = new DirectoryPod(manager.ServerManager, manager.TimeManager, new DirectoryPodSettings

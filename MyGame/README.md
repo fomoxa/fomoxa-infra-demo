@@ -44,9 +44,10 @@ Unity clone về `Library/PackageCache/` và ghim đúng commit trong
 `Packages/packages-lock.json`. Máy cần có `git` trong PATH (máy này có 2.52.0).
 Đổi version chỉ cần sửa tag sau dấu `#` rồi để Unity resolve lại.
 
-## Chạy đủ cụm: directory + backend + pod (P2)
+## Chạy đủ cụm: directory + gateway + backend + pod (P3)
 
-Cần 4 thành phần: `fomoxa-directory` (9500), backend (9600), pod (UDP 7778), client.
+Cần 5 thành phần: `fomoxa-directory` (9500), `fomoxa-gateway` (UDP 7777), backend
+(9600), pod (UDP 7778), client.
 
 Lần đầu chạy, sinh key (file key nằm ở `deploy/secrets/`, **không commit**):
 
@@ -55,14 +56,14 @@ cd D:\Documents\fomoxa
 powershell -NoProfile -File scripts\gen-keys.ps1
 ```
 
-Build `fomoxa-directory` (chỉ cần lại khi sửa code Rust):
+Build `fomoxa-directory` + `fomoxa-gateway` (chỉ cần lại khi sửa code Rust):
 
 ```powershell
 cd D:\Documents\fomoxa\gateway
 cargo build --release -p fomoxa-directory -p fomoxa-gateway
 ```
 
-Khởi động cụm (directory + backend + 1 pod, log trong `logs/`):
+Khởi động cụm (directory + gateway + backend + 1 pod, log trong `logs/`):
 
 ```powershell
 cd D:\Documents\fomoxa
@@ -84,13 +85,16 @@ Ai chạy ở đâu:
 | Thành phần | Cổng | Vai trò |
 |---|---|---|
 | `fomoxa-directory` | 9500 (admin 9501) | biết pod nào giữ room nào, phát grant |
+| `fomoxa-gateway` | UDP 7777 | địa chỉ công khai duy nhất cho mọi pod, route theo session id |
 | `MyGame.Backend` | TCP 9600, WS 9601, pod 9602 | đăng nhập, `JoinRoom` → ticket + grant |
 | pod (`MyGame.exe -pod`) | UDP 7778 | giữ room `arena:1`, chạy game |
-| client | — | login → join → nối pod bằng grant (encrypted UDP) |
+| client | — | login → join → nối gateway bằng grant (encrypted UDP) |
 
 Luồng: client → backend (fRPC/TCP) → directory (allocate) → ticket {address, port,
-grant} → client nối thẳng pod bằng grant; pod đã `AcquireRoom("arena:1")` nên
-directory biết room nằm ở pod nào.
+grant} → client nối **gateway :7777** bằng grant; gateway bọc datagram trong
+envelope 20 byte rồi chuyển tới pod :7778. Pod đã `AcquireRoom("arena:1")` nên
+directory biết room nằm ở pod nào, còn gateway học bảng pod từ directory.
+
 
 ## Chạy nhanh trong Editor (không cần cụm)
 
@@ -189,6 +193,20 @@ POD   peer 1: Stopped Timeout                              <- thư viện tự d
 Client không bật prediction, nên vị trí của chính nó chỉ đổi khi server gửi —
 đó là bằng chứng dữ liệu đã đi đúng vòng client → server → client.
 
+**P3 — thêm gateway, ticket trỏ 7777, pod vẫn 7778:**
+
+```
+ANA   [Join] room arena:1 -> 127.0.0.1:7777, grant 217 bytes
+ANA   client: Started -> [Player] spawn id=1 mine=True
+BO    [Pos] id=1 pos=(5.98, 1.00, 6.10)        <- thấy ana, dữ liệu đi qua gateway
+POD   peer 1: Started / peer 2: Started
+GW    clients on UDP 0.0.0.0:7777, pods from UDP 0.0.0.0:57535, directory at 127.0.0.1:9500
+```
+
+Pod chạy `BehindGateway = true` mà client vẫn vào được, nghĩa là datagram tới pod
+đúng là có envelope 20 byte do gateway thêm vào (thiếu envelope thì listener từ chối).
+
+
 ## Ghi chú kỹ thuật đã gặp
 
 - **Không cài `fomoxa.unity` (unity-codecs)** cùng `com.fomoxa.networking`: cả hai
@@ -224,5 +242,10 @@ Client không bật prediction, nên vị trí của chính nó chỉ đổi khi
   vào file key (không dùng `= ` để xoá).
 - Backend template là `net8.0` mà máy chỉ có .NET 9 → đặt `RollForward=Major`
   trong `MyGame.Backend.csproj`, nếu không app báo "You must install or update .NET".
+- **`BehindGateway` là cấu hình của listener phía server**, không phải của client: pod
+  qua gateway đặt `true`, host mode (không gateway) phải đặt `false`, nếu không
+  client local không vào được.
+- Gateway không cần biết trước pod: nó lấy bảng pod từ directory và route theo 4 byte
+  id trong session id. `pod_bind = 0.0.0.0:0` để OS chọn cổng nói chuyện với pod.
 - Trong script PowerShell, `"$Name:"` bị hiểu là ổ đĩa → viết `"${Name}:"`.
 
