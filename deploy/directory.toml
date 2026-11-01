@@ -1,0 +1,27 @@
+# Cấu hình fomoxa-directory cho cụm test local.
+# Chạy từ thư mục deploy/:  ..\gateway\target\release\fomoxa-directory.exe directory.toml
+# Đường dẫn trong [keys] tính theo thư mục hiện tại lúc chạy.
+
+listen = "0.0.0.0:9500"
+admin_listen = "0.0.0.0:9501"
+grace_seconds = 30
+report_interval_seconds = 5
+drain_seconds = 300
+ticket_seconds = 30
+
+[keys]
+backend = { file = "secrets/directory/backend" }
+pod     = { file = "secrets/directory/pod" }
+gateway = { file = "secrets/directory/gateway" }
+admin   = { file = "secrets/directory/admin" }
+root    = { file = "secrets/directory/root" }
+
+[[placement]]
+filter = "pod.version == client.version"
+
+[[placement]]
+prefer = "pod.region == client.region"
+weight = 10
+
+[[placement]]
+sort = "packed"

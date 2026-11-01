@@ -1,0 +1,139 @@
+{
+  "schema_version": 1,
+  "generator": "fomoxac 0.2.3",
+  "schema_fingerprint": "sha256:68f6e9be6c4e31f1b01bd2bbe69b0b37d5432df329a494c562280902a6b1423f",
+  "sha256_of": "each file with its `// generated-at:` line emptied, so an unchanged schema keeps an unchanged digest",
+  "sources": {
+    "../fomoxa-rpc/Fomoxa.Rpc/SystemModels/FRpc.cs": {
+      "models": [
+        "FRpcCtx",
+        "FRpcError",
+        "FRpcHealthRequest",
+        "FRpcHealthResponse",
+        "FRpcVoid"
+      ],
+      "outputs": [
+        {
+          "path": "Generated/FRpcCtxRpcCodec.cs",
+          "model": "FRpcCtx",
+          "codec": "rpc",
+          "fingerprint": "sha256:0e639d9a7ba779ae8c6ecbd3eab9df46fa1c8777022f6f4dc1a9a310a786b8de",
+          "sha256": "1720470bd2a5a9df9408f2eaa8c626afd89de041c37bcbe59f027d27e8639766"
+        },
+        {
+          "path": "Generated/FRpcErrorRpcCodec.cs",
+          "model": "FRpcError",
+          "codec": "rpc",
+          "fingerprint": "sha256:d52ba5dd04c646124e63d5f67b9ecb74ac50cd4a9c68a248bb80d2c704a7658f",
+          "sha256": "6fd46b325e2dd449b28f63770756b553ddbd6e83d694f0fef8b4b21f19599968"
+        },
+        {
+          "path": "Generated/FRpcHealthRequestRpcCodec.cs",
+          "model": "FRpcHealthRequest",
+          "codec": "rpc",
+          "fingerprint": "sha256:39fb89f8eb3207c74c1cfb92868f0bf57173898081fd777c69872c8eb3a77eed",
+          "sha256": "774f613aebedbdbe9ebb0d203a327468fc9a9a004a105b725bcc8e98b183c427"
+        },
+        {
+          "path": "Generated/FRpcHealthResponseRpcCodec.cs",
+          "model": "FRpcHealthResponse",
+          "codec": "rpc",
+          "fingerprint": "sha256:26b2049d771cfbee1624ff91ac2e23f8e0fcbd76dc9e772db11d278e27d2bb99",
+          "sha256": "a68b6ebea5821a3d85b3ba2c114d96b0d6a6bbcdf5975bc5d5ba1ae23e99f915"
+        },
+        {
+          "path": "Generated/FRpcVoidRpcCodec.cs",
+          "model": "FRpcVoid",
+          "codec": "rpc",
+          "fingerprint": "sha256:2b58fe10f955c83386b3b377b64aa08e695dc84d012a391c80da151205c7bac4",
+          "sha256": "992ada3c45915dcc244ba648823fac127e7b2bc47957c3ea4a6aa96e8bc81921"
+        }
+      ]
+    },
+    "Models/Players.cs": {
+      "models": [
+        "JoinRoomRequest",
+        "NoRoomForVersion",
+        "PlayerLogin",
+        "PlayerWelcome",
+        "RoomTicket"
+      ],
+      "outputs": [
+        {
+          "path": "Generated/JoinRoomRequestRpcCodec.cs",
+          "model": "JoinRoomRequest",
+          "codec": "rpc",
+          "fingerprint": "sha256:daeafd90eb282cf1356dbe2f13f0f434449559b4a1da7bb0d005ddcbea8f8bb8",
+          "sha256": "9ba6bc29b709eb176cc6d1ad51e00bb8a82f774cdf6b792b589aa33ebbd7af22"
+        },
+        {
+          "path": "Generated/NoRoomForVersionRpcCodec.cs",
+          "model": "NoRoomForVersion",
+          "codec": "rpc",
+          "fingerprint": "sha256:070f96f12081f464091d894a2dd09494685554ea0436fe7640fabaa10cdccc1a",
+          "sha256": "890694c3796f55bf19416d2eac4944657e42941460e89ede93985c12651fdd43"
+        },
+        {
+          "path": "Generated/PlayerLoginRpcCodec.cs",
+          "model": "PlayerLogin",
+          "codec": "rpc",
+          "fingerprint": "sha256:53a65473fcce212f82ed492268f53b65b801d26f2bd32d0fb8b16877ee3fda35",
+          "sha256": "350bdb54ff89a40f4059f7b1122b3bc2dae93883da16069d929eade0d701abf4"
+        },
+        {
+          "path": "Generated/PlayerWelcomeRpcCodec.cs",
+          "model": "PlayerWelcome",
+          "codec": "rpc",
+          "fingerprint": "sha256:d25c4670480e53cce1777c30a8fbe43e41f539025c36985afdbc7bd7c7bfea9a",
+          "sha256": "cc1a33a45b28e7b56844fc4c7d60fc75cd9165d0ce7ef52452474ce756c7e938"
+        },
+        {
+          "path": "Generated/RoomTicketRpcCodec.cs",
+          "model": "RoomTicket",
+          "codec": "rpc",
+          "fingerprint": "sha256:af29031b611a669f133f20b4d60829d8c714a49df17c4533a978e6a5005c6926",
+          "sha256": "f8aaa0cf44fa5f8f999ec401a1c696661d1101597002e3b1367ac41f892e1dbf"
+        }
+      ]
+    },
+    "Models/Pods.cs": {
+      "models": [
+        "PodLogin",
+        "TransferPlayerRequest"
+      ],
+      "outputs": [
+        {
+          "path": "Generated/PodLoginRpcCodec.cs",
+          "model": "PodLogin",
+          "codec": "rpc",
+          "fingerprint": "sha256:c505bec161a941afff6e03640b962c6440f60750529e78f6c2bc9502a12fcf17",
+          "sha256": "5e21bf4b4dc5bd4f0d22876560d2a3a4b41f85c3fc0d05d366119813870bf87c"
+        },
+        {
+          "path": "Generated/TransferPlayerRequestRpcCodec.cs",
+          "model": "TransferPlayerRequest",
+          "codec": "rpc",
+          "fingerprint": "sha256:72c6e29eb93ecbbeb8fedaf89be432f3021182248c29abb2993588df1e4a708b",
+          "sha256": "bb007345009a7d7b08f516a37a905d069bd03838325e5b7002b29d1cd53d5ef1"
+        }
+      ]
+    }
+  },
+  "shared": [
+    {
+      "path": "Generated/Runtime.cs",
+      "kind": "runtime",
+      "sha256": "ee1abec709cc3a0d26ff760611ee6277d6e3cff94ca7f7843e255030011dcd56"
+    },
+    {
+      "path": "Generated/Handshake.cs",
+      "kind": "handshake",
+      "sha256": "ce3dec6b3fb2a1845fb40af66c0085272b7c8521d79d547caec229fada329634"
+    },
+    {
+      "path": "Generated/NetSchema.cs",
+      "kind": "net_schema",
+      "sha256": "3dcd30a415bd3f9675384ecfb9305c1041c7db2c95a882841937abf7b40abf91"
+    }
+  ]
+}

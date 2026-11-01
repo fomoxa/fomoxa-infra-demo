@@ -1,0 +1,218 @@
+{
+  "schema_version": 1,
+  "generator": "fomoxac 0.2.3",
+  "fingerprint": "sha256:7133d6e6351d1c92b56043a4bcb06a9279b4ae91adec3a3d1b05c7691b916550",
+  "fingerprint_u64": "0x7133D6E6351D1C92",
+  "models": {
+    "FRpcCtx": {
+      "source": "../Fomoxa.Rpc/SystemModels/FRpc.cs",
+      "fingerprint": "sha256:e0ff630037235c9f66e866365d97d8b358aa6a753bcc3a6c8f3523786031fd4b",
+      "codecs": [
+        "rpc"
+      ],
+      "fields": [
+        {
+          "name": "DeadlineMs",
+          "type": "u32",
+          "codecs": [
+            "rpc"
+          ]
+        },
+        {
+          "name": "TraceId",
+          "type": "bytes",
+          "codecs": [
+            "rpc"
+          ]
+        }
+      ],
+      "messages": {
+        "rpc": {
+          "id": "0x5AE3B9AC",
+          "fingerprint": "sha256:0e639d9a7ba779ae8c6ecbd3eab9df46fa1c8777022f6f4dc1a9a310a786b8de",
+          "fingerprint_u64": "0x0E639D9A7BA779AE",
+          "prefixes": [
+            "sha256:8001ed8ec14681bb896e0e3622a87304581c5eabb17ee2eefab8b11edf6e49c8",
+            "sha256:0e639d9a7ba779ae8c6ecbd3eab9df46fa1c8777022f6f4dc1a9a310a786b8de"
+          ],
+          "prefixes_u64": [
+            "0x8001ED8EC14681BB",
+            "0x0E639D9A7BA779AE"
+          ],
+          "fields": [
+            {
+              "name": "DeadlineMs",
+              "type": "u32"
+            },
+            {
+              "name": "TraceId",
+              "type": "bytes"
+            }
+          ]
+        }
+      }
+    },
+    "FRpcError": {
+      "source": "../Fomoxa.Rpc/SystemModels/FRpc.cs",
+      "fingerprint": "sha256:4ab013d04362bf7b9772ce565a2d9d4cd6385fd22c01060dc6f3247d7678b439",
+      "codecs": [
+        "rpc"
+      ],
+      "fields": [
+        {
+          "name": "Code",
+          "type": "u32",
+          "codecs": [
+            "rpc"
+          ]
+        },
+        {
+          "name": "Message",
+          "type": "string",
+          "codecs": [
+            "rpc"
+          ]
+        },
+        {
+          "name": "DetailsId",
+          "type": "u32",
+          "codecs": [
+            "rpc"
+          ]
+        },
+        {
+          "name": "Details",
+          "type": "bytes",
+          "codecs": [
+            "rpc"
+          ]
+        }
+      ],
+      "messages": {
+        "rpc": {
+          "id": "0xBF94ECC4",
+          "fingerprint": "sha256:d52ba5dd04c646124e63d5f67b9ecb74ac50cd4a9c68a248bb80d2c704a7658f",
+          "fingerprint_u64": "0xD52BA5DD04C64612",
+          "prefixes": [
+            "sha256:a58ea55f6a679084c0e4da8c467ebb0ffc2ef85cbe82fde073adfb832984c4a2",
+            "sha256:4a043b62fdc0e07d53f42ccb409dc3546203f648269e7c4ec534f4475e3ddd7a",
+            "sha256:58ed5cbcd7350354e849778e5edf5276fbcfc8e56e8275a9e22b4f649be2e3c9",
+            "sha256:d52ba5dd04c646124e63d5f67b9ecb74ac50cd4a9c68a248bb80d2c704a7658f"
+          ],
+          "prefixes_u64": [
+            "0xA58EA55F6A679084",
+            "0x4A043B62FDC0E07D",
+            "0x58ED5CBCD7350354",
+            "0xD52BA5DD04C64612"
+          ],
+          "fields": [
+            {
+              "name": "Code",
+              "type": "u32"
+            },
+            {
+              "name": "Message",
+              "type": "string"
+            },
+            {
+              "name": "DetailsId",
+              "type": "u32"
+            },
+            {
+              "name": "Details",
+              "type": "bytes"
+            }
+          ]
+        }
+      }
+    },
+    "FRpcHealthRequest": {
+      "source": "../Fomoxa.Rpc/SystemModels/FRpc.cs",
+      "fingerprint": "sha256:2567bc3919bbcdb3c3e56a077d3675dff33abc82c9cf693e66b3314015e1eb50",
+      "codecs": [
+        "rpc"
+      ],
+      "fields": [
+        {
+          "name": "Service",
+          "type": "string",
+          "codecs": [
+            "rpc"
+          ]
+        }
+      ],
+      "messages": {
+        "rpc": {
+          "id": "0x2F1F7702",
+          "fingerprint": "sha256:39fb89f8eb3207c74c1cfb92868f0bf57173898081fd777c69872c8eb3a77eed",
+          "fingerprint_u64": "0x39FB89F8EB3207C7",
+          "prefixes": [
+            "sha256:39fb89f8eb3207c74c1cfb92868f0bf57173898081fd777c69872c8eb3a77eed"
+          ],
+          "prefixes_u64": [
+            "0x39FB89F8EB3207C7"
+          ],
+          "fields": [
+            {
+              "name": "Service",
+              "type": "string"
+            }
+          ]
+        }
+      }
+    },
+    "FRpcHealthResponse": {
+      "source": "../Fomoxa.Rpc/SystemModels/FRpc.cs",
+      "fingerprint": "sha256:1eaed86859054484e5c686018407e9ac4298dc1916aebaa09eb8b4c002ebb92d",
+      "codecs": [
+        "rpc"
+      ],
+      "fields": [
+        {
+          "name": "Status",
+          "type": "u32",
+          "codecs": [
+            "rpc"
+          ]
+        }
+      ],
+      "messages": {
+        "rpc": {
+          "id": "0x6648B45C",
+          "fingerprint": "sha256:26b2049d771cfbee1624ff91ac2e23f8e0fcbd76dc9e772db11d278e27d2bb99",
+          "fingerprint_u64": "0x26B2049D771CFBEE",
+          "prefixes": [
+            "sha256:26b2049d771cfbee1624ff91ac2e23f8e0fcbd76dc9e772db11d278e27d2bb99"
+          ],
+          "prefixes_u64": [
+            "0x26B2049D771CFBEE"
+          ],
+          "fields": [
+            {
+              "name": "Status",
+              "type": "u32"
+            }
+          ]
+        }
+      }
+    },
+    "FRpcVoid": {
+      "source": "../Fomoxa.Rpc/SystemModels/FRpc.cs",
+      "fingerprint": "sha256:cd48ee6983d59c6f5f7cfd3f3b2ec2a8c4a0f66c30e22bec805204acdb8bc9a3",
+      "codecs": [
+        "rpc"
+      ],
+      "fields": [],
+      "messages": {
+        "rpc": {
+          "id": "0xD4A891C4",
+          "fingerprint": "sha256:2b58fe10f955c83386b3b377b64aa08e695dc84d012a391c80da151205c7bac4",
+          "fingerprint_u64": "0x2B58FE10F955C833",
+          "prefixes": [],
+          "prefixes_u64": [],
+          "fields": []
+        }
+      }
+    }
+  }
+}

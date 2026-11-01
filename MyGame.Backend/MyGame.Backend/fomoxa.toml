@@ -1,0 +1,4 @@
+fomoxac = "0.2.3"
+src = ["Models", "../fomoxa-rpc/Fomoxa.Rpc/SystemModels"]
+out = "Generated"
+net_schema = true

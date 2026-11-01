@@ -1,0 +1,61 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio Version 17
+VisualStudioVersion = 17.0.31903.59
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "MyGame.Backend", "MyGame.Backend\MyGame.Backend.csproj", "{28167FC6-BC27-4387-A591-AE32F8AFDB60}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "fomoxa-rpc", "fomoxa-rpc", "{37A1BA15-14E0-4F5D-AA74-56A75411FC97}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Fomoxa.Rpc", "fomoxa-rpc\Fomoxa.Rpc\Fomoxa.Rpc.csproj", "{4ECBC549-E5BE-4F60-8194-105C34195968}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Fomoxa.Rpc.WebSockets", "fomoxa-rpc\Fomoxa.Rpc.WebSockets\Fomoxa.Rpc.WebSockets.csproj", "{DB7532E5-B74C-48CE-B5B2-E2EFFF480E47}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Fomoxa.Rpc.Directory", "fomoxa-rpc\Fomoxa.Rpc.Directory\Fomoxa.Rpc.Directory.csproj", "{5E571859-A3A5-4ED9-9C66-CE16FF23385C}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Fomoxa.Rpc.Generator", "fomoxa-rpc\Fomoxa.Rpc.Generator\Fomoxa.Rpc.Generator.csproj", "{137C9BA8-BFCB-4E74-9B61-A0C5C301F48C}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Health", "fomoxa-rpc\Health\Health.csproj", "{BD9DCE57-D84B-4CF6-A418-49E93442D5C8}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{28167FC6-BC27-4387-A591-AE32F8AFDB60}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{28167FC6-BC27-4387-A591-AE32F8AFDB60}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{28167FC6-BC27-4387-A591-AE32F8AFDB60}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{28167FC6-BC27-4387-A591-AE32F8AFDB60}.Release|Any CPU.Build.0 = Release|Any CPU
+		{4ECBC549-E5BE-4F60-8194-105C34195968}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{4ECBC549-E5BE-4F60-8194-105C34195968}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{4ECBC549-E5BE-4F60-8194-105C34195968}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{4ECBC549-E5BE-4F60-8194-105C34195968}.Release|Any CPU.Build.0 = Release|Any CPU
+		{DB7532E5-B74C-48CE-B5B2-E2EFFF480E47}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{DB7532E5-B74C-48CE-B5B2-E2EFFF480E47}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{DB7532E5-B74C-48CE-B5B2-E2EFFF480E47}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{DB7532E5-B74C-48CE-B5B2-E2EFFF480E47}.Release|Any CPU.Build.0 = Release|Any CPU
+		{5E571859-A3A5-4ED9-9C66-CE16FF23385C}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{5E571859-A3A5-4ED9-9C66-CE16FF23385C}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{5E571859-A3A5-4ED9-9C66-CE16FF23385C}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{5E571859-A3A5-4ED9-9C66-CE16FF23385C}.Release|Any CPU.Build.0 = Release|Any CPU
+		{137C9BA8-BFCB-4E74-9B61-A0C5C301F48C}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{137C9BA8-BFCB-4E74-9B61-A0C5C301F48C}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{137C9BA8-BFCB-4E74-9B61-A0C5C301F48C}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{137C9BA8-BFCB-4E74-9B61-A0C5C301F48C}.Release|Any CPU.Build.0 = Release|Any CPU
+		{BD9DCE57-D84B-4CF6-A418-49E93442D5C8}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{BD9DCE57-D84B-4CF6-A418-49E93442D5C8}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{BD9DCE57-D84B-4CF6-A418-49E93442D5C8}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{BD9DCE57-D84B-4CF6-A418-49E93442D5C8}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(NestedProjects) = preSolution
+		{4ECBC549-E5BE-4F60-8194-105C34195968} = {37A1BA15-14E0-4F5D-AA74-56A75411FC97}
+		{DB7532E5-B74C-48CE-B5B2-E2EFFF480E47} = {37A1BA15-14E0-4F5D-AA74-56A75411FC97}
+		{5E571859-A3A5-4ED9-9C66-CE16FF23385C} = {37A1BA15-14E0-4F5D-AA74-56A75411FC97}
+		{137C9BA8-BFCB-4E74-9B61-A0C5C301F48C} = {37A1BA15-14E0-4F5D-AA74-56A75411FC97}
+		{BD9DCE57-D84B-4CF6-A418-49E93442D5C8} = {37A1BA15-14E0-4F5D-AA74-56A75411FC97}
+	EndGlobalSection
+EndGlobal

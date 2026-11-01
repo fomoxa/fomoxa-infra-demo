@@ -5,6 +5,9 @@
 /specification/
 /implementation-guide/
 
+# Key sinh bởi scripts/gen-keys.ps1 (không bao giờ commit)
+/deploy/secrets/
+
 # Log/rác ngoài project Unity
 /*.log
 /.vscode/

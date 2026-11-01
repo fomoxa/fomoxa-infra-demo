@@ -1,0 +1,66 @@
+{
+  "schema_version": 1,
+  "generator": "fomoxac 0.2.3",
+  "schema_fingerprint": "sha256:7133d6e6351d1c92b56043a4bcb06a9279b4ae91adec3a3d1b05c7691b916550",
+  "sha256_of": "each file with its `// generated-at:` line emptied, so an unchanged schema keeps an unchanged digest",
+  "sources": {
+    "../Fomoxa.Rpc/SystemModels/FRpc.cs": {
+      "models": [
+        "FRpcCtx",
+        "FRpcError",
+        "FRpcHealthRequest",
+        "FRpcHealthResponse",
+        "FRpcVoid"
+      ],
+      "outputs": [
+        {
+          "path": "Generated/FRpcCtxRpcCodec.cs",
+          "model": "FRpcCtx",
+          "codec": "rpc",
+          "fingerprint": "sha256:0e639d9a7ba779ae8c6ecbd3eab9df46fa1c8777022f6f4dc1a9a310a786b8de",
+          "sha256": "e034a825c93cddfd29c081b802c353c93c091ee3611cb27ce09baa47d066cd23"
+        },
+        {
+          "path": "Generated/FRpcErrorRpcCodec.cs",
+          "model": "FRpcError",
+          "codec": "rpc",
+          "fingerprint": "sha256:d52ba5dd04c646124e63d5f67b9ecb74ac50cd4a9c68a248bb80d2c704a7658f",
+          "sha256": "3df6d697b942d6df7915b08fa4382c87dc9a26defab82c6fa6524669adebad1d"
+        },
+        {
+          "path": "Generated/FRpcHealthRequestRpcCodec.cs",
+          "model": "FRpcHealthRequest",
+          "codec": "rpc",
+          "fingerprint": "sha256:39fb89f8eb3207c74c1cfb92868f0bf57173898081fd777c69872c8eb3a77eed",
+          "sha256": "3150810e1ad2c183482244f1aca362b3a1478aac41be9eebdf68d53f0ab337d9"
+        },
+        {
+          "path": "Generated/FRpcHealthResponseRpcCodec.cs",
+          "model": "FRpcHealthResponse",
+          "codec": "rpc",
+          "fingerprint": "sha256:26b2049d771cfbee1624ff91ac2e23f8e0fcbd76dc9e772db11d278e27d2bb99",
+          "sha256": "7e13e9624f2b2542f84ec5c901a394ff822be7bcd9948f27e82faaeac5cb7fd7"
+        },
+        {
+          "path": "Generated/FRpcVoidRpcCodec.cs",
+          "model": "FRpcVoid",
+          "codec": "rpc",
+          "fingerprint": "sha256:2b58fe10f955c83386b3b377b64aa08e695dc84d012a391c80da151205c7bac4",
+          "sha256": "bbcbd2710b9fbab21db75bf204436c074304f10641874a20a06ba030f9ef4c90"
+        }
+      ]
+    }
+  },
+  "shared": [
+    {
+      "path": "Generated/Runtime.cs",
+      "kind": "runtime",
+      "sha256": "ee1abec709cc3a0d26ff760611ee6277d6e3cff94ca7f7843e255030011dcd56"
+    },
+    {
+      "path": "Generated/Handshake.cs",
+      "kind": "handshake",
+      "sha256": "7f45d126d923e889eeba03114561d9c030c00be13fb2e28bc4a6c2d50dbe7bd7"
+    }
+  ]
+}

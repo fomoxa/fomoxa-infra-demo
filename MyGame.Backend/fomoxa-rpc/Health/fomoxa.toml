@@ -1,0 +1,3 @@
+fomoxac = "0.2.3"
+src = ["../Fomoxa.Rpc/SystemModels"]
+out = "Generated"

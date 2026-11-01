@@ -1,0 +1,16 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>net8.0</TargetFramework>
+    <LangVersion>9.0</LangVersion>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>disable</ImplicitUsings>
+    <IsPackable>false</IsPackable>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="../Fomoxa.Rpc/Fomoxa.Rpc.csproj" />
+    <PackageReference Include="Fomoxa.Net.WebSockets" Version="0.1.1" />
+  </ItemGroup>
+
+</Project>

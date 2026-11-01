@@ -1,0 +1,41 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <OutputType>Exe</OutputType>
+    <TargetFramework>net8.0</TargetFramework>
+    <LangVersion>12.0</LangVersion>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>disable</ImplicitUsings>
+    <InvariantGlobalization>true</InvariantGlobalization>
+    <RootNamespace>MyGame.Backend</RootNamespace>
+    <RollForward>Major</RollForward>
+    <FomoxacDirectory>$(MSBuildThisFileDirectory)../tools/fomoxac/</FomoxacDirectory>
+    <Fomoxac Condition="$([MSBuild]::IsOSPlatform('Windows'))">$(FomoxacDirectory)win-x64/fomoxac.exe</Fomoxac>
+    <Fomoxac Condition="$([MSBuild]::IsOSPlatform('Linux'))">$(FomoxacDirectory)linux-x64/fomoxac</Fomoxac>
+    <FomoxaGenerate Condition="'$(FomoxaGenerate)' == ''">true</FomoxaGenerate>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="../fomoxa-rpc/Fomoxa.Rpc/Fomoxa.Rpc.csproj" />
+    <ProjectReference Include="../fomoxa-rpc/Fomoxa.Rpc.WebSockets/Fomoxa.Rpc.WebSockets.csproj" />
+    <ProjectReference Include="../fomoxa-rpc/Fomoxa.Rpc.Directory/Fomoxa.Rpc.Directory.csproj" />
+    <ProjectReference Include="../fomoxa-rpc/Fomoxa.Rpc.Generator/Fomoxa.Rpc.Generator.csproj" OutputItemType="Analyzer" ReferenceOutputAssembly="false" />
+    <PackageReference Include="Microsoft.Extensions.Configuration.Json" Version="8.0.1" />
+    <PackageReference Include="Microsoft.Extensions.Configuration.EnvironmentVariables" Version="8.0.0" />
+    <None Update="appsettings.json" CopyToOutputDirectory="PreserveNewest" />
+  </ItemGroup>
+
+  <Target Name="FomoxaGenerate" BeforeTargets="BeforeBuild" Condition="'$(FomoxaGenerate)' == 'true'">
+    <PropertyGroup>
+      <FomoxacFound Condition="'$(Fomoxac)' != '' And Exists('$(Fomoxac)')">true</FomoxacFound>
+    </PropertyGroup>
+    <Message Importance="high" Condition="'$(FomoxacFound)' != 'true'" Text="fomoxac is not bundled for this platform; building with the committed Generated folder" />
+    <Exec Condition="'$(FomoxacFound)' == 'true' And !$([MSBuild]::IsOSPlatform('Windows'))" Command="chmod +x &quot;$(Fomoxac)&quot;" />
+    <Exec Condition="'$(FomoxacFound)' == 'true'" Command="&quot;$(Fomoxac)&quot; generate" WorkingDirectory="$(MSBuildThisFileDirectory)" StandardOutputImportance="low" />
+    <ItemGroup>
+      <Compile Remove="Generated/**/*.cs" />
+      <Compile Include="Generated/**/*.cs" />
+    </ItemGroup>
+  </Target>
+
+</Project>
