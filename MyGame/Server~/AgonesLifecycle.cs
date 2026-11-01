@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Threading;
 using System.Threading.Tasks;
 using Agones;
 using Grpc.Core;
@@ -14,6 +15,9 @@ namespace MyGame.Server
     {
         private readonly AgonesSDK agones;
         private readonly HashSet<ulong> activePlayers = new HashSet<ulong>();
+        private readonly object stateLock = new object();
+        private static readonly TimeSpan EmptyGrace = TimeSpan.FromSeconds(30);
+        private CancellationTokenSource emptyTimer;
         private bool allocated;
         private bool shuttingDown;
 
@@ -92,15 +96,44 @@ namespace MyGame.Server
             }
         }
 
-        public async Task OnRoomAcquiredAsync(string room)
+        /// <summary>
+        /// Pod giữ được room từ directory. Chưa có người chơi nên vẫn ở trạng thái Ready;
+        /// chỉ chuyển Allocated khi người chơi đầu tiên kết nối.
+        /// </summary>
+        public Task OnRoomAcquiredAsync(string room)
         {
-            if (agones == null || allocated || shuttingDown)
+            Console.WriteLine($"[Agones] holding room {room} (state stays Ready until first player)");
+            return Task.CompletedTask;
+        }
+
+        public void OnPlayerConnected(ulong peerId)
+        {
+            bool needAllocate = false;
+            lock (stateLock)
             {
-                return;
+                activePlayers.Add(peerId);
+                Console.WriteLine($"[Agones] player {peerId} connected (active: {activePlayers.Count})");
+
+                // Có người quay lại trong thời gian chờ -> hủy đếm ngược tắt pod.
+                emptyTimer?.Cancel();
+                emptyTimer = null;
+
+                if (agones != null && !allocated && !shuttingDown)
+                {
+                    allocated = true;
+                    needAllocate = true;
+                }
             }
 
-            allocated = true;
-            Console.WriteLine($"[Agones] Allocate (room {room})");
+            if (needAllocate)
+            {
+                _ = AllocateAsync();
+            }
+        }
+
+        private async Task AllocateAsync()
+        {
+            Console.WriteLine("[Agones] first player joined -> Allocate");
             try
             {
                 await agones.AllocateAsync();
@@ -108,58 +141,79 @@ namespace MyGame.Server
             catch (Exception ex)
             {
                 Console.Error.WriteLine($"[Agones] AllocateAsync error: {ex.Message}");
-            }
-        }
-
-        public void OnPlayerConnected(ulong peerId)
-        {
-            lock (activePlayers)
-            {
-                activePlayers.Add(peerId);
-                Console.WriteLine($"[Agones] player {peerId} connected (active: {activePlayers.Count})");
+                lock (stateLock)
+                {
+                    // Cho phép thử lại ở lần kết nối kế tiếp.
+                    allocated = false;
+                }
             }
         }
 
         public void OnPlayerDisconnected(ulong peerId)
         {
-            int remaining;
-            lock (activePlayers)
+            CancellationTokenSource timer = null;
+            lock (stateLock)
             {
                 activePlayers.Remove(peerId);
-                remaining = activePlayers.Count;
+                int remaining = activePlayers.Count;
                 Console.WriteLine($"[Agones] player {peerId} disconnected (remaining: {remaining})");
+
+                if (remaining == 0 && allocated && !shuttingDown && agones != null)
+                {
+                    emptyTimer?.Cancel();
+                    timer = emptyTimer = new CancellationTokenSource();
+                }
             }
 
-            // Khi hết người chơi trong phòng đã Allocate, đưa GameServer về Ready để tái sử dụng
-            if (remaining == 0 && allocated && !shuttingDown && agones != null)
+            if (timer != null)
             {
-                allocated = false;
-                Console.WriteLine("[Agones] all players left, returning to Ready");
-                _ = ReturnToReadyAsync();
+                _ = ShutdownWhenStillEmptyAsync(timer);
             }
         }
 
-        private async Task ReturnToReadyAsync()
+        /// <summary>
+        /// Phòng đã trống: đợi một khoảng ngắn (phòng trường hợp mất kết nối thoáng qua)
+        /// rồi Shutdown. Fleet tự tạo GameServer mới ở trạng thái Ready thay thế, nên pod không
+        /// bao giờ ở trạng thái Ready mà vẫn giữ room của một phiên cũ.
+        /// </summary>
+        private async Task ShutdownWhenStillEmptyAsync(CancellationTokenSource timer)
         {
+            Console.WriteLine($"[Agones] room empty, shutting down in {EmptyGrace.TotalSeconds:0}s unless a player returns");
             try
             {
-                await agones.ReadyAsync();
-                Console.WriteLine("[Agones] Ready again");
+                await Task.Delay(EmptyGrace, timer.Token);
             }
-            catch (Exception ex)
+            catch (OperationCanceledException)
             {
-                Console.Error.WriteLine($"[Agones] ReadyAsync error: {ex.Message}");
+                Console.WriteLine("[Agones] player returned, shutdown cancelled");
+                return;
             }
+
+            lock (stateLock)
+            {
+                if (timer.IsCancellationRequested || activePlayers.Count > 0)
+                {
+                    return;
+                }
+            }
+
+            await ShutdownAsync();
+            Environment.Exit(0);
         }
 
         public async Task ShutdownAsync()
         {
-            if (agones == null || shuttingDown)
+            lock (stateLock)
             {
-                return;
+                if (agones == null || shuttingDown)
+                {
+                    return;
+                }
+
+                shuttingDown = true;
+                emptyTimer?.Cancel();
             }
 
-            shuttingDown = true;
             Console.WriteLine("[Agones] Shutting down...");
             try
             {

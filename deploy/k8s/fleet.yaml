@@ -4,7 +4,7 @@ metadata:
   name: fomoxa-server
   namespace: fomoxa
 spec:
-  replicas: 2
+  replicas: 4
   template:
     spec:
       ports:

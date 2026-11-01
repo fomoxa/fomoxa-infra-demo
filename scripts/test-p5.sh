@@ -17,16 +17,21 @@ fi
 kubectl get gs -n fomoxa -o custom-columns=NAME:.metadata.name,STATE:.status.state,ADDRESS:.status.address,PORT:.status.ports[0].port
 
 echo -e "\n2/3 Khoi dong client test..."
-# Neu co powershell.exe tren host Windows (WSL goi interop)
+# Unity Player la ban build Windows (.exe): goi PowerShell qua WSL interop.
+# kubectl trong test-p5.ps1 duoc chuyen ve kubectl cua WSL (noi co kubeconfig k3d).
 if command -v powershell.exe >/dev/null 2>&1; then
-    echo "Phat hien Windows Host Interop, khoi chay test-p5.ps1..."
+    echo "Phat hien Windows Host Interop, khoi chay test-p5.ps1 (kubectl qua WSL)..."
     WIN_SCRIPT=$(wslpath -w "$REPO_ROOT/scripts/test-p5.ps1")
-    powershell.exe -ExecutionPolicy Bypass -File "$WIN_SCRIPT" -Room1 "$ROOM1" -Room2 "$ROOM2"
+    export FOMOXA_KUBECTL_WSL=1
+    export WSLENV="FOMOXA_KUBECTL_WSL${WSLENV:+:$WSLENV}"
+    EXTRA=()
+    [[ "${TEST_SCALE:-}" == "1" ]] && EXTRA+=(-TestScale)
+    powershell.exe -ExecutionPolicy Bypass -File "$WIN_SCRIPT" -Room1 "$ROOM1" -Room2 "$ROOM2" ${EXTRA[@]+"${EXTRA[@]}"}
 else
-    echo "Luu y: Unity Player la ban build Windows (.exe). Hay mo PowerShell tren Windows chay:"
-    echo "  powershell -ExecutionPolicy Bypass -File scripts\\test-p5.ps1"
+    echo "Loi: khong thay powershell.exe. Unity Player la ban build Windows (.exe)." >&2
+    echo "Hay mo PowerShell tren Windows chay: powershell -ExecutionPolicy Bypass -File scripts\\test-p5.ps1" >&2
+    exit 1
 fi
 
-echo -e "\n3/3 Kiem tra lai trang thai Agones GameServers:"
+echo -e "\n3/3 Trang thai Agones GameServers sau khi client thoat:"
 kubectl get gs -n fomoxa
-

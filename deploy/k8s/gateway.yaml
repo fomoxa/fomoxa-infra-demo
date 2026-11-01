@@ -51,6 +51,10 @@ spec:
         - name: secrets
           secret:
             secretName: fomoxa-directory-keys
+            # Gateway chi can key "gateway"; khong mount root/admin/backend/pod.
+            items:
+              - key: gateway
+                path: gateway
 ---
 apiVersion: v1
 kind: Service

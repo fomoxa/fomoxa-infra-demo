@@ -1,16 +1,17 @@
+# THỬ NGHIỆM - KHÔNG được k8s-up áp dụng mặc định (đặt APPLY_INGRESS=1 để áp dụng).
+#
+# Chưa phải hardening production:
+#   - Chưa có TLS (cần cert-manager hoặc Secret TLS + spec.tls).
+#   - Chỉ route HTTP/WebSocket. Cổng 9600 của backend là fRPC qua TCP thô nên KHÔNG đi qua
+#     Ingress HTTP được; client kết nối thẳng vào Service LoadBalancer `backend` (9600).
+#   - k3s/k3d dùng Traefik (ingressClass "traefik"), không phải NGINX.
 apiVersion: networking.k8s.io/v1
 kind: Ingress
 metadata:
   name: fomoxa-ingress
   namespace: fomoxa
-  annotations:
-    # NGINX Ingress Controller annotations cho TLS va rate limiting
-    nginx.ingress.kubernetes.io/proxy-read-timeout: "3600"
-    nginx.ingress.kubernetes.io/proxy-send-timeout: "3600"
-    nginx.ingress.kubernetes.io/websocket-services: "backend"
-    nginx.ingress.kubernetes.io/limit-connections: "50"
-    nginx.ingress.kubernetes.io/limit-rps: "20"
 spec:
+  ingressClassName: traefik
   rules:
     - host: fomoxa.local
       http:
@@ -22,11 +23,3 @@ spec:
                 name: backend
                 port:
                   number: 9601
-          - path: /
-            pathType: Prefix
-            backend:
-              service:
-                name: backend
-                port:
-                  number: 9600
-

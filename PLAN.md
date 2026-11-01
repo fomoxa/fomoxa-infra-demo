@@ -474,9 +474,11 @@ pod-2 `Shutdown` → Fleet tạo pod thay thế.
 
 ---
 
-### P6 - Hardening ✅
+### P6 - Hardening 🚧 (một phần)
 
-- **TLS / Ingress**: `deploy/k8s/ingress.yaml` cấu hình Ingress với `limit-connections: 50` và `limit-rps: 20` cho WebSocket (`/ws` -> 9601) và TCP (`/` -> 9600).
+> Trạng thái: phần vá Backend và health probe đã xong. **Ingress/TLS chưa hoàn thành** (chưa có TLS, fRPC TCP không đi qua Ingress HTTP, `ingress.yaml` chỉ còn route WebSocket thử nghiệm và không được áp dụng mặc định). Drain chưa có script/handler riêng.
+
+- **TLS / Ingress (chưa xong)**: `deploy/k8s/ingress.yaml` chỉ còn route WebSocket (`/ws` -> 9601) qua Traefik, không TLS, không rate limit; chỉ áp dụng khi `APPLY_INGRESS=1`.
 - **fRPC Health Probe**: `deploy/k8s/backend.yaml` đổi `tcpSocket` sang `exec` probe bằng tool `fomoxa-rpc-health` (`dotnet /app/health/fomoxa-rpc-health.dll 127.0.0.1:9600`).
 - **Vá 5 điểm Backend**:
   1. `Backend.Start`: bọc `try / catch` trong `Program.cs`, log nguyên nhân và trả mã thoát an toàn thay vì crash unhandled.

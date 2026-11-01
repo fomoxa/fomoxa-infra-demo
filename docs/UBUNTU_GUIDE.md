@@ -51,7 +51,7 @@
 │                                                      │ route   │
 │  ┌─────────────┐      ┌──────────────────────────────▼──────┐  │
 │  │   backend   │      │  fomoxa-server (Agones Fleet)       │  │
-│  │ TCP :9600   │      │  UDP :7778  × 2 replicas            │  │
+│  │ TCP :9600   │      │  UDP :7778  × 4 replicas            │  │
 │  └─────────────┘      └─────────────────────────────────────┘  │
 │                                                                 │
 │  namespace: agones-system  (Agones controller + CRD)            │
@@ -487,7 +487,7 @@ Agones là Kubernetes operator (từ Google) quản lý **game server lifecycle*
 ### Bước 8.1 - Thêm Helm repo của Agones
 
 ```bash
-helm repo add agones https://agones.dev/chart/helm
+helm repo add agones https://agones.dev/chart/stable
 ```
 
 **Lệnh này làm gì**: Đăng ký địa chỉ chart repository của Agones vào Helm local. Giống "thêm PPA" trong apt.
@@ -504,9 +504,10 @@ helm repo update agones
 helm install agones agones/agones \
     --namespace agones-system \
     --create-namespace \
-    --set "agones.ping.http.expose=false" \
+    --set "agones.allocator.install=false" \
+    --set "agones.ping.install=false" \
     --wait \
-    --timeout 3m
+    --timeout 5m
 ```
 
 **Giải thích từng flag**:
@@ -516,9 +517,10 @@ helm install agones agones/agones \
 | `agones agones/agones` | Tên release là `agones`, dùng chart `agones` từ repo `agones` |
 | `--namespace agones-system` | Cài vào namespace riêng, tách với app Fomoxa |
 | `--create-namespace` | Tự tạo namespace nếu chưa có |
-| `--set "agones.ping.http.expose=false"` | Tắt endpoint ping HTTP (không cần cho local dev) |
+| `--set "agones.allocator.install=false"` | Không cài allocator (LoadBalancer cổng 443, đụng Traefik của k3s; project không dùng `GameServerAllocation`) |
+| `--set "agones.ping.install=false"` | Không cài dịch vụ ping (không cần cho local dev) |
 | `--wait` | Đợi tất cả pod Agones Ready trước khi return |
-| `--timeout 3m` | Timeout 3 phút - Agones kéo nhiều image, có thể chậm |
+| `--timeout 5m` | Timeout 5 phút - Agones kéo nhiều image, có thể chậm |
 
 **Kết quả mong đợi** (1–3 phút):
 
@@ -542,7 +544,6 @@ NAME                                             READY   STATUS    RESTARTS   AG
 agones-allocator-xxxxxxx-xxxxx                   1/1     Running   0          2m
 agones-controller-xxxxxxx-xxxxx                  1/1     Running   0          2m
 agones-extensions-xxxxxxx-xxxxx                  1/1     Running   0          2m
-agones-ping-xxxxxxx-xxxxx                        1/1     Running   0          2m
 ```
 
 ```bash
@@ -753,7 +754,7 @@ kubectl apply -f deploy/k8s/nakama.yaml
 - ConfigMap `nakama-modules`: chứa Lua module `main.lua` (matchmaking logic)
 - Deployment `nakama`: Nakama server (image `heroiclabs/nakama:3.41.0`)
   - initContainer `migrate`: chạy database migration trước khi Nakama start
-- Service `nakama`: expose port 7350 (API) và 7351 (console) trong cluster
+- Service `nakama` (type LoadBalancer): expose port 7350 (API) và 7351 (console); k3d map 7350 ra host nhờ `--port 7350:7350@loadbalancer`
 
 **Đợi Nakama sẵn sàng** (có thể mất 60–120 giây lần đầu - kéo image):
 
@@ -812,17 +813,16 @@ kubectl rollout status deployment/backend -n fomoxa --timeout=60s
 kubectl apply -f deploy/k8s/fleet.yaml
 ```
 
-**Lệnh này tạo**: Fleet `fomoxa-server` với `replicas: 2`. Agones sẽ tự tạo 2 GameServer pods (mỗi pod có 2 container: `fomoxa-server` + `agones-gameserver-sidecar`).
+**Lệnh này tạo**: Fleet `fomoxa-server` với `replicas: 4` (một pod cho mỗi room trong pool `arena:1..4`). Agones sẽ tự tạo 4 GameServer pods (mỗi pod có 2 container: `fomoxa-server` + `agones-gameserver-sidecar`).
 
 **Khác với Deployment thông thường**: Không dùng `rollout status` - thay vào đó xem trạng thái GameServer (Bước 11).
 
-### Bước 10.9 - Apply ingress (tùy chọn)
+### Bước 10.9 - Apply ingress (thử nghiệm, bỏ qua được)
+
+`ingress.yaml` hiện chỉ route WebSocket `/ws` qua Traefik, chưa có TLS và **không** phải hardening production. Demo không cần bước này (client kết nối thẳng LoadBalancer 9600/7777). Nếu muốn thử:
 
 ```bash
-# Chỉ cần nếu file tồn tại
-if [ -f deploy/k8s/ingress.yaml ]; then
-    kubectl apply -f deploy/k8s/ingress.yaml
-fi
+kubectl apply -f deploy/k8s/ingress.yaml
 ```
 
 ---
@@ -886,10 +886,10 @@ fomoxa-server-xxxx-zzzz    Ready   10.42.0.y    7778   k3d-fomoxa-server-0   2m
 |-------|---------|
 | `Starting` | Pod đang khởi động, chưa đăng ký với Agones sidecar |
 | `Ready` | Pod đã khởi động, đã báo ready với Agones, **sẵn sàng nhận player** |
-| `Allocated` | Có player đang chơi trên pod này - directory đã assign cho session |
-| `Shutdown` | Pod đang drain (chờ hết player rồi terminate) |
+| `Allocated` | Đã có ít nhất một player kết nối vào pod. Pod giữ room (`arena:N`) nhưng chưa có người vẫn ở `Ready` |
+| `Shutdown` | Pod đã báo tắt (phòng trống sau 30 giây) hoặc đang bị xóa; Fleet sẽ tạo pod mới thay thế |
 
-> **Quan trọng**: Game server pod phải ở trạng thái **Ready** trước khi nó có thể đăng ký với directory service để nhận phòng (`arena:1`, `arena:2`, ...). Code trong `AgonesLifecycle.cs` gọi `sdk.Ready()` → Agones chuyển state sang `Ready` → rồi mới gọi register với directory.
+> **Quan trọng**: Game server pod phải ở trạng thái **Ready** trước khi nó có thể đăng ký với directory service để nhận phòng (`arena:1`, `arena:2`, ...). Code trong `AgonesLifecycle.cs` gọi `sdk.Ready()` → Agones chuyển state sang `Ready` → rồi mới gọi register với directory. Vòng đời đầy đủ: `Ready` (giữ room, chưa có người) → `Allocated` (người chơi đầu tiên kết nối) → khi người cuối rời đi và phòng trống 30 giây thì `Shutdown`, Fleet tạo pod `Ready` mới.
 
 ### Bước 11.3 - Xem Fleet status
 
@@ -901,10 +901,10 @@ kubectl get fleets -n fomoxa
 
 ```
 NAME             SCHEDULING   DESIRED   CURRENT   ALLOCATED   READY   AGE
-fomoxa-server    Packed       2         2         0           2       5m
+fomoxa-server    Packed       4         4         0           4       5m
 ```
 
-- `DESIRED`: số replicas mong muốn (fleet.yaml `replicas: 2`)
+- `DESIRED`: số replicas mong muốn (fleet.yaml `replicas: 4`)
 - `CURRENT`: số GameServer đang tồn tại
 - `ALLOCATED`: số đang có player
 - `READY`: số đang ở trạng thái Ready (có thể nhận player mới)
@@ -951,9 +951,9 @@ terminationGracePeriodSeconds: 360
 **Ràng buộc quan trọng**: `terminationGracePeriodSeconds` **phải lớn hơn** `drain_seconds`.
 
 **Tại sao?** Khi Kubernetes muốn terminate một pod (rolling update, scale down):
-1. Kubernetes gửi SIGTERM → pod bắt đầu drain (không nhận player mới, chờ hết player cũ)
-2. Drain kéo dài tối đa `drain_seconds` (300s = 5 phút)
-3. Kubernetes đợi `terminationGracePeriodSeconds` (360s) trước khi SIGKILL
+1. Drain do **directory** phát lệnh (`DirectoryAdmin.Drain`): pod nhận `OnDrain`, ngừng nhận room mới, và khi hết hạn `drain_seconds` thì tự shutdown.
+2. Hiện **chưa có script nào gọi Drain** và SIGTERM chỉ làm tiến trình thoát ngay (chưa kích hoạt drain). Nên `kubectl delete gs` hay rolling update vẫn cắt người chơi.
+3. Kubernetes đợi `terminationGracePeriodSeconds` (360s) trước khi SIGKILL; giá trị này chỉ có ý nghĩa khi drain được kích hoạt trước (việc cần làm sau)
 
 Nếu `terminationGracePeriodSeconds` ≤ `drain_seconds`, Kubernetes sẽ SIGKILL pod trước khi drain xong → player bị disconnect đột ngột.
 
@@ -1149,11 +1149,11 @@ kubectl logs -n fomoxa <pod-name> --previous
 ### Scale Fleet (thêm/bớt game server)
 
 ```bash
-# Scale lên 4 game servers
-kubectl scale fleet fomoxa-server --replicas=4 -n fomoxa
+# Scale lên 5 game servers (lưu ý: pool room chỉ có 4 room, pod thứ 5 chưa giữ room)
+kubectl scale fleet fomoxa-server --replicas=5 -n fomoxa
 
-# Scale xuống 1 (Agones sẽ drain pods không có player trước khi xóa)
-kubectl scale fleet fomoxa-server --replicas=1 -n fomoxa
+# Scale xuống 2 (Agones ưu tiên xóa pod Ready, giữ pod Allocated đang có player)
+kubectl scale fleet fomoxa-server --replicas=2 -n fomoxa
 
 # Kiểm tra sau scale
 kubectl get gs -n fomoxa
@@ -1190,13 +1190,13 @@ kubectl apply -f deploy/k8s/fleet.yaml
 
 ### Drain một game server (graceful shutdown)
 
-Drain = báo cho pod "không nhận player mới, chờ hết player hiện tại rồi tắt":
+> **Lưu ý**: graceful drain **chưa được hỗ trợ** trong repo này (chưa có script gọi `DirectoryAdmin.Drain`, SIGTERM chỉ thoát tiến trình). Xóa một GameServer sẽ ngắt người chơi trên pod đó.
 
 ```bash
-# Xem GameServer Allocated
+# Xem GameServer Allocated (đang có người chơi)
 kubectl get gs -n fomoxa
 
-# Xóa một GameServer cụ thể - Agones sẽ drain (không SIGKILL ngay)
+# Xóa một GameServer cụ thể (CẮT người chơi đang ở trên pod đó)
 kubectl delete gs <gameserver-name> -n fomoxa
 
 # Fleet sẽ tự tạo pod mới để duy trì replicas

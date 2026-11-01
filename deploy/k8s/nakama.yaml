@@ -321,6 +321,8 @@ metadata:
   name: nakama
   namespace: fomoxa
 spec:
+  # LoadBalancer de k3d map 7350 tu host vao Nakama trong cum (--port 7350:7350@loadbalancer)
+  type: LoadBalancer
   selector:
     app: nakama
   ports:

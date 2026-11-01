@@ -61,16 +61,24 @@ Write-Host "Context hien tai: $((kubectl config current-context).Trim())" -Foreg
 
 # 3. Cai dat / Cap nhat Agones qua Helm
 Write-Host "`n2/6 Cai dat Agones via Helm..." -ForegroundColor Yellow
-helm repo add agones https://agones.dev/chart/helm 2>$null | Out-Null
-helm repo update agones | Out-Null
+# Dat $env:AGONES_VERSION (vi du 1.47.0) de ghim version chart; de trong = ban moi nhat.
+helm repo add agones https://agones.dev/chart/stable --force-update
+if ($LASTEXITCODE -ne 0) { throw "helm repo add agones that bai" }
+helm repo update agones
+if ($LASTEXITCODE -ne 0) { throw "helm repo update agones that bai" }
 
 $agonesInstalled = helm list -n agones-system -q 2>$null
 if (-not $agonesInstalled) {
-    helm install agones agones/agones `
+    $versionArgs = @()
+    if ($env:AGONES_VERSION) { $versionArgs = @("--version", $env:AGONES_VERSION) }
+    # Project khong dung GameServerAllocation => tat allocator va ping.
+    # Allocator la LoadBalancer cong 443, dung voi Traefik cua k3s tren cum 1 node.
+    helm install agones agones/agones @versionArgs `
         --namespace agones-system `
         --create-namespace `
-        --set "agones.ping.http.expose=false" `
-        --wait --timeout 3m
+        --set "agones.allocator.install=false" `
+        --set "agones.ping.install=false" `
+        --wait --timeout 5m
 }
 else {
     Write-Host "Agones da duoc cai dat trong agones-system." -ForegroundColor Green

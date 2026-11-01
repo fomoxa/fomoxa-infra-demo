@@ -32,7 +32,20 @@ if ! command -v helm >/dev/null 2>&1; then
 fi
 
 # 3. Tao cum k3d fomoxa
+port_busy() {
+    # true neu cong TCP/UDP dang duoc docker publish
+    docker ps --format '{{.Names}} {{.Ports}}' | grep -E "[:]$1->" || true
+}
 if ! k3d cluster list "$CLUSTER_NAME" >/dev/null 2>&1; then
+    for p in 7777 9600 7350; do
+        busy="$(port_busy "$p")"
+        if [[ -n "$busy" ]]; then
+            echo "Loi: cong $p dang bi container khac giu:" >&2
+            echo "$busy" >&2
+            echo "Hay tat docker compose truoc: docker compose -f deploy/compose.yaml down" >&2
+            exit 1
+        fi
+    done
     echo -e "\n1/6 Tao cum k3d '$CLUSTER_NAME' voi port mappings..."
     k3d cluster create "$CLUSTER_NAME" \
         --port "7777:7777/udp@loadbalancer" \
@@ -48,15 +61,21 @@ echo "Context hien tai: $(kubectl config current-context)"
 
 # 4. Cai dat Agones qua Helm
 echo -e "\n2/6 Cai dat Agones via Helm..."
-helm repo add agones https://agones.dev/chart/helm >/dev/null 2>&1 || true
-helm repo update agones >/dev/null 2>&1 || true
+# Dat AGONES_VERSION (vi du 1.47.0) de ghim version chart; de trong = ban moi nhat.
+AGONES_VERSION="${AGONES_VERSION:-}"
+helm repo add agones https://agones.dev/chart/stable --force-update
+helm repo update agones
 
 if ! helm list -n agones-system -q | grep -q "agones"; then
+    # Project khong dung GameServerAllocation => tat allocator va ping.
+    # Allocator la LoadBalancer cong 443, dung voi Traefik cua k3s tren cum 1 node.
     helm install agones agones/agones \
+        ${AGONES_VERSION:+--version "$AGONES_VERSION"} \
         --namespace agones-system \
         --create-namespace \
-        --set "agones.ping.http.expose=false" \
-        --wait --timeout 3m
+        --set "agones.allocator.install=false" \
+        --set "agones.ping.install=false" \
+        --wait --timeout 5m
 else
     echo "Agones da duoc cai dat trong agones-system."
 fi
@@ -89,7 +108,8 @@ kubectl apply -f "$REPO_ROOT/deploy/k8s/directory.yaml"
 kubectl apply -f "$REPO_ROOT/deploy/k8s/gateway.yaml"
 kubectl apply -f "$REPO_ROOT/deploy/k8s/backend.yaml"
 kubectl apply -f "$REPO_ROOT/deploy/k8s/fleet.yaml"
-if [[ -f "$REPO_ROOT/deploy/k8s/ingress.yaml" ]]; then
+# Ingress la thu nghiem (chua TLS), chi ap dung khi APPLY_INGRESS=1
+if [[ "${APPLY_INGRESS:-}" == "1" && -f "$REPO_ROOT/deploy/k8s/ingress.yaml" ]]; then
     kubectl apply -f "$REPO_ROOT/deploy/k8s/ingress.yaml"
 fi
 

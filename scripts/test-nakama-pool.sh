@@ -5,6 +5,18 @@ BASE="${1:-http://127.0.0.1:7350}"
 HTTP_KEY="${2:-defaulthttpkey}"
 SERVER_KEY="${3:-defaultkey}"
 
+# Canh bao neu cong 7350 dang duoc giu boi Nakama cua docker compose (khong phai cum k3d)
+if [[ "$BASE" == *"127.0.0.1:7350"* ]] && command -v docker >/dev/null 2>&1; then
+    owner="$(docker ps --format '{{.Names}} {{.Ports}}' | grep -E '[:]7350->' | awk '{print $1}' || true)"
+    if [[ -n "$owner" ]]; then
+        echo "Luu y: cong 7350 dang tro toi container '$owner'."
+        if [[ "$owner" != k3d-* ]]; then
+            echo "  Do khong phai cum k3d => script se test Nakama cua compose, khong phai cum K8s." >&2
+            [[ "${ALLOW_COMPOSE:-}" == "1" ]] || { echo "  Dat ALLOW_COMPOSE=1 neu chu y muon test compose." >&2; exit 1; }
+        fi
+    fi
+fi
+
 auth_device() {
     local device_id="$1"
     local creds
