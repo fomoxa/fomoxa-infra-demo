@@ -47,6 +47,13 @@ data:
         return nk.json_encode(value)
     end
 
+    local function backend_only(ctx)
+        -- Gọi bằng http_key thì ctx.user_id rỗng; người chơi (Bearer) bị từ chối.
+        if ctx.user_id ~= nil and ctx.user_id ~= "" then
+            error({ message = "chi backend duoc goi RPC nay", code = 7 })
+        end
+    end
+
     local function read_one(collection, key)
         local records = nk.storage_read({ { collection = collection, key = key, user_id = SYSTEM } })
         if records == nil or #records == 0 then
@@ -72,7 +79,12 @@ data:
         nk.storage_write({ record })
     end
 
-    local function next_pool_room()
+    -- pool: danh sách room thực sự có pod (backend gửi kèm); không có thì dùng ROOM_POOL cố định.
+    local function next_pool_room(pool)
+        local rooms = ROOM_POOL
+        if type(pool) == "table" and #pool > 0 then
+            rooms = pool
+        end
         for _ = 1, 5 do
             local record = read_one(QUEUE, POOL_COUNTER_KEY)
             local cur = 0
@@ -81,13 +93,13 @@ data:
                 cur = record.value.index
                 version = record.version or ""
             end
-            local next_idx = (cur % #ROOM_POOL) + 1
+            local next_idx = (cur % #rooms) + 1
             local ok = pcall(write_one, QUEUE, POOL_COUNTER_KEY, { index = next_idx }, version)
             if ok then
-                return ROOM_POOL[next_idx]
+                return rooms[next_idx]
             end
         end
-        return ROOM_POOL[1]
+        return rooms[1]
     end
 
     local function ticket_for(assigned_room, queue_key, first, second)
@@ -149,7 +161,7 @@ data:
             if waiting then
                 local cleared, clearError = pcall(write_one, QUEUE, queue_key, { user_id = "", since = 0 }, version)
                 if cleared then
-                    local assigned_room = is_auto and next_pool_room() or requested_room
+                    local assigned_room = is_auto and next_pool_room(data.pool) or requested_room
                     local result = ticket_for(assigned_room, queue_key, waiting, user)
                     nk.logger_info("match: " .. waiting .. " + " .. user .. " -> " .. assigned_room .. " ticket " .. result.ticket)
                     return respond(result)
@@ -198,6 +210,7 @@ data:
     end
 
     local function verify_ticket(ctx, payload)
+        backend_only(ctx)
         local data = decode(payload)
 
         if data.ticket == nil or data.user_id == nil then
@@ -236,6 +249,7 @@ data:
     end
 
     local function reset_match(ctx, payload)
+        backend_only(ctx)
         local data = decode(payload)
         local requested_room = data.room
         local queue_key = is_auto_room(requested_room) and "pool:auto" or (requested_room or "arena:1")
@@ -256,6 +270,7 @@ data:
     -- Cho backend (http_key): trạng thái các room trong pool để lobby hiển thị.
     -- players = số người đang chờ hoặc đã được ghép (chưa phải số kết nối thật tại pod).
     local function list_rooms(ctx, payload)
+        backend_only(ctx)
         local now = os.time()
         local rooms = {}
 
@@ -279,6 +294,31 @@ data:
         return respond({ rooms = rooms })
     end
 
+    -- Kho key-value cho tài khoản / hồ sơ / bạn bè của backend (giá trị là chuỗi JSON do backend tự quản).
+    local function kv_get(ctx, payload)
+        backend_only(ctx)
+        local data = decode(payload)
+        if data.collection == nil or data.key == nil then
+            error({ message = "can collection va key", code = 3 })
+        end
+        local record = read_one(data.collection, data.key)
+        if record == nil then
+            return respond({ found = false })
+        end
+        return respond({ found = true, value = record.value.v or "", version = record.version })
+    end
+
+    -- version: "" = ghi đè, "*" = chỉ khi chưa tồn tại, khác = chỉ khi version khớp.
+    local function kv_put(ctx, payload)
+        backend_only(ctx)
+        local data = decode(payload)
+        if data.collection == nil or data.key == nil then
+            error({ message = "can collection va key", code = 3 })
+        end
+        local ok = pcall(write_one, data.collection, data.key, { v = data.value or "" }, data.version or "")
+        return respond({ ok = ok })
+    end
+
     local function health(ctx, payload)
         return respond({ ok = true, now = os.time() })
     end
@@ -288,6 +328,8 @@ data:
     nk.register_rpc(verify_ticket, "verify_ticket")
     nk.register_rpc(reset_match, "reset_match")
     nk.register_rpc(list_rooms, "list_rooms")
+    nk.register_rpc(kv_get, "kv_get")
+    nk.register_rpc(kv_put, "kv_put")
     nk.register_rpc(health, "health")
 
     nk.logger_info("fomoxa match module da nap (auto pool ho tro)")

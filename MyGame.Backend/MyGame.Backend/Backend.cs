@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Net;
 using System.Threading.Tasks;
+using MyGame.Backend.Accounts;
 using Fomoxa.Net.WebSockets;
 using Fomoxa.Rpc;
 using Fomoxa.Rpc.Net;
@@ -78,7 +79,14 @@ namespace MyGame.Backend
             var schema = Generated.NetSchema.Build();
             var sessions = new PlayerSessions();
             var stats = new RoomStats();
-            Registry players = new LobbyServer(new Lobby(directory, nakama, sessions, stats, new OnlinePlayers())).Registry().Authenticate(new Players(nakama, sessions)).Build();
+            var online = new OnlinePlayers();
+            IKeyValueStore kv = nakama != null
+                ? new NakamaKv(settings.NakamaUrl, settings.NakamaHttpKey)
+                : (string.IsNullOrEmpty(settings.DataFile) ? new MemoryKv() : new FileKv(settings.DataFile));
+            var accounts = new AccountService(kv);
+            var accountAuth = new AccountAuth(accounts);
+            var core = new LobbyCore(accounts, online, accountAuth);
+            Registry players = new LobbyServer(new Lobby(directory, nakama, sessions, stats, online, core)).Registry().Authenticate(new Players(nakama, sessions, accountAuth)).Build();
             if (!string.IsNullOrEmpty(settings.PlayersTcp))
             {
                 RpcServer server = Started(RpcServer.Bind(settings.PlayersTcp, schema, players));
@@ -95,7 +103,7 @@ namespace MyGame.Backend
 
             if (!string.IsNullOrEmpty(settings.PodsTcp))
             {
-                Registry pods = new PodGateServer(new PodGate(directory, stats)).Registry().Authenticate(new PodKeys(settings.PodKey)).Build();
+                Registry pods = new PodGateServer(new PodGate(directory, stats, core)).Registry().Authenticate(new PodKeys(settings.PodKey)).Build();
                 RpcServer server = Started(RpcServer.Bind(settings.PodsTcp, schema, pods));
                 PodsTcp = server.LocalEndPoint;
             }

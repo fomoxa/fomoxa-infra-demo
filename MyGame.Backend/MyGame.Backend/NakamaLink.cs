@@ -132,9 +132,9 @@ namespace MyGame.Backend
             return rooms;
         }
 
-        public Task<MatchState> FindMatch(string token, string room, CancellationToken cancellation = default)
+        public Task<MatchState> FindMatch(string token, string room, IReadOnlyList<string>? pool = null, CancellationToken cancellation = default)
         {
-            return Rpc("find_match", token, new { room }, cancellation);
+            return Rpc("find_match", token, new { room, pool = pool ?? Array.Empty<string>() }, cancellation);
         }
 
         public Task<MatchState> PollMatch(string token, string room, CancellationToken cancellation = default)

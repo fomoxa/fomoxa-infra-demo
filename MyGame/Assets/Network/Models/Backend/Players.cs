@@ -18,6 +18,16 @@ namespace MyGame.Backend.Models
         [Network("bytes")]
         [Codec("rpc")]
         public byte[] Secret { get; set; } = Array.Empty<byte>();
+
+        /// <summary>"login" | "register" | "recover"; rỗng = kiểu cũ (DeviceId / chỉ có tên).</summary>
+        [Network("string")]
+        [Codec("rpc")]
+        public string Mode { get; set; } = "";
+
+        /// <summary>Mã khôi phục (chỉ dùng khi Mode = "recover"; khi đó Secret là mật khẩu MỚI).</summary>
+        [Network("bytes")]
+        [Codec("rpc")]
+        public byte[] Recovery { get; set; } = Array.Empty<byte>();
     }
 
     [Network]
@@ -27,6 +37,11 @@ namespace MyGame.Backend.Models
         [Network("string")]
         [Codec("rpc")]
         public string Player { get; set; } = "";
+
+        /// <summary>Mã khôi phục mới - chỉ có khi vừa đăng ký hoặc vừa khôi phục; hiện đúng một lần.</summary>
+        [Network("string")]
+        [Codec("rpc")]
+        public string RecoveryCode { get; set; } = "";
     }
 
     [Network]

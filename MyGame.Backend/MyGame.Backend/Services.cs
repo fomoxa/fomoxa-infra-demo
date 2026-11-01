@@ -28,6 +28,27 @@ namespace MyGame.Backend
 
         [Unary(Requires = Roles.Player)]
         OnlineList Presence(CallContext context, PresenceRequest request);
+
+        [Unary(Requires = Roles.Player)]
+        Task<ActionResult> ChangePassword(CallContext context, ChangePasswordRequest request);
+
+        [Unary(Requires = Roles.Player)]
+        ActionResult TakeRecoveryCode(CallContext context, RecoveryCodeRequest request);
+
+        [Unary(Requires = Roles.Player)]
+        Task<PlayerProfile> GetProfile(CallContext context, ProfileRequest request);
+
+        [Unary(Requires = Roles.Player)]
+        Task<SocialState> Social(CallContext context, SocialRequest request);
+
+        [Unary(Requires = Roles.Player)]
+        Task<ActionResult> FriendAction(CallContext context, FriendActionRequest request);
+
+        [Unary(Requires = Roles.Player)]
+        Task<ActionResult> Invite(CallContext context, InviteRequest request);
+
+        [Unary(Requires = Roles.Player)]
+        ScoreboardState Scoreboard(CallContext context, ScoreboardRequest request);
     }
 
     [Service("Pods")]
@@ -45,5 +66,8 @@ namespace MyGame.Backend
 
         [Unary(Requires = Roles.Pod)]
         void ReportRoom(CallContext context, RoomReport request);
+
+        [Unary(Requires = Roles.Pod)]
+        void ReportScores(CallContext context, ScoreReport request);
     }
 }

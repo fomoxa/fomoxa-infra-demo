@@ -1,7 +1,7 @@
 {
   "schema_version": 1,
   "generator": "fomoxac 0.2.3",
-  "schema_fingerprint": "sha256:9dee5cf7c3d465d8248658ab9c513e18b69dc973e6a18dd9e242d01a1c58cfd0",
+  "schema_fingerprint": "sha256:2f70c6192c18f3b2810ade177c74f2407b04f7e716ec0fbf0371b8d000e26337",
   "sha256_of": "each file with its `// generated-at:` line emptied, so an unchanged schema keeps an unchanged digest",
   "sources": {
     "../fomoxa-rpc/Fomoxa.Rpc/SystemModels/FRpc.cs": {
@@ -77,15 +77,15 @@
           "path": "Generated/PlayerLoginRpcCodec.cs",
           "model": "PlayerLogin",
           "codec": "rpc",
-          "fingerprint": "sha256:38ad643c414405aa97f06d51672a4dccd7fff5ac1be16af45a0ef84247c5f858",
-          "sha256": "9cd5cfac8b5877b8d486a7a4b03bcfe2831a13399f9f0fcced2ecc4f0df32d91"
+          "fingerprint": "sha256:7565bed2ac9898bf1f69f0bb883af5f141ac6fbc7e08b933088d038794b8a9d0",
+          "sha256": "2bdfab732adbfa892897924478a317a58bbd15994ccb10b11b448a612a75a450"
         },
         {
           "path": "Generated/PlayerWelcomeRpcCodec.cs",
           "model": "PlayerWelcome",
           "codec": "rpc",
-          "fingerprint": "sha256:d25c4670480e53cce1777c30a8fbe43e41f539025c36985afdbc7bd7c7bfea9a",
-          "sha256": "cc1a33a45b28e7b56844fc4c7d60fc75cd9165d0ce7ef52452474ce756c7e938"
+          "fingerprint": "sha256:73222329e5d27bc15e18ca1d724aae2c93fd11ec6b9c9ed62ba977a1ed308129",
+          "sha256": "b4c1b96d19198086871524cfb16bb1e08828f07487174411fac6482b5505f8b2"
         },
         {
           "path": "Generated/RoomTicketRpcCodec.cs",
@@ -179,6 +179,140 @@
           "sha256": "9ae59623057c70ab7da02b7773c46ea4cf9e32e794d8bda66845eef2d638b953"
         }
       ]
+    },
+    "Models/Social.cs": {
+      "models": [
+        "ActionResult",
+        "ChangePasswordRequest",
+        "FriendActionRequest",
+        "FriendInfo",
+        "InviteInfo",
+        "InviteRequest",
+        "PlayerProfile",
+        "PodScore",
+        "ProfileRequest",
+        "RecoveryCodeRequest",
+        "ScoreEntry",
+        "ScoreReport",
+        "ScoreboardRequest",
+        "ScoreboardState",
+        "SocialRequest",
+        "SocialState"
+      ],
+      "outputs": [
+        {
+          "path": "Generated/ActionResultRpcCodec.cs",
+          "model": "ActionResult",
+          "codec": "rpc",
+          "fingerprint": "sha256:094512b7e565b4dca141626efbfac354411e22f2133229719fd941e6a6fce457",
+          "sha256": "e275e82d9f0f21f7dd7e49e6ca46dbc8c4d7596d4242c80d8aad4231281f7170"
+        },
+        {
+          "path": "Generated/ChangePasswordRequestRpcCodec.cs",
+          "model": "ChangePasswordRequest",
+          "codec": "rpc",
+          "fingerprint": "sha256:392339e55a079c5315cb9721536abf356a9ba34650f12f0676b055c171a12ee7",
+          "sha256": "a912066e38389d2b3d6ae39860ac0fda712b5ac9c503af6cc5965b29c6c9bb60"
+        },
+        {
+          "path": "Generated/FriendActionRequestRpcCodec.cs",
+          "model": "FriendActionRequest",
+          "codec": "rpc",
+          "fingerprint": "sha256:e49f77cae5730e5d2d14be2e6ad4b0d99cb4687d7f0f0f3b2c74e7422bb247ca",
+          "sha256": "2e7923360f1332c9236cc3bab8adb0ad77fcf4b89207ce918bb2332f4fd12f58"
+        },
+        {
+          "path": "Generated/FriendInfoRpcCodec.cs",
+          "model": "FriendInfo",
+          "codec": "rpc",
+          "fingerprint": "sha256:24edf656fba7a124619ff36e9500bde5aaa01302882f348b0f5bd0038306c157",
+          "sha256": "cdca2106bb4cbf43862583aa694a16699c4f321ddf7685cbb8c0d8a4ddc8cbcc"
+        },
+        {
+          "path": "Generated/InviteInfoRpcCodec.cs",
+          "model": "InviteInfo",
+          "codec": "rpc",
+          "fingerprint": "sha256:87c7eca89afd8d1feba1b0061ace85ae311224c0c36b00b212a1894cba0f4f49",
+          "sha256": "b4b3414d446a80af2e37da40b3ba106cfa002efa41909191b7e86c0d12e60707"
+        },
+        {
+          "path": "Generated/InviteRequestRpcCodec.cs",
+          "model": "InviteRequest",
+          "codec": "rpc",
+          "fingerprint": "sha256:86808c8435b040aef4f05c02c6e7a40a9dbf81c75ab228dd7eea32c8ccc45bf7",
+          "sha256": "214bca677b73cdef9ed0b00d9b2ae66faf5cf40a8bb8aa215422ddee896957c2"
+        },
+        {
+          "path": "Generated/PlayerProfileRpcCodec.cs",
+          "model": "PlayerProfile",
+          "codec": "rpc",
+          "fingerprint": "sha256:44d7004fd9b1837422966bffd4691d448b4a59038c2f5ba33a5b1b1006065ddf",
+          "sha256": "e68d360cb8deedae5ee7e4344cbd857eca41d5da98817ad782ed0836cb2e6b50"
+        },
+        {
+          "path": "Generated/PodScoreRpcCodec.cs",
+          "model": "PodScore",
+          "codec": "rpc",
+          "fingerprint": "sha256:aeb25409cfb9f9d63ad2f660fab0fcecad8d65f9ede78f039e46b7da35635ffb",
+          "sha256": "7ddf4a8a15bcb6fd82a6974fee1db9aa780486ea461fff4a5cebc32dadbcd2dc"
+        },
+        {
+          "path": "Generated/ProfileRequestRpcCodec.cs",
+          "model": "ProfileRequest",
+          "codec": "rpc",
+          "fingerprint": "sha256:886d7cdb2761e337a8afd65f6d9d9dc832055f435679d3c5db1e9d5a5a7ef4b1",
+          "sha256": "03b98d00e69d026dae19173e6df157436adc3f3c609269a5a19bc12a800fb27b"
+        },
+        {
+          "path": "Generated/RecoveryCodeRequestRpcCodec.cs",
+          "model": "RecoveryCodeRequest",
+          "codec": "rpc",
+          "fingerprint": "sha256:c2f2e811caac6b1a5804fd7b70602017d693f55be25a54f6aab83f4db74f767d",
+          "sha256": "5f3d975e65aacb941119fbd0deeb36cdf4a46803bd6e87145eebe5901b00d132"
+        },
+        {
+          "path": "Generated/ScoreEntryRpcCodec.cs",
+          "model": "ScoreEntry",
+          "codec": "rpc",
+          "fingerprint": "sha256:e3e347903564b1960ad70d6b88ec6338ccb220585832f22c35ef6f60958a6385",
+          "sha256": "31a48b8b1df0bf6cf04971dfa804eefef71ef9c865f4276a6ade7a4b7b271f6b"
+        },
+        {
+          "path": "Generated/ScoreReportRpcCodec.cs",
+          "model": "ScoreReport",
+          "codec": "rpc",
+          "fingerprint": "sha256:70d5d11d3eca69a15b86d9350636b8ddd187065a441d4dd1d716f80cf741f903",
+          "sha256": "39460a357967229c809226b2e0c67bbdd94bc70949156a7753961d124013c29f"
+        },
+        {
+          "path": "Generated/ScoreboardRequestRpcCodec.cs",
+          "model": "ScoreboardRequest",
+          "codec": "rpc",
+          "fingerprint": "sha256:1b72a38d98a0ca20917edb2dae113990dcbb3c46adf76bb6cc051504b500c1d3",
+          "sha256": "7fec6e8541882aa6687ef9991319c7068ce5a20f2bcfd964c9c7db5e08bc189d"
+        },
+        {
+          "path": "Generated/ScoreboardStateRpcCodec.cs",
+          "model": "ScoreboardState",
+          "codec": "rpc",
+          "fingerprint": "sha256:5753f1678f612d2a2d34aaf0f576f6004ca73ab301f3a85eb5f91ec6a97b49cb",
+          "sha256": "463d6d7497aeb537400f8745b6d9da4e83cc9f8c0d387eda397003281b638403"
+        },
+        {
+          "path": "Generated/SocialRequestRpcCodec.cs",
+          "model": "SocialRequest",
+          "codec": "rpc",
+          "fingerprint": "sha256:d8e3bcf428b7612df350b60eefc6f24443116c69161462210ad995dd8791d21c",
+          "sha256": "a231f1c852966e21871335bf5c2cb76b6d88c48d37fd45850fb3a9e4e9e883b3"
+        },
+        {
+          "path": "Generated/SocialStateRpcCodec.cs",
+          "model": "SocialState",
+          "codec": "rpc",
+          "fingerprint": "sha256:b141d03acf71241a86e9075c97f5dc615ca9bbd04c8c15b065bc4f01ee6149dc",
+          "sha256": "18396d75dd8f94c235ff6ee243f8368be919500dfcb35077b89575a07340b90e"
+        }
+      ]
     }
   },
   "shared": [
@@ -190,12 +324,12 @@
     {
       "path": "Generated/Handshake.cs",
       "kind": "handshake",
-      "sha256": "7d86545b6418ced7b4a46e7e7f0ddb130c9cb6a9fbf4e7d15170f4eb40b05811"
+      "sha256": "108147521502743b754f14ac131f3ca5d8681811646ee3aed599c4fa27760e77"
     },
     {
       "path": "Generated/NetSchema.cs",
       "kind": "net_schema",
-      "sha256": "548ced27cefd3e7870a947271ef59ee644aac4df7adc29c3613afc0657b54a20"
+      "sha256": "03c56d24d2a1cb8529e79b6a02cb0f15a2ead8b6f63c78917e85b779dc443c7a"
     }
   ]
 }

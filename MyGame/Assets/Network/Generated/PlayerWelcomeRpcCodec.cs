@@ -4,9 +4,9 @@
 // source: Assets/Network/Models/Backend/Players.cs
 // model: PlayerWelcome
 // codec: rpc
-// fingerprint: sha256:d25c4670480e53cce1777c30a8fbe43e41f539025c36985afdbc7bd7c7bfea9a
+// fingerprint: sha256:73222329e5d27bc15e18ca1d724aae2c93fd11ec6b9c9ed62ba977a1ed308129
 // fomoxac-version: 0.2.3
-// generated-at: 2026-11-01T10:10:46Z
+// generated-at: 2026-11-01T11:21:29Z
 
 namespace Generated
 {
@@ -16,6 +16,7 @@ namespace Generated
 /// The wire layout, in declaration order (RFC-0002 §5.1):
 /// <list type="number">
 /// <item><description><c>Player</c>: <c>string</c></description></item>
+/// <item><description><c>RecoveryCode</c>: <c>string</c></description></item>
 /// </list>
 /// </remarks>
 public static class PlayerWelcomeRpcCodec
@@ -28,12 +29,13 @@ public static class PlayerWelcomeRpcCodec
 
     /// <summary>This message's wire-contract fingerprint - the same value
     /// <c>Handshake.cs</c> publishes, and the one a peer compares against.</summary>
-    public const ulong Fingerprint = 0xD25C4670480E53CC;
+    public const ulong Fingerprint = 0x73222329E5D27BC1;
 
     /// <summary>Writes the <c>rpc</c> fields of <paramref name="value"/>, in declaration order.</summary>
     public static void Encode(Writer writer, MyGame.Backend.Models.PlayerWelcome value)
     {
         writer.WriteString(value.Player);
+        writer.WriteString(value.RecoveryCode);
     }
 
     /// <summary>Reads the <c>rpc</c> fields into <paramref name="value"/>, in declaration order.</summary>
@@ -57,6 +59,16 @@ public static class PlayerWelcomeRpcCodec
             reader.ReadString(ref playerValue);
         }
         value.Player = playerValue;
+        var recoveryCodeValue = value.RecoveryCode;
+        if (reader.FieldAbsent())
+        {
+            recoveryCodeValue = "";
+        }
+        else
+        {
+            reader.ReadString(ref recoveryCodeValue);
+        }
+        value.RecoveryCode = recoveryCodeValue;
     }
 }
 

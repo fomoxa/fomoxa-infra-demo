@@ -4,9 +4,9 @@
 // source: Models/Players.cs
 // model: PlayerLogin
 // codec: rpc
-// fingerprint: sha256:38ad643c414405aa97f06d51672a4dccd7fff5ac1be16af45a0ef84247c5f858
+// fingerprint: sha256:7565bed2ac9898bf1f69f0bb883af5f141ac6fbc7e08b933088d038794b8a9d0
 // fomoxac-version: 0.2.3
-// generated-at: 2026-11-01T03:24:15Z
+// generated-at: 2026-11-01T11:18:30Z
 
 namespace Generated
 {
@@ -18,6 +18,8 @@ namespace Generated
 /// <item><description><c>Player</c>: <c>string</c></description></item>
 /// <item><description><c>DeviceId</c>: <c>string</c></description></item>
 /// <item><description><c>Secret</c>: <c>bytes</c></description></item>
+/// <item><description><c>Mode</c>: <c>string</c></description></item>
+/// <item><description><c>Recovery</c>: <c>bytes</c></description></item>
 /// </list>
 /// </remarks>
 public static class PlayerLoginRpcCodec
@@ -30,7 +32,7 @@ public static class PlayerLoginRpcCodec
 
     /// <summary>This message's wire-contract fingerprint - the same value
     /// <c>Handshake.cs</c> publishes, and the one a peer compares against.</summary>
-    public const ulong Fingerprint = 0x38AD643C414405AA;
+    public const ulong Fingerprint = 0x7565BED2AC9898BF;
 
     /// <summary>Writes the <c>rpc</c> fields of <paramref name="value"/>, in declaration order.</summary>
     public static void Encode(Writer writer, MyGame.Backend.Models.PlayerLogin value)
@@ -38,6 +40,8 @@ public static class PlayerLoginRpcCodec
         writer.WriteString(value.Player);
         writer.WriteString(value.DeviceId);
         writer.WriteBytes(value.Secret);
+        writer.WriteString(value.Mode);
+        writer.WriteBytes(value.Recovery);
     }
 
     /// <summary>Reads the <c>rpc</c> fields into <paramref name="value"/>, in declaration order.</summary>
@@ -81,6 +85,26 @@ public static class PlayerLoginRpcCodec
             reader.ReadBytes(ref secretValue);
         }
         value.Secret = secretValue;
+        var modeValue = value.Mode;
+        if (reader.FieldAbsent())
+        {
+            modeValue = "";
+        }
+        else
+        {
+            reader.ReadString(ref modeValue);
+        }
+        value.Mode = modeValue;
+        var recoveryValue = value.Recovery;
+        if (reader.FieldAbsent())
+        {
+            recoveryValue = System.Array.Empty<byte>();
+        }
+        else
+        {
+            reader.ReadBytes(ref recoveryValue);
+        }
+        value.Recovery = recoveryValue;
     }
 }
 

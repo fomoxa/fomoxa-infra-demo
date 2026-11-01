@@ -72,10 +72,23 @@ namespace MyGame.Backend
         private readonly DirectoryLink directory;
         private readonly RoomStats stats;
 
-        public PodGate(DirectoryLink directory, RoomStats stats)
+        private readonly LobbyCore core;
+
+        public PodGate(DirectoryLink directory, RoomStats stats, LobbyCore core)
         {
             this.directory = directory;
             this.stats = stats;
+            this.core = core;
+        }
+
+        public void ReportScores(CallContext context, ScoreReport request)
+        {
+            if (string.IsNullOrEmpty(request.Room))
+            {
+                throw new RpcException(Status.InvalidArgument("ReportScores needs a room"));
+            }
+
+            core.ReportScores(request);
         }
 
         public void ReportRoom(CallContext context, RoomReport request)

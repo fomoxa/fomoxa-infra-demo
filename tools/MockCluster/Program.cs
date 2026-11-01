@@ -14,6 +14,7 @@ using Fomoxa.Rpc;
 using Fomoxa.Rpc.Directory;
 using Fomoxa.Rpc.Net;
 using Generated;
+using MyGame.Backend.Accounts;
 using MyGame.Backend;
 using MyGame.Backend.Models;
 
@@ -56,11 +57,26 @@ namespace MockCluster
             Registry directoryRegistry = new DirectoryServer(directory).Registry().Authenticate(new MockDirectoryAuth()).Build();
             using RpcServer directoryServer = RpcServer.Bind(directoryAddress, directorySchema, directoryRegistry).Serve();
 
-            var playersRegistry = new LobbyServer(new MockLobby(directory, TimeSpan.FromSeconds(delay))).Registry().Authenticate(new MockPlayers()).Build();
+            string dataFile = args.Get("data", "");
+            IKeyValueStore kv = dataFile.Length == 0 ? new MemoryKv() : new FileKv(dataFile);
+            var accounts = new AccountService(kv);
+            var online = new OnlinePlayers();
+            var accountAuth = new AccountAuth(accounts);
+            var core = new LobbyCore(accounts, online, accountAuth);
+
+            var playersRegistry = new LobbyServer(new MockLobby(directory, TimeSpan.FromSeconds(delay), online, core)).Registry()
+                .Authenticate(new MockPlayers(accountAuth)).Build();
             using RpcServer playersServer = RpcServer.Bind(playersAddress, NetSchema.Build(), playersRegistry).Serve();
+
+            // Cổng pod giả: các pod thật báo bảng điểm lên đây.
+            string podsAddress = args.Get("pods-listen", "0.0.0.0:9602");
+            var podsRegistry = new PodGateServer(new MockPodGate(core)).Registry().Authenticate(new MockPodKeys()).Build();
+            using RpcServer podsServer = RpcServer.Bind(podsAddress, NetSchema.Build(), podsRegistry).Serve();
 
             Console.WriteLine($"[Mock] directory giả  : {directoryServer.LocalEndPoint}");
             Console.WriteLine($"[Mock] backend giả    : {playersServer.LocalEndPoint}  (client Unity: 127.0.0.1:{playersServer.LocalEndPoint.Port})");
+            Console.WriteLine($"[Mock] cổng pod giả   : {podsServer.LocalEndPoint}");
+            Console.WriteLine(dataFile.Length == 0 ? "[Mock] tài khoản: trong bộ nhớ (mất khi tắt; dùng --data=file.json để giữ lại)" : $"[Mock] tài khoản lưu ở {dataFile}");
 
             using var stopping = new ManualResetEventSlim();
             using var terminate = PosixSignalRegistration.Create(PosixSignal.SIGTERM, c => { c.Cancel = true; stopping.Set(); });
@@ -84,7 +100,7 @@ namespace MockCluster
                     string directoryTarget = "127.0.0.1:" + directoryServer.LocalEndPoint.Port;
                     for (int i = 0; i < podCount; i++)
                     {
-                        children.Add(StartPod(server, i, basePort + i, directoryTarget, rooms, keyFile, args.Get("pod-backend", ""), args.Get("pod-backend-key", "")));
+                        children.Add(StartPod(server, i, basePort + i, directoryTarget, rooms, keyFile, "127.0.0.1:" + podsServer.LocalEndPoint.Port, keyFile));
                     }
                 }
 
@@ -103,7 +119,7 @@ namespace MockCluster
 
                 if (args.Has("selftest"))
                 {
-                    return await SelfTest(playersServer.LocalEndPoint.Port) ? 0 : 3;
+                    return await SelfTest(playersServer.LocalEndPoint.Port, podsServer.LocalEndPoint.Port) ? 0 : 3;
                 }
 
                 stopping.Wait();
@@ -191,8 +207,8 @@ namespace MockCluster
             return 0;
         }
 
-        /// <summary>Đóng vai client: đăng nhập, xem phòng, vào phòng, kiểm tra ticket. Không kiểm UDP.</summary>
-        private static async Task<bool> SelfTest(int port)
+        /// <summary>Đóng vai client: tài khoản, phòng, online, bạn bè, lời mời, bảng điểm. Không kiểm UDP.</summary>
+        private static async Task<bool> SelfTest(int port, int podPort)
         {
             bool ok = true;
             void Check(string name, bool pass, string detail = "")
@@ -201,51 +217,175 @@ namespace MockCluster
                 ok &= pass;
             }
 
-            RpcConnection Open(PlayerLogin login)
+            RpcConnection Open(string player, string password, string mode = "", string recovery = "")
             {
+                var login = new PlayerLogin
+                {
+                    Player = player,
+                    Mode = mode,
+                    Secret = Encoding.UTF8.GetBytes(password),
+                    Recovery = Encoding.UTF8.GetBytes(recovery),
+                };
                 var options = new ConnectOptions { Credential = Credential.Of(PlayersMethods.Login, login) };
                 return RpcConnection.Connect($"127.0.0.1:{port}", NetSchema.Build(), LobbyClient.Declare(PlayersClient.Registry()).Build(), options).GetAwaiter().GetResult();
             }
 
-            using (RpcConnection connection = Open(new PlayerLogin { Player = "selftest", DeviceId = "selftest-device", Secret = Encoding.UTF8.GetBytes("password123") }))
+            bool Rejected(Func<RpcConnection> open)
+            {
+                try
+                {
+                    using RpcConnection c = open();
+                    return false;
+                }
+                catch (Exception)
+                {
+                    return true;
+                }
+            }
+
+            CallOptions Within = CallOptions.Within(TimeSpan.FromSeconds(8));
+            string recoveryCode;
+
+            // --- tài khoản
+            using (RpcConnection first = Open("selftest", "password123", "register"))
+            {
+                // Mã khôi phục nằm trong PlayerWelcome; thử qua đường khôi phục thật bên dưới.
+            }
+
+            Check("Dang ky trung ten bi tu choi", Rejected(() => Open("SelfTest", "password123", "register")));
+            Check("Dang ky mat khau yeu bi tu choi", Rejected(() => Open("weakpw", "123", "register")));
+            Check("Sai mat khau bi tu choi", Rejected(() => Open("selftest", "wrongpassword", "login")));
+            Check("Tai khoan khong ton tai bi tu choi", Rejected(() => Open("nobodyhere", "password123", "login")));
+            using (RpcConnection again = Open("SELFTEST", "password123", "login"))
+            {
+                Check("Dang nhap dung (khong phan biet hoa thuong)", true);
+            }
+
+            // Khôi phục cần mã thật: đăng ký tài khoản thứ hai và lấy mã từ PlayerWelcome qua kết nối trực tiếp.
+            recoveryCode = RegisterAndGetCode("friend2", "password123", port);
+            Check("Dang ky tra ve ma khoi phuc", recoveryCode.Length == 19, $"({recoveryCode})");
+            Check("Khoi phuc voi ma sai bi tu choi", Rejected(() => Open("friend2", "newpassword1", "recover", "AAAA-AAAA-AAAA-AAAA")));
+            using (RpcConnection recovered = Open("friend2", "newpassword1", "recover", recoveryCode))
+            {
+                Check("Khoi phuc bang ma dung", true);
+            }
+
+            Check("Ma khoi phuc cu het hieu luc", Rejected(() => Open("friend2", "another12345", "recover", recoveryCode)));
+            Check("Mat khau cu khong con dung sau khoi phuc", Rejected(() => Open("friend2", "password123", "login")));
+
+            // --- sảnh + phòng + online
+            using (RpcConnection connection = Open("selftest", "password123", "login"))
             {
                 var lobby = new LobbyClient(connection);
-                RoomList list = await lobby.ListRoomsAsync(new ListRoomsRequest(), CallOptions.Within(TimeSpan.FromSeconds(5)));
+                RoomList list = await lobby.ListRoomsAsync(new ListRoomsRequest(), Within);
                 Check("ListRooms", list.Rooms.Count > 1, $"({string.Join(", ", list.Rooms.Select(r => $"{r.RoomKey}[{r.Players}/{r.Capacity}] {r.State}"))})");
 
-                RoomTicket direct = await lobby.JoinRoomAsync(new JoinRoomRequest { RoomKey = "arena:1", Version = "1.0" }, CallOptions.Within(TimeSpan.FromSeconds(5)));
+                RoomTicket direct = await lobby.JoinRoomAsync(new JoinRoomRequest { RoomKey = "arena:1", Version = "1.0" }, Within);
                 Check("JoinRoom arena:1", direct.Port != 0 && direct.Connection.Length > 0, $"-> {direct.Address}:{direct.Port}, grant {direct.Connection.Length} bytes");
 
-                RoomTicket auto = await lobby.JoinRoomAsync(new JoinRoomRequest { RoomKey = "auto", Version = "1.0" }, CallOptions.Within(TimeSpan.FromSeconds(5)));
+                RoomTicket auto = await lobby.JoinRoomAsync(new JoinRoomRequest { RoomKey = "auto", Version = "1.0" }, Within);
                 Check("JoinRoom auto", auto.Port != 0 && auto.Connection.Length > 0, $"-> {auto.Address}:{auto.Port}");
 
-                OnlineList online = await lobby.PresenceAsync(new PresenceRequest { Room = "arena:1" }, CallOptions.Within(TimeSpan.FromSeconds(5)));
-                Check("Presence (danh sach online)", online.Players.Any(p => p.Name == "selftest" && p.Room == "arena:1"),
+                OnlineList online = await lobby.PresenceAsync(new PresenceRequest { Room = "arena:1" }, Within);
+                Check("Presence", online.Players.Any(p => p.Name == "selftest" && p.Room == "arena:1"),
                     $"({string.Join(", ", online.Players.Select(p => $"{p.Name}@{(p.Room.Length == 0 ? "sanh" : p.Room)}"))})");
 
                 try
                 {
-                    await lobby.JoinRoomAsync(new JoinRoomRequest { RoomKey = "arena:99", Version = "1.0" }, CallOptions.Within(TimeSpan.FromSeconds(5)));
+                    await lobby.JoinRoomAsync(new JoinRoomRequest { RoomKey = "arena:99", Version = "1.0" }, Within);
                     Check("JoinRoom phong khong ton tai bi tu choi", false);
                 }
                 catch (RpcException)
                 {
                     Check("JoinRoom phong khong ton tai bi tu choi", true);
                 }
+
+                // --- đổi mật khẩu
+                ActionResult changed = await lobby.ChangePasswordAsync(new ChangePasswordRequest { OldPassword = "password123", NewPassword = "password456" }, Within);
+                Check("Doi mat khau", changed.Ok);
+                bool wrongOld = false;
+                try
+                {
+                    await lobby.ChangePasswordAsync(new ChangePasswordRequest { OldPassword = "khongdung123", NewPassword = "password789" }, Within);
+                }
+                catch (RpcException)
+                {
+                    wrongOld = true;
+                }
+
+                Check("Doi mat khau voi mat khau cu sai bi tu choi", wrongOld);
             }
 
-            try
+            Check("Dang nhap bang mat khau cu sau khi doi bi tu choi", Rejected(() => Open("selftest", "password123", "login")));
+
+            // --- bảng điểm + kỷ lục do pod báo
+            using (RpcConnection pod = await RpcConnection.Connect(
+                $"127.0.0.1:{podPort}",
+                NetSchema.Build(),
+                PodGateClient.Declare(PodsClient.Registry()).Build(),
+                new ConnectOptions { Credential = Credential.Of(PodsMethods.Login, new PodLogin { Key = new byte[32] }) }))
+            using (RpcConnection me = Open("selftest", "password456", "login"))
             {
-                using RpcConnection wrong = Open(new PlayerLogin { Player = "selftest", DeviceId = "x", Secret = Encoding.UTF8.GetBytes("wrongpassword") });
-                Check("Sai mat khau bi tu choi", false);
-            }
-            catch (Exception)
-            {
-                Check("Sai mat khau bi tu choi", true);
+                var gate = new PodGateClient(pod);
+                var lobby = new LobbyClient(me);
+
+                async Task Report(uint steps) =>
+                    await gate.ReportScoresAsync(new ScoreReport { Room = "arena:1", Entries = { new PodScore { Player = "selftest", Steps = steps }, new PodScore { Player = "guestx", Steps = 1 } } }, Within);
+
+                await Report(3);
+                await Task.Delay(500);
+                ScoreboardState board = await lobby.ScoreboardAsync(new ScoreboardRequest { Room = "arena:1" }, Within);
+                Check("Bang diem xep hang", board.Entries.Count == 2 && board.Entries[0].Name == "selftest" && board.Entries[0].Steps == 3,
+                    $"({string.Join(", ", board.Entries.Select(e => $"{e.Name}:{e.Steps}/{e.Best}"))})");
+
+                await Report(2);
+                await Report(5);
+                await Task.Delay(500);
+                PlayerProfile profile = await lobby.GetProfileAsync(new ProfileRequest(), Within);
+                Check("Ky luc luu lai la bac cao nhat", profile.BestSteps == 5 && profile.Matches >= 1, $"(best={profile.BestSteps}, matches={profile.Matches})");
+
+                // --- bạn bè + lời mời
+                using RpcConnection other = Open("friend2", "newpassword1", "login");
+                var otherLobby = new LobbyClient(other);
+                await lobby.FriendActionAsync(new FriendActionRequest { Action = "request", Target = "friend2" }, Within);
+                SocialState incoming = await otherLobby.SocialAsync(new SocialRequest(), Within);
+                Check("Loi moi ket ban den nguoi nhan", incoming.Incoming.Contains("selftest"));
+                await otherLobby.FriendActionAsync(new FriendActionRequest { Action = "accept", Target = "selftest" }, Within);
+                SocialState mine = await lobby.SocialAsync(new SocialRequest(), Within);
+                Check("Thanh ban be hai chieu", mine.Friends.Any(f => f.Name == "friend2"));
+
+                await lobby.PresenceAsync(new PresenceRequest { Room = "arena:1" }, Within);
+                await otherLobby.PresenceAsync(new PresenceRequest { Room = "" }, Within);
+                ActionResult invited = await lobby.InviteAsync(new InviteRequest { To = "friend2", Room = "arena:1" }, Within);
+                SocialState withInvite = await otherLobby.SocialAsync(new SocialRequest(), Within);
+                Check("Moi ban vao phong", invited.Ok && withInvite.Invites.Any(i => i.From == "selftest" && i.Room == "arena:1"));
+                Check("Ban be hien online va dang o dau", withInvite.Friends.Any(f => f.Name == "selftest" && f.Online && f.Room == "arena:1"));
+
+                bool inviteStranger = false;
+                try
+                {
+                    await lobby.InviteAsync(new InviteRequest { To = "guestx", Room = "arena:1" }, Within);
+                }
+                catch (RpcException)
+                {
+                    inviteStranger = true;
+                }
+
+                Check("Khong moi duoc nguoi chua la ban", inviteStranger);
             }
 
             Console.WriteLine(ok ? "[selftest] TAT CA DAT" : "[selftest] CO LOI");
             return ok;
+        }
+
+        /// <summary>Đăng ký rồi lấy mã khôi phục bằng Lobby.TakeRecoveryCode.</summary>
+        private static string RegisterAndGetCode(string player, string password, int port)
+        {
+            var login = new PlayerLogin { Player = player, Mode = "register", Secret = Encoding.UTF8.GetBytes(password) };
+            var options = new ConnectOptions { Credential = Credential.Of(PlayersMethods.Login, login) };
+            using RpcConnection connection = RpcConnection.Connect($"127.0.0.1:{port}", NetSchema.Build(), LobbyClient.Declare(PlayersClient.Registry()).Build(), options).GetAwaiter().GetResult();
+            ActionResult taken = new LobbyClient(connection).TakeRecoveryCodeAsync(new RecoveryCodeRequest(), CallOptions.Within(TimeSpan.FromSeconds(8))).GetAwaiter().GetResult();
+            return taken.Ok ? taken.Message : "";
         }
 
         private sealed class Args

@@ -28,6 +28,9 @@ namespace MyGame.Backend
 
         public byte[] PodKey { get; set; } = Array.Empty<byte>();
 
+        /// <summary>File JSON lưu tài khoản khi không có Nakama (rỗng = chỉ trong bộ nhớ).</summary>
+        public string DataFile { get; set; } = "";
+
         public string NakamaUrl { get; set; } = "";
 
         public string NakamaServerKey { get; set; } = "defaultkey";
@@ -45,6 +48,7 @@ namespace MyGame.Backend
                 PlayersTcp = fomoxa["Players:Tcp"] ?? "0.0.0.0:9600",
                 PlayersWebSocket = fomoxa["Players:WebSocket"] ?? "0.0.0.0:9601",
                 PodsTcp = fomoxa["Pods:Tcp"] ?? "0.0.0.0:9602",
+                DataFile = fomoxa["Data:File"] ?? "",
                 NakamaUrl = fomoxa["Nakama:Url"] ?? "",
                 NakamaServerKey = fomoxa["Nakama:ServerKey"] ?? "defaultkey",
                 NakamaHttpKey = fomoxa["Nakama:HttpKey"] ?? "defaulthttpkey",

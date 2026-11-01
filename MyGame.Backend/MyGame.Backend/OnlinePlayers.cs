@@ -20,6 +20,22 @@ namespace MyGame.Backend
         public void Touch(string principal, string name, string room) =>
             players[principal] = (name, room ?? "", DateTime.UtcNow);
 
+        /// <summary>Tìm người đang online theo tên (không phân biệt hoa thường).</summary>
+        public bool TryFind(string name, out string room)
+        {
+            foreach (var pair in players)
+            {
+                if (DateTime.UtcNow - pair.Value.Seen <= Timeout && string.Equals(pair.Value.Name, name, StringComparison.OrdinalIgnoreCase))
+                {
+                    room = pair.Value.Room;
+                    return true;
+                }
+            }
+
+            room = "";
+            return false;
+        }
+
         public OnlineList Snapshot()
         {
             DateTime now = DateTime.UtcNow;

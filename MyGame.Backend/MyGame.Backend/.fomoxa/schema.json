@@ -1,9 +1,105 @@
 {
   "schema_version": 1,
   "generator": "fomoxac 0.2.3",
-  "fingerprint": "sha256:9dee5cf7c3d465d8248658ab9c513e18b69dc973e6a18dd9e242d01a1c58cfd0",
-  "fingerprint_u64": "0x9DEE5CF7C3D465D8",
+  "fingerprint": "sha256:2f70c6192c18f3b2810ade177c74f2407b04f7e716ec0fbf0371b8d000e26337",
+  "fingerprint_u64": "0x2F70C6192C18F3B2",
   "models": {
+    "ActionResult": {
+      "source": "Models/Social.cs",
+      "fingerprint": "sha256:10064792c42fcc86e865d22b19f53985fecc6659f0be34cb922b21d3218c16b6",
+      "codecs": [
+        "rpc"
+      ],
+      "fields": [
+        {
+          "name": "Ok",
+          "type": "bool",
+          "codecs": [
+            "rpc"
+          ]
+        },
+        {
+          "name": "Message",
+          "type": "string",
+          "codecs": [
+            "rpc"
+          ]
+        }
+      ],
+      "messages": {
+        "rpc": {
+          "id": "0x7A5E53C2",
+          "fingerprint": "sha256:094512b7e565b4dca141626efbfac354411e22f2133229719fd941e6a6fce457",
+          "fingerprint_u64": "0x094512B7E565B4DC",
+          "prefixes": [
+            "sha256:6869138bfa5d4977970315c0480016c6251b8daefbe1844d3fea1761d48a8aee",
+            "sha256:094512b7e565b4dca141626efbfac354411e22f2133229719fd941e6a6fce457"
+          ],
+          "prefixes_u64": [
+            "0x6869138BFA5D4977",
+            "0x094512B7E565B4DC"
+          ],
+          "fields": [
+            {
+              "name": "Ok",
+              "type": "bool"
+            },
+            {
+              "name": "Message",
+              "type": "string"
+            }
+          ]
+        }
+      }
+    },
+    "ChangePasswordRequest": {
+      "source": "Models/Social.cs",
+      "fingerprint": "sha256:44df00b2c2b6983d60f7dd6a58a976fd3ce3814e2b65c599fc9fe829eacb6f24",
+      "codecs": [
+        "rpc"
+      ],
+      "fields": [
+        {
+          "name": "OldPassword",
+          "type": "string",
+          "codecs": [
+            "rpc"
+          ]
+        },
+        {
+          "name": "NewPassword",
+          "type": "string",
+          "codecs": [
+            "rpc"
+          ]
+        }
+      ],
+      "messages": {
+        "rpc": {
+          "id": "0xED0B5B66",
+          "fingerprint": "sha256:392339e55a079c5315cb9721536abf356a9ba34650f12f0676b055c171a12ee7",
+          "fingerprint_u64": "0x392339E55A079C53",
+          "prefixes": [
+            "sha256:36438f92993fe6d954d280cc457068e65a2567b93c08af9963066a145abd0560",
+            "sha256:392339e55a079c5315cb9721536abf356a9ba34650f12f0676b055c171a12ee7"
+          ],
+          "prefixes_u64": [
+            "0x36438F92993FE6D9",
+            "0x392339E55A079C53"
+          ],
+          "fields": [
+            {
+              "name": "OldPassword",
+              "type": "string"
+            },
+            {
+              "name": "NewPassword",
+              "type": "string"
+            }
+          ]
+        }
+      }
+    },
     "FRpcCtx": {
       "source": "../fomoxa-rpc/Fomoxa.Rpc/SystemModels/FRpc.cs",
       "fingerprint": "sha256:e0ff630037235c9f66e866365d97d8b358aa6a753bcc3a6c8f3523786031fd4b",
@@ -214,6 +310,224 @@
         }
       }
     },
+    "FriendActionRequest": {
+      "source": "Models/Social.cs",
+      "fingerprint": "sha256:e1751694ad8422c8b039bae92f143032198eb1c3a41afdb4514a931dd61452cd",
+      "codecs": [
+        "rpc"
+      ],
+      "fields": [
+        {
+          "name": "Action",
+          "type": "string",
+          "codecs": [
+            "rpc"
+          ]
+        },
+        {
+          "name": "Target",
+          "type": "string",
+          "codecs": [
+            "rpc"
+          ]
+        }
+      ],
+      "messages": {
+        "rpc": {
+          "id": "0xE4B80C59",
+          "fingerprint": "sha256:e49f77cae5730e5d2d14be2e6ad4b0d99cb4687d7f0f0f3b2c74e7422bb247ca",
+          "fingerprint_u64": "0xE49F77CAE5730E5D",
+          "prefixes": [
+            "sha256:fad45db6ef6b98ea2c1649aad1aecd7644d5b1122484f8e55abaea796c19bab2",
+            "sha256:e49f77cae5730e5d2d14be2e6ad4b0d99cb4687d7f0f0f3b2c74e7422bb247ca"
+          ],
+          "prefixes_u64": [
+            "0xFAD45DB6EF6B98EA",
+            "0xE49F77CAE5730E5D"
+          ],
+          "fields": [
+            {
+              "name": "Action",
+              "type": "string"
+            },
+            {
+              "name": "Target",
+              "type": "string"
+            }
+          ]
+        }
+      }
+    },
+    "FriendInfo": {
+      "source": "Models/Social.cs",
+      "fingerprint": "sha256:8dee8edec25b2c7b15127de8d6279b074688eaa227638f595f7120e48258a4f4",
+      "codecs": [
+        "rpc"
+      ],
+      "fields": [
+        {
+          "name": "Name",
+          "type": "string",
+          "codecs": [
+            "rpc"
+          ]
+        },
+        {
+          "name": "Online",
+          "type": "bool",
+          "codecs": [
+            "rpc"
+          ]
+        },
+        {
+          "name": "Room",
+          "type": "string",
+          "codecs": [
+            "rpc"
+          ]
+        },
+        {
+          "name": "BestSteps",
+          "type": "u32",
+          "codecs": [
+            "rpc"
+          ]
+        }
+      ],
+      "messages": {
+        "rpc": {
+          "id": "0x1772C1DD",
+          "fingerprint": "sha256:24edf656fba7a124619ff36e9500bde5aaa01302882f348b0f5bd0038306c157",
+          "fingerprint_u64": "0x24EDF656FBA7A124",
+          "prefixes": [
+            "sha256:2893b5bc6fec5f1b68389b9078b818ae8b8bf50a0eadad7fc1a698d9c8d6ea90",
+            "sha256:58520766ff14c501904baa982973a678a78128bb2477c266666c2b8a10c4b2ec",
+            "sha256:df9d8965023adedb1541d98deb71a20d48b6bdefd81241c509f708e9d0b5a14e",
+            "sha256:24edf656fba7a124619ff36e9500bde5aaa01302882f348b0f5bd0038306c157"
+          ],
+          "prefixes_u64": [
+            "0x2893B5BC6FEC5F1B",
+            "0x58520766FF14C501",
+            "0xDF9D8965023ADEDB",
+            "0x24EDF656FBA7A124"
+          ],
+          "fields": [
+            {
+              "name": "Name",
+              "type": "string"
+            },
+            {
+              "name": "Online",
+              "type": "bool"
+            },
+            {
+              "name": "Room",
+              "type": "string"
+            },
+            {
+              "name": "BestSteps",
+              "type": "u32"
+            }
+          ]
+        }
+      }
+    },
+    "InviteInfo": {
+      "source": "Models/Social.cs",
+      "fingerprint": "sha256:2a8b513e579c1c9b24b90e8108470947303c542c8187004e3a88dc7c4649c1e1",
+      "codecs": [
+        "rpc"
+      ],
+      "fields": [
+        {
+          "name": "From",
+          "type": "string",
+          "codecs": [
+            "rpc"
+          ]
+        },
+        {
+          "name": "Room",
+          "type": "string",
+          "codecs": [
+            "rpc"
+          ]
+        }
+      ],
+      "messages": {
+        "rpc": {
+          "id": "0xC9BCBB37",
+          "fingerprint": "sha256:87c7eca89afd8d1feba1b0061ace85ae311224c0c36b00b212a1894cba0f4f49",
+          "fingerprint_u64": "0x87C7ECA89AFD8D1F",
+          "prefixes": [
+            "sha256:bca5c75b983f60405e45ccd51331a85bc9ea067533060413e5499222a5eb0b04",
+            "sha256:87c7eca89afd8d1feba1b0061ace85ae311224c0c36b00b212a1894cba0f4f49"
+          ],
+          "prefixes_u64": [
+            "0xBCA5C75B983F6040",
+            "0x87C7ECA89AFD8D1F"
+          ],
+          "fields": [
+            {
+              "name": "From",
+              "type": "string"
+            },
+            {
+              "name": "Room",
+              "type": "string"
+            }
+          ]
+        }
+      }
+    },
+    "InviteRequest": {
+      "source": "Models/Social.cs",
+      "fingerprint": "sha256:14262e09f96da0b8b26e43aba8ea9ece2b1457658c4fc5d47511492ac9e81f76",
+      "codecs": [
+        "rpc"
+      ],
+      "fields": [
+        {
+          "name": "To",
+          "type": "string",
+          "codecs": [
+            "rpc"
+          ]
+        },
+        {
+          "name": "Room",
+          "type": "string",
+          "codecs": [
+            "rpc"
+          ]
+        }
+      ],
+      "messages": {
+        "rpc": {
+          "id": "0x81D89AF1",
+          "fingerprint": "sha256:86808c8435b040aef4f05c02c6e7a40a9dbf81c75ab228dd7eea32c8ccc45bf7",
+          "fingerprint_u64": "0x86808C8435B040AE",
+          "prefixes": [
+            "sha256:dd76b38cf2c7f50b98c7387089eeee056472f9ba3babf547030395a38343c52f",
+            "sha256:86808c8435b040aef4f05c02c6e7a40a9dbf81c75ab228dd7eea32c8ccc45bf7"
+          ],
+          "prefixes_u64": [
+            "0xDD76B38CF2C7F50B",
+            "0x86808C8435B040AE"
+          ],
+          "fields": [
+            {
+              "name": "To",
+              "type": "string"
+            },
+            {
+              "name": "Room",
+              "type": "string"
+            }
+          ]
+        }
+      }
+    },
     "JoinRoomRequest": {
       "source": "Models/Players.cs",
       "fingerprint": "sha256:a0fec41dd61fffdca452b62dc3c39a63db75892b610e7bcb691d1201cc2b43f9",
@@ -400,7 +714,7 @@
     },
     "PlayerLogin": {
       "source": "Models/Players.cs",
-      "fingerprint": "sha256:8e1df98060d2a42932c79f3258cd42445f0444288e87f9c552ac7dac9324ea77",
+      "fingerprint": "sha256:1a7b172c1befe69e8640a47d26407d2c7c715877bb93715f77ef23f2b31c8e75",
       "codecs": [
         "rpc"
       ],
@@ -425,22 +739,40 @@
           "codecs": [
             "rpc"
           ]
+        },
+        {
+          "name": "Mode",
+          "type": "string",
+          "codecs": [
+            "rpc"
+          ]
+        },
+        {
+          "name": "Recovery",
+          "type": "bytes",
+          "codecs": [
+            "rpc"
+          ]
         }
       ],
       "messages": {
         "rpc": {
           "id": "0xA458A75D",
-          "fingerprint": "sha256:38ad643c414405aa97f06d51672a4dccd7fff5ac1be16af45a0ef84247c5f858",
-          "fingerprint_u64": "0x38AD643C414405AA",
+          "fingerprint": "sha256:7565bed2ac9898bf1f69f0bb883af5f141ac6fbc7e08b933088d038794b8a9d0",
+          "fingerprint_u64": "0x7565BED2AC9898BF",
           "prefixes": [
             "sha256:85bf3c66cec72290ab4fd328de0fc0fae44602148a12b155ee3e48f46ab2e568",
             "sha256:7a67c804c11ea3da82cad4333654dff9a8f1e7ca5ce34317a75bde317cf5965e",
-            "sha256:38ad643c414405aa97f06d51672a4dccd7fff5ac1be16af45a0ef84247c5f858"
+            "sha256:38ad643c414405aa97f06d51672a4dccd7fff5ac1be16af45a0ef84247c5f858",
+            "sha256:bb386bd195e150e8238281cfa0325960a3ffacc525b2abc06d72377dc42f3b96",
+            "sha256:7565bed2ac9898bf1f69f0bb883af5f141ac6fbc7e08b933088d038794b8a9d0"
           ],
           "prefixes_u64": [
             "0x85BF3C66CEC72290",
             "0x7A67C804C11EA3DA",
-            "0x38AD643C414405AA"
+            "0x38AD643C414405AA",
+            "0xBB386BD195E150E8",
+            "0x7565BED2AC9898BF"
           ],
           "fields": [
             {
@@ -454,6 +786,88 @@
             {
               "name": "Secret",
               "type": "bytes"
+            },
+            {
+              "name": "Mode",
+              "type": "string"
+            },
+            {
+              "name": "Recovery",
+              "type": "bytes"
+            }
+          ]
+        }
+      }
+    },
+    "PlayerProfile": {
+      "source": "Models/Social.cs",
+      "fingerprint": "sha256:4a10d5d4f79b7181b687ceadc4a70ab31a897f6d3e7f92937db85b4d3287d77d",
+      "codecs": [
+        "rpc"
+      ],
+      "fields": [
+        {
+          "name": "Name",
+          "type": "string",
+          "codecs": [
+            "rpc"
+          ]
+        },
+        {
+          "name": "BestSteps",
+          "type": "u32",
+          "codecs": [
+            "rpc"
+          ]
+        },
+        {
+          "name": "Matches",
+          "type": "u32",
+          "codecs": [
+            "rpc"
+          ]
+        },
+        {
+          "name": "CreatedUnix",
+          "type": "i64",
+          "codecs": [
+            "rpc"
+          ]
+        }
+      ],
+      "messages": {
+        "rpc": {
+          "id": "0xB9B9F9EE",
+          "fingerprint": "sha256:44d7004fd9b1837422966bffd4691d448b4a59038c2f5ba33a5b1b1006065ddf",
+          "fingerprint_u64": "0x44D7004FD9B18374",
+          "prefixes": [
+            "sha256:7b20d3be7db164c8174d0e9c57fc3955adf80a218a2ab5d801deeb8c00e52beb",
+            "sha256:3ac68dea37274ceadd8f7682c10d901f74adc0598c5b4680bc9a8b069d05328e",
+            "sha256:172f9a2c9f4ae0577983e80dbad729542943125aa998964a5d42ec16a4caefee",
+            "sha256:44d7004fd9b1837422966bffd4691d448b4a59038c2f5ba33a5b1b1006065ddf"
+          ],
+          "prefixes_u64": [
+            "0x7B20D3BE7DB164C8",
+            "0x3AC68DEA37274CEA",
+            "0x172F9A2C9F4AE057",
+            "0x44D7004FD9B18374"
+          ],
+          "fields": [
+            {
+              "name": "Name",
+              "type": "string"
+            },
+            {
+              "name": "BestSteps",
+              "type": "u32"
+            },
+            {
+              "name": "Matches",
+              "type": "u32"
+            },
+            {
+              "name": "CreatedUnix",
+              "type": "i64"
             }
           ]
         }
@@ -461,7 +875,7 @@
     },
     "PlayerWelcome": {
       "source": "Models/Players.cs",
-      "fingerprint": "sha256:7a437031a5184ef77fce56a14b2f17bedeb53eb7b95e4bf5984eb154faf9dc03",
+      "fingerprint": "sha256:327f39d7745fa59eb56d7f23a2690cd523d5933aeeef0b2b7cd5fda8f803ac1e",
       "codecs": [
         "rpc"
       ],
@@ -472,22 +886,35 @@
           "codecs": [
             "rpc"
           ]
+        },
+        {
+          "name": "RecoveryCode",
+          "type": "string",
+          "codecs": [
+            "rpc"
+          ]
         }
       ],
       "messages": {
         "rpc": {
           "id": "0x515870BB",
-          "fingerprint": "sha256:d25c4670480e53cce1777c30a8fbe43e41f539025c36985afdbc7bd7c7bfea9a",
-          "fingerprint_u64": "0xD25C4670480E53CC",
+          "fingerprint": "sha256:73222329e5d27bc15e18ca1d724aae2c93fd11ec6b9c9ed62ba977a1ed308129",
+          "fingerprint_u64": "0x73222329E5D27BC1",
           "prefixes": [
-            "sha256:d25c4670480e53cce1777c30a8fbe43e41f539025c36985afdbc7bd7c7bfea9a"
+            "sha256:d25c4670480e53cce1777c30a8fbe43e41f539025c36985afdbc7bd7c7bfea9a",
+            "sha256:73222329e5d27bc15e18ca1d724aae2c93fd11ec6b9c9ed62ba977a1ed308129"
           ],
           "prefixes_u64": [
-            "0xD25C4670480E53CC"
+            "0xD25C4670480E53CC",
+            "0x73222329E5D27BC1"
           ],
           "fields": [
             {
               "name": "Player",
+              "type": "string"
+            },
+            {
+              "name": "RecoveryCode",
               "type": "string"
             }
           ]
@@ -529,6 +956,54 @@
         }
       }
     },
+    "PodScore": {
+      "source": "Models/Social.cs",
+      "fingerprint": "sha256:e4472950e9ee20b316efdf89f2b7391869b97a7c3a905c443a783923316e4c2e",
+      "codecs": [
+        "rpc"
+      ],
+      "fields": [
+        {
+          "name": "Player",
+          "type": "string",
+          "codecs": [
+            "rpc"
+          ]
+        },
+        {
+          "name": "Steps",
+          "type": "u32",
+          "codecs": [
+            "rpc"
+          ]
+        }
+      ],
+      "messages": {
+        "rpc": {
+          "id": "0x066C630B",
+          "fingerprint": "sha256:aeb25409cfb9f9d63ad2f660fab0fcecad8d65f9ede78f039e46b7da35635ffb",
+          "fingerprint_u64": "0xAEB25409CFB9F9D6",
+          "prefixes": [
+            "sha256:e77eeb3db6091d2d65ce6bf77dadb8e9c2ccbf1c58dd679c1b766036bd06be40",
+            "sha256:aeb25409cfb9f9d63ad2f660fab0fcecad8d65f9ede78f039e46b7da35635ffb"
+          ],
+          "prefixes_u64": [
+            "0xE77EEB3DB6091D2D",
+            "0xAEB25409CFB9F9D6"
+          ],
+          "fields": [
+            {
+              "name": "Player",
+              "type": "string"
+            },
+            {
+              "name": "Steps",
+              "type": "u32"
+            }
+          ]
+        }
+      }
+    },
     "PresenceRequest": {
       "source": "Models/Rooms.cs",
       "fingerprint": "sha256:e7038cf7bac5c54a529cf9797a0b34ba950a1ea17e7a507452aebb9e0473644f",
@@ -561,6 +1036,59 @@
               "type": "string"
             }
           ]
+        }
+      }
+    },
+    "ProfileRequest": {
+      "source": "Models/Social.cs",
+      "fingerprint": "sha256:1ef3b5ca8b061f28389a5bf6bf21506398f7e3cd05f210ec1d9ce558de39a129",
+      "codecs": [
+        "rpc"
+      ],
+      "fields": [
+        {
+          "name": "Player",
+          "type": "string",
+          "codecs": [
+            "rpc"
+          ]
+        }
+      ],
+      "messages": {
+        "rpc": {
+          "id": "0xF14DD1DF",
+          "fingerprint": "sha256:886d7cdb2761e337a8afd65f6d9d9dc832055f435679d3c5db1e9d5a5a7ef4b1",
+          "fingerprint_u64": "0x886D7CDB2761E337",
+          "prefixes": [
+            "sha256:886d7cdb2761e337a8afd65f6d9d9dc832055f435679d3c5db1e9d5a5a7ef4b1"
+          ],
+          "prefixes_u64": [
+            "0x886D7CDB2761E337"
+          ],
+          "fields": [
+            {
+              "name": "Player",
+              "type": "string"
+            }
+          ]
+        }
+      }
+    },
+    "RecoveryCodeRequest": {
+      "source": "Models/Social.cs",
+      "fingerprint": "sha256:98d6bea0b4535af61c60f90ecaf835a4be7a9322750f33b6ad7fcfe47c77004c",
+      "codecs": [
+        "rpc"
+      ],
+      "fields": [],
+      "messages": {
+        "rpc": {
+          "id": "0xD44E36C4",
+          "fingerprint": "sha256:c2f2e811caac6b1a5804fd7b70602017d693f55be25a54f6aab83f4db74f767d",
+          "fingerprint_u64": "0xC2F2E811CAAC6B1A",
+          "prefixes": [],
+          "prefixes_u64": [],
+          "fields": []
         }
       }
     },
@@ -803,6 +1331,277 @@
             {
               "name": "WebSocketUrl",
               "type": "string"
+            }
+          ]
+        }
+      }
+    },
+    "ScoreEntry": {
+      "source": "Models/Social.cs",
+      "fingerprint": "sha256:73a0f5ef53eab5b34e1873bd8e01a2555147f454b85c7506a39fe1503479e422",
+      "codecs": [
+        "rpc"
+      ],
+      "fields": [
+        {
+          "name": "Name",
+          "type": "string",
+          "codecs": [
+            "rpc"
+          ]
+        },
+        {
+          "name": "Steps",
+          "type": "u32",
+          "codecs": [
+            "rpc"
+          ]
+        },
+        {
+          "name": "Best",
+          "type": "u32",
+          "codecs": [
+            "rpc"
+          ]
+        }
+      ],
+      "messages": {
+        "rpc": {
+          "id": "0x3971B2DF",
+          "fingerprint": "sha256:e3e347903564b1960ad70d6b88ec6338ccb220585832f22c35ef6f60958a6385",
+          "fingerprint_u64": "0xE3E347903564B196",
+          "prefixes": [
+            "sha256:73691bbeb155647939cca8cd552c1e5757c4f7a26ff773bc8b4ce33967f2bb52",
+            "sha256:cc854e112261ddc2da02049dd586ee59d19f891714d9da1faf772b065c038783",
+            "sha256:e3e347903564b1960ad70d6b88ec6338ccb220585832f22c35ef6f60958a6385"
+          ],
+          "prefixes_u64": [
+            "0x73691BBEB1556479",
+            "0xCC854E112261DDC2",
+            "0xE3E347903564B196"
+          ],
+          "fields": [
+            {
+              "name": "Name",
+              "type": "string"
+            },
+            {
+              "name": "Steps",
+              "type": "u32"
+            },
+            {
+              "name": "Best",
+              "type": "u32"
+            }
+          ]
+        }
+      }
+    },
+    "ScoreReport": {
+      "source": "Models/Social.cs",
+      "fingerprint": "sha256:6da573017e8ddb08cf91ac9838bf3e3e79492c79d2ab5fbdd3080c9c82c2bcd2",
+      "codecs": [
+        "rpc"
+      ],
+      "fields": [
+        {
+          "name": "Room",
+          "type": "string",
+          "codecs": [
+            "rpc"
+          ]
+        },
+        {
+          "name": "Entries",
+          "type": "Array<PodScore>",
+          "codecs": [
+            "rpc"
+          ]
+        }
+      ],
+      "messages": {
+        "rpc": {
+          "id": "0x31D969A1",
+          "fingerprint": "sha256:70d5d11d3eca69a15b86d9350636b8ddd187065a441d4dd1d716f80cf741f903",
+          "fingerprint_u64": "0x70D5D11D3ECA69A1",
+          "prefixes": [
+            "sha256:0d136f152054634f25efbfbfed2cf7670d4665dd99d5d4599db9b35e865c98c5",
+            "sha256:70d5d11d3eca69a15b86d9350636b8ddd187065a441d4dd1d716f80cf741f903"
+          ],
+          "prefixes_u64": [
+            "0x0D136F152054634F",
+            "0x70D5D11D3ECA69A1"
+          ],
+          "fields": [
+            {
+              "name": "Room",
+              "type": "string"
+            },
+            {
+              "name": "Entries",
+              "type": "Array<PodScore>"
+            }
+          ]
+        }
+      }
+    },
+    "ScoreboardRequest": {
+      "source": "Models/Social.cs",
+      "fingerprint": "sha256:5a5b25cfc98d5b041a4dcb47926d505432915f1fc64486f31d5e0477b629b2e1",
+      "codecs": [
+        "rpc"
+      ],
+      "fields": [
+        {
+          "name": "Room",
+          "type": "string",
+          "codecs": [
+            "rpc"
+          ]
+        }
+      ],
+      "messages": {
+        "rpc": {
+          "id": "0xD03AD48D",
+          "fingerprint": "sha256:1b72a38d98a0ca20917edb2dae113990dcbb3c46adf76bb6cc051504b500c1d3",
+          "fingerprint_u64": "0x1B72A38D98A0CA20",
+          "prefixes": [
+            "sha256:1b72a38d98a0ca20917edb2dae113990dcbb3c46adf76bb6cc051504b500c1d3"
+          ],
+          "prefixes_u64": [
+            "0x1B72A38D98A0CA20"
+          ],
+          "fields": [
+            {
+              "name": "Room",
+              "type": "string"
+            }
+          ]
+        }
+      }
+    },
+    "ScoreboardState": {
+      "source": "Models/Social.cs",
+      "fingerprint": "sha256:7dc38fd18bd434166a1dc94f77f08e907bcbac3f79b824dce6c6fd602a12a941",
+      "codecs": [
+        "rpc"
+      ],
+      "fields": [
+        {
+          "name": "Entries",
+          "type": "Array<ScoreEntry>",
+          "codecs": [
+            "rpc"
+          ]
+        }
+      ],
+      "messages": {
+        "rpc": {
+          "id": "0x318B45B8",
+          "fingerprint": "sha256:5753f1678f612d2a2d34aaf0f576f6004ca73ab301f3a85eb5f91ec6a97b49cb",
+          "fingerprint_u64": "0x5753F1678F612D2A",
+          "prefixes": [
+            "sha256:5753f1678f612d2a2d34aaf0f576f6004ca73ab301f3a85eb5f91ec6a97b49cb"
+          ],
+          "prefixes_u64": [
+            "0x5753F1678F612D2A"
+          ],
+          "fields": [
+            {
+              "name": "Entries",
+              "type": "Array<ScoreEntry>"
+            }
+          ]
+        }
+      }
+    },
+    "SocialRequest": {
+      "source": "Models/Social.cs",
+      "fingerprint": "sha256:ce94eb1c469163e25bbda92b979f140f7c44a1274f47ccbf914885dd0f8e0be1",
+      "codecs": [
+        "rpc"
+      ],
+      "fields": [],
+      "messages": {
+        "rpc": {
+          "id": "0xB6A48B6C",
+          "fingerprint": "sha256:d8e3bcf428b7612df350b60eefc6f24443116c69161462210ad995dd8791d21c",
+          "fingerprint_u64": "0xD8E3BCF428B7612D",
+          "prefixes": [],
+          "prefixes_u64": [],
+          "fields": []
+        }
+      }
+    },
+    "SocialState": {
+      "source": "Models/Social.cs",
+      "fingerprint": "sha256:e585391b3f32c74cc93c28a6adf2a6868c32708068fe726bb2c6405862cea8a7",
+      "codecs": [
+        "rpc"
+      ],
+      "fields": [
+        {
+          "name": "Friends",
+          "type": "Array<FriendInfo>",
+          "codecs": [
+            "rpc"
+          ]
+        },
+        {
+          "name": "Incoming",
+          "type": "Array<string>",
+          "codecs": [
+            "rpc"
+          ]
+        },
+        {
+          "name": "Outgoing",
+          "type": "Array<string>",
+          "codecs": [
+            "rpc"
+          ]
+        },
+        {
+          "name": "Invites",
+          "type": "Array<InviteInfo>",
+          "codecs": [
+            "rpc"
+          ]
+        }
+      ],
+      "messages": {
+        "rpc": {
+          "id": "0x59954303",
+          "fingerprint": "sha256:b141d03acf71241a86e9075c97f5dc615ca9bbd04c8c15b065bc4f01ee6149dc",
+          "fingerprint_u64": "0xB141D03ACF71241A",
+          "prefixes": [
+            "sha256:df69bdbba6f5d8f588745cc7f9647b671de5264281f08ead9cf1fb2ae7a4ad21",
+            "sha256:de0b62e2b758179229200c164f391506e9b7886cfe4710206697386e8e037cac",
+            "sha256:bf579b1f8a3888adadf8798a8bcea61959e64df44e7483c30ce2d020218d5942",
+            "sha256:b141d03acf71241a86e9075c97f5dc615ca9bbd04c8c15b065bc4f01ee6149dc"
+          ],
+          "prefixes_u64": [
+            "0xDF69BDBBA6F5D8F5",
+            "0xDE0B62E2B7581792",
+            "0xBF579B1F8A3888AD",
+            "0xB141D03ACF71241A"
+          ],
+          "fields": [
+            {
+              "name": "Friends",
+              "type": "Array<FriendInfo>"
+            },
+            {
+              "name": "Incoming",
+              "type": "Array<string>"
+            },
+            {
+              "name": "Outgoing",
+              "type": "Array<string>"
+            },
+            {
+              "name": "Invites",
+              "type": "Array<InviteInfo>"
             }
           ]
         }
