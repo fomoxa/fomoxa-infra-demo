@@ -2,8 +2,8 @@
 set -euo pipefail
 
 BASE="${1:-http://127.0.0.1:7350}"
-HTTP_KEY="${2:-defaulthttpkey}"
-SERVER_KEY="${3:-defaultkey}"
+HTTP_KEY="${2:-}"
+SERVER_KEY="${3:-}"
 
 # Canh bao neu cong 7350 dang duoc giu boi Nakama cua docker compose (khong phai cum k3d)
 if [[ "$BASE" == *"127.0.0.1:7350"* ]] && command -v docker >/dev/null 2>&1; then
@@ -16,6 +16,10 @@ if [[ "$BASE" == *"127.0.0.1:7350"* ]] && command -v docker >/dev/null 2>&1; the
         fi
     fi
 fi
+
+source "$(dirname "${BASH_SOURCE[0]}")/lib-nakama-keys.sh"
+HTTP_KEY="${HTTP_KEY:-$DEFAULT_HTTP_KEY}"
+SERVER_KEY="${SERVER_KEY:-$DEFAULT_SERVER_KEY}"
 
 auth_device() {
     local device_id="$1"

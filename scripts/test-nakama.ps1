@@ -1,13 +1,27 @@
 param(
     [string]$Base = "http://127.0.0.1:7350",
     [string]$Room = "arena:1",
-    [string]$HttpKey = "defaulthttpkey",
-    [string]$ServerKey = "defaultkey",
+    [string]$HttpKey = "",
+    [string]$ServerKey = "",
     [string]$UserA = "fomoxa-test-ana",
     [string]$UserB = "fomoxa-test-bo"
 )
 
 $ErrorActionPreference = "Stop"
+
+# Key Nakama: mac dinh doc tu secret cua cum K8s (neu co), khong thi dung key mac dinh cua docker compose.
+function Get-NakamaKey {
+    param([string]$Name, [string]$Fallback)
+    if ($env:NAKAMA_USE_DEFAULT_KEYS -eq "1") { return $Fallback }
+    try {
+        $encoded = kubectl get secret fomoxa-nakama -n fomoxa -o "jsonpath={.data.$Name}" 2>$null
+        if ($encoded) { return [Text.Encoding]::UTF8.GetString([Convert]::FromBase64String($encoded)) }
+    }
+    catch { }
+    return $Fallback
+}
+if (-not $HttpKey) { $HttpKey = Get-NakamaKey "http-key" "defaulthttpkey" }
+if (-not $ServerKey) { $ServerKey = Get-NakamaKey "server-key" "defaultkey" }
 
 function Auth-Device {
     param([string]$Id)

@@ -8,6 +8,8 @@ Hạ tầng game server nhiều người chơi phân tán (Distributed Multiplay
 
 - 📖 **[Hướng dẫn từng bước chạy trên Ubuntu / WSL2 (Zero to Running)](docs/UBUNTU_GUIDE.md)**: Hướng dẫn chi tiết bằng lệnh Bash cho người mới clone repo từ A đến Z (cài phụ thuộc, build, chạy K8s, test).
 - 📋 **[Kế hoạch phát triển (PLAN.md)](PLAN.md)**: Toàn bộ lộ trình từ P1 đến P6 (kiến trúc, quyết định kỹ thuật, DoD, và nhật ký các bước).
+- ⚙️ **[Vận hành (docs/OPERATIONS.md)](docs/OPERATIONS.md)**: gameplay leo bục, tài khoản + khôi phục, bạn bè, TLS, key Nakama, giám sát (Prometheus/Grafana/Loki), autoscaling, và bảng "đã kiểm chứng như thế nào".
+- 🧪 **[Cụm giả (tools/MockCluster)](tools/MockCluster/README.md)**: chạy thử cả hệ thống trên một máy, không cần K8s: `./scripts/run-mock-cluster.sh`.
 - 🎮 **[Dự án Unity Game Client (MyGame/README.md)](MyGame/README.md)**: Hướng dẫn về scene Unity, cấu trúc prefab, package dependencies và chạy client.
 
 ---

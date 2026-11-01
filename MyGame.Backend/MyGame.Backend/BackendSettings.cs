@@ -31,6 +31,9 @@ namespace MyGame.Backend
         /// <summary>File JSON lưu tài khoản khi không có Nakama (rỗng = chỉ trong bộ nhớ).</summary>
         public string DataFile { get; set; } = "";
 
+        /// <summary>Địa chỉ HTTP /metrics cho Prometheus (rỗng = tắt).</summary>
+        public string MetricsListen { get; set; } = "0.0.0.0:9610";
+
         public string NakamaUrl { get; set; } = "";
 
         public string NakamaServerKey { get; set; } = "defaultkey";
@@ -49,6 +52,7 @@ namespace MyGame.Backend
                 PlayersWebSocket = fomoxa["Players:WebSocket"] ?? "0.0.0.0:9601",
                 PodsTcp = fomoxa["Pods:Tcp"] ?? "0.0.0.0:9602",
                 DataFile = fomoxa["Data:File"] ?? "",
+                MetricsListen = fomoxa["Metrics:Listen"] ?? "0.0.0.0:9610",
                 NakamaUrl = fomoxa["Nakama:Url"] ?? "",
                 NakamaServerKey = fomoxa["Nakama:ServerKey"] ?? "defaultkey",
                 NakamaHttpKey = fomoxa["Nakama:HttpKey"] ?? "defaulthttpkey",

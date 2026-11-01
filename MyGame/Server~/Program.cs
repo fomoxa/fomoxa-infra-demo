@@ -136,6 +136,27 @@ namespace MyGame.Server
 
             bool draining = false;
 
+            using var metrics = new MyGame.Backend.Metrics("fomoxa_pod");
+            metrics.Gauge("players", "Số người chơi đang kết nối vào pod", () => runtime.ServerManager.PeerCount);
+            metrics.Gauge("rooms", "Số phòng pod đang giữ", () => pod.Rooms.Count);
+            metrics.Gauge("draining", "1 nếu pod đang drain", () => draining ? 1 : 0);
+            metrics.Gauge("registered", "1 nếu pod đã đăng ký với directory", () => pod.IsRegistered ? 1 : 0);
+            metrics.Gauge("best_steps", "Số bậc cao nhất của người chơi đang trên pod", () =>
+            {
+                lock (scoreGate)
+                {
+                    uint best = 0;
+                    foreach (PlayerEntity entity in entities.Values)
+                    {
+                        best = System.Math.Max(best, (uint)entity.Behaviour.Steps);
+                    }
+
+                    return best;
+                }
+            });
+            metrics.Gauge("uptime_seconds", "Thời gian pod đã chạy", () => clock.Elapsed.TotalSeconds);
+            metrics.Serve(config.MetricsListen);
+
             // SIGTERM/SIGINT lần 1: xin directory drain (ngừng nhận room mới) rồi chờ hết người chơi.
             // Lần 2, hoặc khi chưa đăng ký directory, hoặc directory báo lỗi: thoát ngay.
             // Hết hạn drain_seconds thì OnDrainDeadline xử lý.

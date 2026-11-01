@@ -28,5 +28,14 @@ gen_key "$DIR_SECRETS/gateway" 24
 gen_key "$DIR_SECRETS/pod" 24
 gen_key "$SECRETS_DIR/backend-pod" 24
 
+# Nakama: key rieng thay cho defaultkey/defaulthttpkey, mat khau console va DB
+NAKAMA_SECRETS="$SECRETS_DIR/nakama"
+gen_key "$NAKAMA_SECRETS/server-key" 16
+gen_key "$NAKAMA_SECRETS/http-key" 24
+gen_key "$NAKAMA_SECRETS/console-password" 16
+gen_key "$NAKAMA_SECRETS/session-key" 24
+gen_key "$NAKAMA_SECRETS/refresh-key" 24
+gen_key "$NAKAMA_SECRETS/db-password" 16
+
 echo "Hoan tat sinh keys tai $SECRETS_DIR"
 

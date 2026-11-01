@@ -224,6 +224,7 @@ namespace MyGame.Backend
                 string matchedRoom = await WaitForMatch(principal, request.RoomKey);
                 RoomTicket ticket = await directory.Ticket(principal, matchedRoom, request.Version);
                 recentTickets[cacheKey] = (ticket, DateTime.UtcNow + IdempotentWindow);
+                core.Metrics?.Count("joins_total", "result=\"ok\"");
                 Console.WriteLine($"[Lobby] {principal} -> {ticket.Address}:{ticket.Port} (room: {matchedRoom})");
                 return ticket;
             }

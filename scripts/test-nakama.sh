@@ -3,8 +3,8 @@ set -euo pipefail
 
 BASE="${1:-http://127.0.0.1:7350}"
 ROOM="${2:-arena:1}"
-HTTP_KEY="${3:-defaulthttpkey}"
-SERVER_KEY="${4:-defaultkey}"
+HTTP_KEY="${3:-}"
+SERVER_KEY="${4:-}"
 USER_A="${5:-fomoxa-test-ana}"
 USER_B="${6:-fomoxa-test-bo}"
 
@@ -19,6 +19,10 @@ if [[ "$BASE" == *"127.0.0.1:7350"* ]] && command -v docker >/dev/null 2>&1; the
         fi
     fi
 fi
+
+source "$(dirname "${BASH_SOURCE[0]}")/lib-nakama-keys.sh"
+HTTP_KEY="${HTTP_KEY:-$DEFAULT_HTTP_KEY}"
+SERVER_KEY="${SERVER_KEY:-$DEFAULT_SERVER_KEY}"
 
 auth_device() {
     local device_id="$1"

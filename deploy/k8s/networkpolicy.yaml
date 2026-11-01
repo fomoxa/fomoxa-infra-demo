@@ -101,3 +101,32 @@ spec:
         - podSelector: { matchLabels: { app: gateway } }
       ports:
         - { protocol: UDP, port: 7778 }
+---
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: tls-proxy-clients
+  namespace: fomoxa
+spec:
+  podSelector:
+    matchLabels: { app: tls-proxy }
+  ingress:
+    - ports:
+        - { protocol: TCP, port: 9643 }
+---
+# Prometheus (namespace monitoring) scrape metrics cua backend (9610) va pod (9611)
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: metrics-from-monitoring
+  namespace: fomoxa
+spec:
+  podSelector: {}
+  ingress:
+    - from:
+        - namespaceSelector:
+            matchLabels: { kubernetes.io/metadata.name: monitoring }
+      ports:
+        - { protocol: TCP, port: 9610 }
+        - { protocol: TCP, port: 9611 }
+        - { protocol: TCP, port: 9100 }

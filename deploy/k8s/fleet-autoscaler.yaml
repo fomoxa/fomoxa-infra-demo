@@ -1,0 +1,22 @@
+# Tu dong them/bot GameServer theo so pod Ready con trong (Agones FleetAutoscaler, policy Buffer).
+#   - luon giu 2 pod Ready (phong trong) de nguoi moi vao khong phai cho
+#   - toi thieu 4 pod, toi da 16 pod (khop 16 phong arena:1..16 trong fleet.yaml)
+# Khi dang chay autoscaler, DUNG sua `replicas` trong fleet.yaml roi apply lai (se tranh voi autoscaler).
+# Ap dung: kubectl apply -f deploy/k8s/fleet-autoscaler.yaml  (hoac AUTOSCALE=1 ./scripts/k8s-up.sh)
+apiVersion: autoscaling.agones.dev/v1
+kind: FleetAutoscaler
+metadata:
+  name: fomoxa-server-autoscaler
+  namespace: fomoxa
+spec:
+  fleetName: fomoxa-server
+  policy:
+    type: Buffer
+    buffer:
+      bufferSize: 2
+      minReplicas: 4
+      maxReplicas: 16
+  sync:
+    type: FixedInterval
+    fixedInterval:
+      seconds: 15

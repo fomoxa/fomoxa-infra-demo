@@ -1,0 +1,179 @@
+# Prometheus: tu tim pod co annotation prometheus.io/scrape=true trong namespace fomoxa (backend :9610, GameServer :9611,
+# Nakama :9100) va agones-system (controller Agones). Luat canh bao nam trong ConfigMap prometheus-rules.
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: prometheus
+  namespace: monitoring
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  name: prometheus-fomoxa
+rules:
+  - apiGroups: [""]
+    resources: ["pods", "nodes", "services", "endpoints"]
+    verbs: ["get", "list", "watch"]
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRoleBinding
+metadata:
+  name: prometheus-fomoxa
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: ClusterRole
+  name: prometheus-fomoxa
+subjects:
+  - kind: ServiceAccount
+    name: prometheus
+    namespace: monitoring
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: prometheus-config
+  namespace: monitoring
+data:
+  prometheus.yml: |
+    global:
+      scrape_interval: 15s
+      evaluation_interval: 15s
+    rule_files:
+      - /etc/prometheus/rules/*.yml
+    alerting:
+      alertmanagers:
+        - static_configs:
+            - targets: ["alertmanager.monitoring.svc.cluster.local:9093"]
+    scrape_configs:
+      - job_name: pods
+        kubernetes_sd_configs:
+          - role: pod
+            namespaces:
+              names: ["fomoxa", "agones-system"]
+        relabel_configs:
+          - source_labels: [__meta_kubernetes_pod_annotation_prometheus_io_scrape]
+            action: keep
+            regex: "true"
+          - source_labels: [__address__, __meta_kubernetes_pod_annotation_prometheus_io_port]
+            action: replace
+            regex: ([^:]+)(?::\d+)?;(\d+)
+            replacement: $1:$2
+            target_label: __address__
+          - source_labels: [__meta_kubernetes_pod_annotation_prometheus_io_path]
+            action: replace
+            regex: (.+)
+            target_label: __metrics_path__
+          - source_labels: [__meta_kubernetes_namespace]
+            target_label: namespace
+          - source_labels: [__meta_kubernetes_pod_label_app]
+            target_label: app
+          - source_labels: [__meta_kubernetes_pod_name]
+            target_label: pod
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: prometheus-rules
+  namespace: monitoring
+data:
+  fomoxa.yml: |
+    groups:
+      - name: fomoxa
+        rules:
+          - alert: BackendDown
+            expr: up{app="backend"} == 0 or absent(up{app="backend"})
+            for: 1m
+            labels: { severity: critical }
+            annotations:
+              summary: "Backend không phản hồi"
+              description: "Không scrape được metrics của backend trong 1 phút - người chơi không đăng nhập / vào phòng được."
+          - alert: NakamaDown
+            expr: up{app="nakama"} == 0 or absent(up{app="nakama"})
+            for: 1m
+            labels: { severity: critical }
+            annotations:
+              summary: "Nakama không phản hồi"
+              description: "Ghép trận và lưu tài khoản (nếu dùng Nakama storage) sẽ lỗi."
+          - alert: NoReadyGameServer
+            expr: sum(agones_fleets_replicas_count{type="ready"}) < 1
+            for: 2m
+            labels: { severity: critical }
+            annotations:
+              summary: "Hết GameServer Ready"
+              description: "Không còn pod trống cho người chơi mới. Kiểm tra FleetAutoscaler / tài nguyên cụm."
+          - alert: GameServerNotRegistered
+            expr: fomoxa_pod_registered == 0
+            for: 2m
+            labels: { severity: warning }
+            annotations:
+              summary: "Pod {{ $labels.pod }} chưa đăng ký với directory"
+              description: "Pod chạy nhưng không nhận được người chơi (directory không thấy)."
+          - alert: HighLoginFailures
+            expr: sum(rate(fomoxa_logins_total{result="fail"}[5m])) > 1
+            for: 5m
+            labels: { severity: warning }
+            annotations:
+              summary: "Nhiều lần đăng nhập thất bại"
+              description: "Hơn 1 lần thất bại mỗi giây trong 5 phút - có thể đang bị dò mật khẩu."
+          - alert: PodNearlyFull
+            expr: fomoxa_pod_players >= 14
+            for: 5m
+            labels: { severity: info }
+            annotations:
+              summary: "Pod {{ $labels.pod }} gần đầy"
+              description: "Hơn 14/16 người chơi trên một pod."
+          - alert: FleetAtMaxReplicas
+            expr: sum(agones_fleets_replicas_count{type="total"}) >= 16
+            for: 10m
+            labels: { severity: warning }
+            annotations:
+              summary: "Fleet đã chạm trần 16 pod"
+              description: "FleetAutoscaler không thể thêm pod; tăng maxReplicas và số phòng nếu cần."
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: prometheus
+  namespace: monitoring
+spec:
+  replicas: 1
+  selector:
+    matchLabels: { app: prometheus }
+  template:
+    metadata:
+      labels: { app: prometheus }
+    spec:
+      serviceAccountName: prometheus
+      containers:
+        - name: prometheus
+          image: prom/prometheus:v2.55.1
+          args:
+            - --config.file=/etc/prometheus/prometheus.yml
+            - --storage.tsdb.path=/prometheus
+            - --storage.tsdb.retention.time=7d
+          ports:
+            - containerPort: 9090
+          resources:
+            requests: { cpu: "100m", memory: "256Mi" }
+            limits: { cpu: "500m", memory: "768Mi" }
+          volumeMounts:
+            - { name: config, mountPath: /etc/prometheus/prometheus.yml, subPath: prometheus.yml }
+            - { name: rules, mountPath: /etc/prometheus/rules }
+            - { name: data, mountPath: /prometheus }
+      volumes:
+        - name: config
+          configMap: { name: prometheus-config }
+        - name: rules
+          configMap: { name: prometheus-rules }
+        - name: data
+          emptyDir: {}
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: prometheus
+  namespace: monitoring
+spec:
+  selector: { app: prometheus }
+  ports:
+    - { name: web, port: 9090, targetPort: 9090 }

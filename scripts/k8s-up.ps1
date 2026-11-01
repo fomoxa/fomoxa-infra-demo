@@ -48,6 +48,7 @@ if (-not $clusterExists -and -not $SkipClusterCreate) {
     k3d cluster create $clusterName `
         --port "7777:7777/udp@loadbalancer" `
         --port "9600:9600@loadbalancer" `
+        --port "9643:9643@loadbalancer" `
         --port "7350:7350@loadbalancer" `
         --wait
 }
@@ -110,6 +111,7 @@ kubectl apply -f "$repoRoot\deploy\k8s\nakama.yaml"
 kubectl apply -f "$repoRoot\deploy\k8s\directory.yaml"
 kubectl apply -f "$repoRoot\deploy\k8s\gateway.yaml"
 kubectl apply -f "$repoRoot\deploy\k8s\backend.yaml"
+kubectl apply -f "$repoRoot\deploy\k8s\tls-proxy.yaml"
 kubectl apply -f "$repoRoot\deploy\k8s\fleet.yaml"
 
 Write-Host "`nCho cac dich vu khoi dong..." -ForegroundColor Cyan

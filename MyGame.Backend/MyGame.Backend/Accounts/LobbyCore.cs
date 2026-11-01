@@ -32,6 +32,7 @@ namespace MyGame.Backend
         }
 
         private readonly AccountAuth auth;
+        public Metrics? Metrics { get; set; }
 
         public LobbyCore(AccountService accounts, OnlinePlayers online, AccountAuth auth)
         {
@@ -55,6 +56,7 @@ namespace MyGame.Backend
         public async Task<ActionResult> ChangePassword(string principal, ChangePasswordRequest request)
         {
             await Guard(() => accounts.ChangePasswordAsync(principal, request.OldPassword, request.NewPassword));
+            Metrics?.Count("password_changes_total");
             return new ActionResult { Ok = true, Message = "đã đổi mật khẩu" };
         }
 
@@ -119,6 +121,7 @@ namespace MyGame.Backend
             {
                 case "request":
                     await Guard(() => accounts.RequestFriendAsync(principal, target));
+                    Metrics?.Count("friend_requests_total");
                     return new ActionResult { Ok = true, Message = "đã gửi lời mời kết bạn" };
                 case "accept":
                     await Guard(() => accounts.AcceptFriendAsync(principal, target));
@@ -158,6 +161,7 @@ namespace MyGame.Backend
                 list.Add((principal, request.Room, DateTime.UtcNow + InviteLifetime));
             }
 
+            Metrics?.Count("room_invites_total");
             return new ActionResult { Ok = true, Message = "đã gửi lời mời" };
         }
 
@@ -194,6 +198,7 @@ namespace MyGame.Backend
         /// <summary>Pod báo bảng điểm hiện tại của một phòng (mỗi vài giây). Cập nhật bảng, kỷ lục và số trận.</summary>
         public void ReportScores(ScoreReport report)
         {
+            Metrics?.Count("score_reports_total");
             _ = ProcessReport(report);
         }
 

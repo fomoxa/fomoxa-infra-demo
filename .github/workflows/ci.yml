@@ -27,8 +27,28 @@ jobs:
       - name: Build server pod
         run: dotnet build MyGame/Server~/MyGame.Server.csproj -c Release
 
-      - name: MockCluster selftest (login, ListRooms, JoinRoom với pod thật)
+      - name: MockCluster selftest (tài khoản, phòng, bạn bè, bảng điểm, TLS - với pod thật)
         run: ./scripts/run-mock-cluster.sh --selftest
+
+      - name: Bot leo bục qua UDP mã hoá (ticket, pod, vật lý, bảng điểm, kỷ lục)
+        run: ./scripts/run-mock-cluster.sh --bot-test --pods=2
+
+  real-backend:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: 8.0.x
+      - name: Backend thật + Nakama thật (docker compose) + selftest
+        run: ./scripts/test-real-backend.sh
+      - name: Script test Nakama (ghép cặp, ticket)
+        run: |
+          (cd deploy && docker compose up -d)
+          for _ in $(seq 1 60); do curl -fsS http://127.0.0.1:7350/healthcheck >/dev/null 2>&1 && break; sleep 2; done
+          ALLOW_COMPOSE=1 ./scripts/test-nakama.sh
+          ALLOW_COMPOSE=1 ./scripts/test-nakama-pool.sh
+          (cd deploy && docker compose down -v)
 
   lint-scripts-and-manifests:
     runs-on: ubuntu-latest
@@ -48,6 +68,21 @@ jobs:
               docs = [d for d in yaml.safe_load_all(open(f)) if d]
               print("ok", f, len(docs), "doc")
           PY
+
+      - name: Cấu hình giám sát hợp lệ (promtool / amtool)
+        run: |
+          python3 - <<'PY'
+          import os, yaml
+          docs = list(yaml.safe_load_all(open("deploy/monitoring/10-prometheus.yaml")))
+          get = lambda n: [d for d in docs if d and d.get("metadata", {}).get("name") == n][0]["data"]
+          os.makedirs("/tmp/prom/rules", exist_ok=True)
+          open("/tmp/prom/prometheus.yml", "w").write(get("prometheus-config")["prometheus.yml"].replace("/etc/prometheus/rules/*.yml", "/tmp/prom/rules/*.yml"))
+          open("/tmp/prom/rules/fomoxa.yml", "w").write(get("prometheus-rules")["fomoxa.yml"])
+          am = list(yaml.safe_load_all(open("deploy/monitoring/20-alertmanager.yaml")))
+          open("/tmp/prom/alertmanager.yml", "w").write([d for d in am if d["kind"] == "ConfigMap"][0]["data"]["alertmanager.yml"])
+          PY
+          docker run --rm --entrypoint promtool -v /tmp/prom:/tmp/prom prom/prometheus:v2.55.1 check config /tmp/prom/prometheus.yml
+          docker run --rm --entrypoint amtool -v /tmp/prom:/tmp/prom prom/alertmanager:v0.27.0 check-config /tmp/prom/alertmanager.yml
 
       - name: main.lua khớp ConfigMap trong nakama.yaml
         run: |

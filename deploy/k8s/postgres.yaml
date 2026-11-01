@@ -33,7 +33,10 @@ spec:
             - name: POSTGRES_DB
               value: nakama
             - name: POSTGRES_PASSWORD
-              value: localdb
+              valueFrom:
+                secretKeyRef:
+                  name: fomoxa-nakama
+                  key: db-password
           volumeMounts:
             - name: pgdata
               mountPath: /var/lib/postgresql/data

@@ -12,6 +12,10 @@ spec:
     metadata:
       labels:
         app: backend
+      annotations:
+        prometheus.io/scrape: "true"
+        prometheus.io/port: "9610"
+        prometheus.io/path: "/metrics"
     spec:
       containers:
         - name: backend
@@ -34,15 +38,19 @@ spec:
             - name: Fomoxa__Nakama__Url
               value: "http://nakama.fomoxa.svc.cluster.local:7350"
             - name: Fomoxa__Nakama__ServerKey
-              value: "defaultkey"
+              valueFrom:
+                secretKeyRef: { name: fomoxa-nakama, key: server-key }
             - name: Fomoxa__Nakama__HttpKey
-              value: "defaulthttpkey"
+              valueFrom:
+                secretKeyRef: { name: fomoxa-nakama, key: http-key }
             - name: Fomoxa__Players__Tcp
               value: "0.0.0.0:9600"
             - name: Fomoxa__Players__WebSocket
               value: "0.0.0.0:9601"
             - name: Fomoxa__Pods__Tcp
               value: "0.0.0.0:9602"
+            - name: Fomoxa__Metrics__Listen
+              value: "0.0.0.0:9610"
           ports:
             - name: tcp
               containerPort: 9600
@@ -50,6 +58,8 @@ spec:
               containerPort: 9601
             - name: pods
               containerPort: 9602
+            - name: metrics
+              containerPort: 9610
           volumeMounts:
             - name: secrets
               mountPath: /secrets/backend

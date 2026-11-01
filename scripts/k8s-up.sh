@@ -37,7 +37,7 @@ port_busy() {
     docker ps --format '{{.Names}} {{.Ports}}' | grep -E "[:]$1->" || true
 }
 if ! k3d cluster list "$CLUSTER_NAME" >/dev/null 2>&1; then
-    for p in 7777 9600 7350; do
+    for p in 7777 9600 9643 7350; do
         busy="$(port_busy "$p")"
         if [[ -n "$busy" ]]; then
             echo "Loi: cong $p dang bi container khac giu:" >&2
@@ -50,6 +50,7 @@ if ! k3d cluster list "$CLUSTER_NAME" >/dev/null 2>&1; then
     k3d cluster create "$CLUSTER_NAME" \
         --port "7777:7777/udp@loadbalancer" \
         --port "9600:9600@loadbalancer" \
+        --port "9643:9643@loadbalancer" \
         --port "7350:7350@loadbalancer" \
         --wait
 else
@@ -107,6 +108,7 @@ kubectl apply -f "$REPO_ROOT/deploy/k8s/nakama.yaml"
 kubectl apply -f "$REPO_ROOT/deploy/k8s/directory.yaml"
 kubectl apply -f "$REPO_ROOT/deploy/k8s/gateway.yaml"
 kubectl apply -f "$REPO_ROOT/deploy/k8s/backend.yaml"
+kubectl apply -f "$REPO_ROOT/deploy/k8s/tls-proxy.yaml"
 kubectl apply -f "$REPO_ROOT/deploy/k8s/fleet.yaml"
 # Ingress la thu nghiem (chua TLS), chi ap dung khi APPLY_INGRESS=1
 if [[ "${APPLY_INGRESS:-}" == "1" && -f "$REPO_ROOT/deploy/k8s/ingress.yaml" ]]; then
@@ -124,6 +126,28 @@ kubectl rollout status deployment/nakama -n fomoxa --timeout=120s
 kubectl rollout status deployment/directory -n fomoxa --timeout=60s
 kubectl rollout status deployment/gateway -n fomoxa --timeout=60s
 kubectl rollout status deployment/backend -n fomoxa --timeout=60s
+
+# AUTOSCALE=1: FleetAutoscaler giu 2 pod Ready, 4..16 pod (can Agones da cai xong)
+if [[ "${AUTOSCALE:-}" == "1" ]]; then
+    kubectl apply -f "$REPO_ROOT/deploy/k8s/fleet-autoscaler.yaml"
+fi
+
+# INSTALL_MONITORING=1: Prometheus + Alertmanager + Grafana + Loki/Promtail trong namespace monitoring
+if [[ "${INSTALL_MONITORING:-}" == "1" ]]; then
+    kubectl apply -f "$REPO_ROOT/deploy/monitoring/00-namespace.yaml"
+    if ! kubectl get secret grafana-admin -n monitoring >/dev/null 2>&1; then
+        kubectl create secret generic grafana-admin -n monitoring --from-literal=password="$(openssl rand -hex 12)"
+    fi
+    kubectl apply -f "$REPO_ROOT/deploy/monitoring/"
+    echo "Giam sat: kubectl port-forward -n monitoring svc/grafana 3000:3000  (user admin, mat khau: kubectl get secret grafana-admin -n monitoring -o jsonpath={.data.password} | base64 -d)"
+fi
+
+# TLS_ONLY=1: dong cong 9600 khong ma hoa ra ngoai (chi trong cum), client bat buoc di qua TLS 9643
+if [[ "${TLS_ONLY:-}" == "1" ]]; then
+    kubectl patch svc backend -n fomoxa -p '{"spec":{"type":"ClusterIP"}}' >/dev/null
+    echo "Da dong cong 9600 (backend ClusterIP). Client phai dung TLS cong 9643."
+fi
+echo "TLS: client dung -backend:127.0.0.1:9643 -tlspin:<pin>; xem pin bang ./scripts/gen-tls-cert.sh"
 
 echo -e "\nKiem tra GameServers:"
 kubectl get gs -n fomoxa

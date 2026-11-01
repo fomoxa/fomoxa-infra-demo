@@ -31,7 +31,7 @@ local function decode(payload)
     end
     local ok, value = pcall(nk.json_decode, payload)
     if not ok then
-        error({ message = "payload phai la JSON", code = 3 })
+        error({ "payload phai la JSON", 3 })
     end
     return value
 end
@@ -43,7 +43,7 @@ end
 local function backend_only(ctx)
     -- Gọi bằng http_key thì ctx.user_id rỗng; người chơi (Bearer) bị từ chối.
     if ctx.user_id ~= nil and ctx.user_id ~= "" then
-        error({ message = "chi backend duoc goi RPC nay", code = 7 })
+        error({ "chi backend duoc goi RPC nay", 7 })
     end
 end
 
@@ -102,7 +102,7 @@ local function ticket_for(assigned_room, queue_key, first, second)
     write_one(TICKET, ticket, { room = assigned_room, users = { first, second }, exp = exp }, "")
 
     local result = { status = "matched", room = assigned_room, ticket = ticket, exp = exp }
-    
+
     -- Trạng thái room để list_rooms hiển thị
     write_one(ROOMSTAT, assigned_room, { users = { first, second }, exp = exp }, "")
 
@@ -134,6 +134,17 @@ local function find_match(ctx, payload)
     local queue_key = is_auto and "pool:auto" or requested_room
     local user = ctx.user_id
     local stamp = os.time()
+
+    -- Bắt đầu một lượt ghép mới: bỏ kết quả cũ của người này để poll_match không trả về trận đã xong.
+    local stale = read_one(RESULT, queue_key .. ":" .. user)
+    if stale and stale.value and stale.value.ticket then
+        local fresh = read_one(RESULT, "user:" .. user)
+        local keys = { { collection = RESULT, key = queue_key .. ":" .. user, user_id = SYSTEM } }
+        if fresh and fresh.value and fresh.value.ticket == stale.value.ticket then
+            keys[#keys + 1] = { collection = RESULT, key = "user:" .. user, user_id = SYSTEM }
+        end
+        nk.storage_delete(keys)
+    end
 
     for _ = 1, 5 do
         local record = read_one(QUEUE, queue_key)
@@ -171,7 +182,7 @@ local function find_match(ctx, payload)
         end
     end
 
-    error({ message = "match_queue ban, thu lai", code = 14 })
+    error({ "match_queue ban, thu lai", 14 })
 end
 
 local function poll_match(ctx, payload)
@@ -181,15 +192,13 @@ local function poll_match(ctx, payload)
     local user = ctx.user_id
     local queue_key = is_auto and "pool:auto" or requested_room
 
-    -- Thử đọc từ queue_key:user_id, sau đó fallback user:user_id
+    -- Chỉ lấy kết quả của ĐÚNG hàng chờ này. Trước đây có fallback sang "user:<id>" nên người vừa ghép xong ở phòng cũ
+    -- (còn hạn 120 giây) xin phòng khác lại nhận nhầm kết quả cũ.
     local record = read_one(RESULT, queue_key .. ":" .. user)
-    if not record then
-        record = read_one(RESULT, "user:" .. user)
-    end
 
     if record and record.value then
         if record.value.exp and record.value.exp < os.time() then
-            nk.storage_delete({ 
+            nk.storage_delete({
                 { collection = RESULT, key = queue_key .. ":" .. user, user_id = SYSTEM },
                 { collection = RESULT, key = "user:" .. user, user_id = SYSTEM }
             })
@@ -292,7 +301,7 @@ local function kv_get(ctx, payload)
     backend_only(ctx)
     local data = decode(payload)
     if data.collection == nil or data.key == nil then
-        error({ message = "can collection va key", code = 3 })
+        error({ "can collection va key", 3 })
     end
     local record = read_one(data.collection, data.key)
     if record == nil then
@@ -306,7 +315,7 @@ local function kv_put(ctx, payload)
     backend_only(ctx)
     local data = decode(payload)
     if data.collection == nil or data.key == nil then
-        error({ message = "can collection va key", code = 3 })
+        error({ "can collection va key", 3 })
     end
     local ok = pcall(write_one, data.collection, data.key, { v = data.value or "" }, data.version or "")
     return respond({ ok = ok })

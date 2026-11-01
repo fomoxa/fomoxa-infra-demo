@@ -17,6 +17,11 @@ spec:
         periodSeconds: 5
         failureThreshold: 3
       template:
+        metadata:
+          annotations:
+            prometheus.io/scrape: "true"
+            prometheus.io/port: "9611"
+            prometheus.io/path: "/metrics"
         spec:
           terminationGracePeriodSeconds: 360
           containers:
@@ -57,8 +62,11 @@ spec:
                   value: "backend-pods.fomoxa.svc.cluster.local:9602"
                 - name: POD_BACKEND_KEY_FILE
                   value: "/secrets/backend-pod/backend-pod"
+                - name: FOMOXA_METRICS
+                  value: "0.0.0.0:9611"
+                # Đủ phòng cho FleetAutoscaler (tối đa 16 pod); mỗi pod claim một phòng còn trống.
                 - name: FOMOXA_ROOM
-                  value: "arena:1,arena:2,arena:3,arena:4"
+                  value: "arena:1,arena:2,arena:3,arena:4,arena:5,arena:6,arena:7,arena:8,arena:9,arena:10,arena:11,arena:12,arena:13,arena:14,arena:15,arena:16"
               volumeMounts:
                 - name: pod-key
                   mountPath: /secrets/pod

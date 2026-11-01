@@ -32,6 +32,12 @@ $keys = [ordered]@{
     "directory/admin"   = 24
     "directory/root"    = 32
     "backend-pod"       = 24
+    "nakama/server-key"       = 16
+    "nakama/http-key"         = 24
+    "nakama/console-password" = 16
+    "nakama/session-key"      = 24
+    "nakama/refresh-key"      = 24
+    "nakama/db-password"      = 16
 }
 
 $created = 0

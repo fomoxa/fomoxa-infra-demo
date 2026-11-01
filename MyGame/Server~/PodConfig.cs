@@ -53,6 +53,9 @@ namespace MyGame.Server
 
         public string BackendKeyFile { get; private set; } = "";
 
+        /// <summary>host:port HTTP /metrics cho Prometheus. Rỗng = tắt.</summary>
+        public string MetricsListen { get; private set; } = "";
+
         public static PodConfig Read(string[] argv)
         {
             var config = new PodConfig();
@@ -105,6 +108,7 @@ namespace MyGame.Server
 
             config.BackendAddress = config.Value("backend", "FOMOXA_BACKEND", "");
             config.BackendKeyFile = config.Value("backend-key", "POD_BACKEND_KEY_FILE", "");
+            config.MetricsListen = config.Value("metrics", "FOMOXA_METRICS", "");
             if (config.BackendAddress.Length > 0 && config.BackendKeyFile.Length == 0)
             {
                 throw new PodConfigException("--backend can kem --backend-key (hoac POD_BACKEND_KEY_FILE)");

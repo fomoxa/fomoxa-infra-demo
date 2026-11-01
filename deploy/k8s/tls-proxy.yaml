@@ -1,0 +1,80 @@
+# Proxy TLS truoc backend: client noi vao cong 9643 bang TLS, nginx giai ma roi chuyen byte tho toi backend:9600.
+# fRPC cua backend khong tu ma hoa duong client-backend (mat khau dang nhap di qua day) nen day la lop bao ve.
+# Chung chi: Secret `fomoxa-tls` (scripts/gen-k8s-secrets sinh cert tu ky + in pin; production dung cert tu CA).
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: tls-proxy-config
+  namespace: fomoxa
+data:
+  nginx.conf: |
+    worker_processes 1;
+    pid /tmp/nginx.pid;
+    events { worker_connections 1024; }
+    stream {
+      server {
+        listen 9643 ssl;
+        ssl_certificate     /tls/tls.crt;
+        ssl_certificate_key /tls/tls.key;
+        ssl_protocols       TLSv1.2 TLSv1.3;
+        proxy_pass          backend.fomoxa.svc.cluster.local:9600;
+        proxy_connect_timeout 5s;
+        proxy_timeout       1h;
+      }
+    }
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: tls-proxy
+  namespace: fomoxa
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: tls-proxy
+  template:
+    metadata:
+      labels:
+        app: tls-proxy
+    spec:
+      containers:
+        - name: nginx
+          image: nginxinc/nginx-unprivileged:1.27-alpine
+          ports:
+            - containerPort: 9643
+              name: tls
+          resources:
+            requests: { cpu: "50m", memory: "32Mi" }
+            limits: { cpu: "500m", memory: "128Mi" }
+          securityContext:
+            allowPrivilegeEscalation: false
+            capabilities: { drop: ["ALL"] }
+          volumeMounts:
+            - { name: config, mountPath: /etc/nginx/nginx.conf, subPath: nginx.conf, readOnly: true }
+            - { name: tls, mountPath: /tls, readOnly: true }
+          readinessProbe:
+            tcpSocket: { port: 9643 }
+            initialDelaySeconds: 3
+            periodSeconds: 5
+      volumes:
+        - name: config
+          configMap:
+            name: tls-proxy-config
+        - name: tls
+          secret:
+            secretName: fomoxa-tls
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: tls-proxy
+  namespace: fomoxa
+spec:
+  type: LoadBalancer
+  selector:
+    app: tls-proxy
+  ports:
+    - name: tls
+      port: 9643
+      targetPort: 9643

@@ -44,5 +44,28 @@ kubectl create secret generic fomoxa-backend-pod-key `
     --from-file=backend-pod=(Join-Path $secretRoot "backend-pod") `
     --dry-run=client -o yaml | kubectl apply -f -
 
+# 6. Nakama: key riêng, mật khẩu console và DB
+$nakama = Join-Path $secretRoot "nakama"
+kubectl create secret generic fomoxa-nakama `
+    --namespace=$Namespace `
+    --from-file=server-key=(Join-Path $nakama "server-key") `
+    --from-file=http-key=(Join-Path $nakama "http-key") `
+    --from-file=console-password=(Join-Path $nakama "console-password") `
+    --from-file=session-key=(Join-Path $nakama "session-key") `
+    --from-file=refresh-key=(Join-Path $nakama "refresh-key") `
+    --from-file=db-password=(Join-Path $nakama "db-password") `
+    --dry-run=client -o yaml | kubectl apply -f -
+
+# 7. TLS cho cổng 9643
+$tls = Join-Path $secretRoot "tls"
+if (-not (Test-Path (Join-Path $tls "tls.crt"))) {
+    & "$PSScriptRoot\gen-tls-cert.ps1" | Out-Null
+}
+kubectl create secret tls fomoxa-tls `
+    --namespace=$Namespace `
+    --cert=(Join-Path $tls "tls.crt") `
+    --key=(Join-Path $tls "tls.key") `
+    --dry-run=client -o yaml | kubectl apply -f -
+
 Write-Host "[gen-k8s-secrets] Hoàn tất tạo K8s secrets!" -ForegroundColor Green
 

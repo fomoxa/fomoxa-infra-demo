@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Net;
 using System.Threading.Tasks;
 using MyGame.Backend.Accounts;
@@ -15,6 +16,7 @@ namespace MyGame.Backend
         private readonly List<RpcServer> servers = new List<RpcServer>();
         private readonly DirectoryLink directory;
         private readonly NakamaLink nakama;
+        private Metrics? metrics;
 
         private Backend(DirectoryLink directory, NakamaLink nakama)
         {
@@ -72,6 +74,7 @@ namespace MyGame.Backend
             servers.Clear();
             directory.Dispose();
             nakama?.Dispose();
+            metrics?.Dispose();
         }
 
         private void Listen(BackendSettings settings)
@@ -86,6 +89,17 @@ namespace MyGame.Backend
             var accounts = new AccountService(kv);
             var accountAuth = new AccountAuth(accounts);
             var core = new LobbyCore(accounts, online, accountAuth);
+            var metrics = new Metrics();
+            metrics.Describe("logins_total", "Số lần đăng nhập / đăng ký / khôi phục theo kết quả");
+            metrics.Describe("joins_total", "Số lần xin vào phòng thành công");
+            metrics.Describe("score_reports_total", "Số báo cáo bảng điểm nhận từ pod");
+            metrics.Gauge("online_players", "Số người chơi online (báo có mặt trong 20 giây gần nhất)", () => online.Snapshot().Players.Count);
+            metrics.Gauge("rooms_reported", "Số phòng do pod báo lên", () => stats.Current().Count);
+            metrics.Gauge("room_players", "Tổng số người đang trong các phòng do pod báo lên", () => stats.Current().Sum(r => (double)r.Players));
+            accountAuth.Metrics = metrics;
+            core.Metrics = metrics;
+            this.metrics = metrics;
+            metrics.Serve(settings.MetricsListen);
             Registry players = new LobbyServer(new Lobby(directory, nakama, sessions, stats, online, core)).Registry().Authenticate(new Players(nakama, sessions, accountAuth)).Build();
             if (!string.IsNullOrEmpty(settings.PlayersTcp))
             {

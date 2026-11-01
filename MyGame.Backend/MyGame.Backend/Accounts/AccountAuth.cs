@@ -22,6 +22,7 @@ namespace MyGame.Backend.Accounts
         private static readonly TimeSpan CodeLifetime = TimeSpan.FromMinutes(10);
 
         private readonly AccountService accounts;
+        public Metrics? Metrics { get; set; }
         private readonly System.Collections.Concurrent.ConcurrentDictionary<string, (string Code, DateTime Expires)> pendingCodes =
             new System.Collections.Concurrent.ConcurrentDictionary<string, (string, DateTime)>();
 
@@ -59,6 +60,7 @@ namespace MyGame.Backend.Accounts
             }
             catch (AggregateException wrapped) when (wrapped.InnerException is AccountException problem)
             {
+                Metrics?.Count("logins_total", $"mode=\"{ModeName(request)}\",result=\"fail\"");
                 throw LobbyCore.Translate(problem);
             }
 
@@ -70,13 +72,17 @@ namespace MyGame.Backend.Accounts
                     pendingCodes[outcome.Principal] = (outcome.RecoveryCode, DateTime.UtcNow + CodeLifetime);
                 }
 
+                Metrics?.Count("logins_total", $"mode=\"{ModeName(request)}\",result=\"ok\"");
                 return outcome;
             }
             catch (AccountException problem)
             {
+                Metrics?.Count("logins_total", $"mode=\"{ModeName(request)}\",result=\"fail\"");
                 throw LobbyCore.Translate(problem);
             }
         }
+
+        private static string ModeName(PlayerLogin request) => string.IsNullOrEmpty(request.Mode) ? "login" : request.Mode.ToLowerInvariant();
 
         private async Task<AuthOutcome> AuthenticateAsync(PlayerLogin request)
         {
