@@ -1,0 +1,20 @@
+# Upstream clones: chỉ để tham khảo, không commit vào repo này
+/backend/
+/gateway/
+/unity-docs/
+/specification/
+/implementation-guide/
+
+# Log/rác ngoài project Unity
+/*.log
+/.vscode/
+/.idea/
+
+# Unity (phòng khi mở nhầm ở thư mục gốc)
+/[Ll]ibrary/
+/[Tt]emp/
+/[Oo]bj/
+/[Bb]uild/
+/[Bb]uilds/
+/[Ll]ogs/
+/[Uu]ser[Ss]ettings/
