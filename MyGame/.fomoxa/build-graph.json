@@ -1,9 +1,77 @@
 {
   "schema_version": 1,
   "generator": "fomoxac 0.2.2",
-  "schema_fingerprint": "sha256:07362d838c02b8bd9e008202998d482dd814c6d3837cc51e0091d519dc0626bd",
+  "schema_fingerprint": "sha256:f0d218b53eb30ad8b6ce2333491c586e314e1bf648ae7ae47c1d6b0154e07284",
   "sha256_of": "each file with its `// generated-at:` line emptied, so an unchanged schema keeps an unchanged digest",
   "sources": {
+    "Assets/Network/Models/Backend/Players.cs": {
+      "models": [
+        "JoinRoomRequest",
+        "NoRoomForVersion",
+        "PlayerLogin",
+        "PlayerWelcome",
+        "RoomTicket"
+      ],
+      "outputs": [
+        {
+          "path": "Assets/Network/Generated/JoinRoomRequestRpcCodec.cs",
+          "model": "JoinRoomRequest",
+          "codec": "rpc",
+          "fingerprint": "sha256:daeafd90eb282cf1356dbe2f13f0f434449559b4a1da7bb0d005ddcbea8f8bb8",
+          "sha256": "744376878f4a95553badf5b4505ebcfbc492540bde09ee939ce3e0aa8319d9d0"
+        },
+        {
+          "path": "Assets/Network/Generated/NoRoomForVersionRpcCodec.cs",
+          "model": "NoRoomForVersion",
+          "codec": "rpc",
+          "fingerprint": "sha256:070f96f12081f464091d894a2dd09494685554ea0436fe7640fabaa10cdccc1a",
+          "sha256": "68efa333bcf1b0cf1c58d9a9f532768b941c08e09db98357c3841131dd546ef0"
+        },
+        {
+          "path": "Assets/Network/Generated/PlayerLoginRpcCodec.cs",
+          "model": "PlayerLogin",
+          "codec": "rpc",
+          "fingerprint": "sha256:53a65473fcce212f82ed492268f53b65b801d26f2bd32d0fb8b16877ee3fda35",
+          "sha256": "a9861d6375d3db2d5f0b506b5b2fc912903087bd09ec4f54e25f0e1e01a58eb4"
+        },
+        {
+          "path": "Assets/Network/Generated/PlayerWelcomeRpcCodec.cs",
+          "model": "PlayerWelcome",
+          "codec": "rpc",
+          "fingerprint": "sha256:d25c4670480e53cce1777c30a8fbe43e41f539025c36985afdbc7bd7c7bfea9a",
+          "sha256": "e2b4cff35e4abc33c38a0c5f84b80fc341c54ac9fa3051b4b94f62db8eefcf18"
+        },
+        {
+          "path": "Assets/Network/Generated/RoomTicketRpcCodec.cs",
+          "model": "RoomTicket",
+          "codec": "rpc",
+          "fingerprint": "sha256:af29031b611a669f133f20b4d60829d8c714a49df17c4533a978e6a5005c6926",
+          "sha256": "0b47afc2390c7a785909be2e9246bc5dcd47319fcd1ef1b0a061d3689c30b67e"
+        }
+      ]
+    },
+    "Assets/Network/Models/Backend/Pods.cs": {
+      "models": [
+        "PodLogin",
+        "TransferPlayerRequest"
+      ],
+      "outputs": [
+        {
+          "path": "Assets/Network/Generated/PodLoginRpcCodec.cs",
+          "model": "PodLogin",
+          "codec": "rpc",
+          "fingerprint": "sha256:c505bec161a941afff6e03640b962c6440f60750529e78f6c2bc9502a12fcf17",
+          "sha256": "452b87f50fa69f981bc21551a814d75e6cadb3bf1ce24d6fd547c521ccb446ee"
+        },
+        {
+          "path": "Assets/Network/Generated/TransferPlayerRequestRpcCodec.cs",
+          "model": "TransferPlayerRequest",
+          "codec": "rpc",
+          "fingerprint": "sha256:72c6e29eb93ecbbeb8fedaf89be432f3021182248c29abb2993588df1e4a708b",
+          "sha256": "97328437b0962149f1ca5d55be67c31e18953c44642c602301155c2f9f74755b"
+        }
+      ]
+    },
     "Assets/Network/Models/MoveInput.cs": {
       "models": [
         "MoveInput"
@@ -696,12 +764,12 @@
     {
       "path": "Assets/Network/Generated/Handshake.cs",
       "kind": "handshake",
-      "sha256": "a42167f09fb207daa9a89014fb19334dd2e3a95e5f4271e2de838be0a1e30a66"
+      "sha256": "b660c7c8ea2fa5f813cddb9cf17d5328a973d413e9dd6fa0dd876e3276e7dcb5"
     },
     {
       "path": "Assets/Network/Generated/NetSchema.cs",
       "kind": "net_schema",
-      "sha256": "170dce99bfd9f523b1dae59efb3a7cd3eb65c753e8c47d1792c7d06954b4cf09"
+      "sha256": "ee480814035b8deda337e15f7ec27f8e2f3a7a4306037a26bc399097d7f14a6b"
     }
   ]
 }

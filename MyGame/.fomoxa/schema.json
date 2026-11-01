@@ -1,8 +1,8 @@
 {
   "schema_version": 1,
   "generator": "fomoxac 0.2.2",
-  "fingerprint": "sha256:07362d838c02b8bd9e008202998d482dd814c6d3837cc51e0091d519dc0626bd",
-  "fingerprint_u64": "0x07362D838C02B8BD",
+  "fingerprint": "sha256:f0d218b53eb30ad8b6ce2333491c586e314e1bf648ae7ae47c1d6b0154e07284",
+  "fingerprint_u64": "0xF0D218B53EB30AD8",
   "models": {
     "AnimatorState": {
       "source": "FomoxaSystemModels/AnimatorState.cs",
@@ -1282,6 +1282,54 @@
         }
       }
     },
+    "JoinRoomRequest": {
+      "source": "Assets/Network/Models/Backend/Players.cs",
+      "fingerprint": "sha256:a0fec41dd61fffdca452b62dc3c39a63db75892b610e7bcb691d1201cc2b43f9",
+      "codecs": [
+        "rpc"
+      ],
+      "fields": [
+        {
+          "name": "RoomKey",
+          "type": "string",
+          "codecs": [
+            "rpc"
+          ]
+        },
+        {
+          "name": "Version",
+          "type": "string",
+          "codecs": [
+            "rpc"
+          ]
+        }
+      ],
+      "messages": {
+        "rpc": {
+          "id": "0x1C3656CE",
+          "fingerprint": "sha256:daeafd90eb282cf1356dbe2f13f0f434449559b4a1da7bb0d005ddcbea8f8bb8",
+          "fingerprint_u64": "0xDAEAFD90EB282CF1",
+          "prefixes": [
+            "sha256:a3d820992c5d12bf97fac2fb8f57c35932432a10b1359c2df43e48411cebe924",
+            "sha256:daeafd90eb282cf1356dbe2f13f0f434449559b4a1da7bb0d005ddcbea8f8bb8"
+          ],
+          "prefixes_u64": [
+            "0xA3D820992C5D12BF",
+            "0xDAEAFD90EB282CF1"
+          ],
+          "fields": [
+            {
+              "name": "RoomKey",
+              "type": "string"
+            },
+            {
+              "name": "Version",
+              "type": "string"
+            }
+          ]
+        }
+      }
+    },
     "LocalPeer": {
       "source": "FomoxaSystemModels/LocalPeer.cs",
       "fingerprint": "sha256:6b3d297716473a2143336b8fecb4afb64b8755bf114e13f82e40555cd7bfc508",
@@ -1421,6 +1469,41 @@
             {
               "name": "Z",
               "type": "f32"
+            }
+          ]
+        }
+      }
+    },
+    "NoRoomForVersion": {
+      "source": "Assets/Network/Models/Backend/Players.cs",
+      "fingerprint": "sha256:1652f1adcafd2dea18828d7a199c93a473da6a29ff5d2ec1c9f51750042affe0",
+      "codecs": [
+        "rpc"
+      ],
+      "fields": [
+        {
+          "name": "Version",
+          "type": "string",
+          "codecs": [
+            "rpc"
+          ]
+        }
+      ],
+      "messages": {
+        "rpc": {
+          "id": "0x0B1B2391",
+          "fingerprint": "sha256:070f96f12081f464091d894a2dd09494685554ea0436fe7640fabaa10cdccc1a",
+          "fingerprint_u64": "0x070F96F12081F464",
+          "prefixes": [
+            "sha256:070f96f12081f464091d894a2dd09494685554ea0436fe7640fabaa10cdccc1a"
+          ],
+          "prefixes_u64": [
+            "0x070F96F12081F464"
+          ],
+          "fields": [
+            {
+              "name": "Version",
+              "type": "string"
             }
           ]
         }
@@ -1866,6 +1949,124 @@
         }
       }
     },
+    "PlayerLogin": {
+      "source": "Assets/Network/Models/Backend/Players.cs",
+      "fingerprint": "sha256:b483378c0bfee01c184766133943bae6b1d926ccc1a2d8d7cccd83f5977d3bb8",
+      "codecs": [
+        "rpc"
+      ],
+      "fields": [
+        {
+          "name": "Player",
+          "type": "string",
+          "codecs": [
+            "rpc"
+          ]
+        },
+        {
+          "name": "Secret",
+          "type": "bytes",
+          "codecs": [
+            "rpc"
+          ]
+        }
+      ],
+      "messages": {
+        "rpc": {
+          "id": "0xA458A75D",
+          "fingerprint": "sha256:53a65473fcce212f82ed492268f53b65b801d26f2bd32d0fb8b16877ee3fda35",
+          "fingerprint_u64": "0x53A65473FCCE212F",
+          "prefixes": [
+            "sha256:85bf3c66cec72290ab4fd328de0fc0fae44602148a12b155ee3e48f46ab2e568",
+            "sha256:53a65473fcce212f82ed492268f53b65b801d26f2bd32d0fb8b16877ee3fda35"
+          ],
+          "prefixes_u64": [
+            "0x85BF3C66CEC72290",
+            "0x53A65473FCCE212F"
+          ],
+          "fields": [
+            {
+              "name": "Player",
+              "type": "string"
+            },
+            {
+              "name": "Secret",
+              "type": "bytes"
+            }
+          ]
+        }
+      }
+    },
+    "PlayerWelcome": {
+      "source": "Assets/Network/Models/Backend/Players.cs",
+      "fingerprint": "sha256:7a437031a5184ef77fce56a14b2f17bedeb53eb7b95e4bf5984eb154faf9dc03",
+      "codecs": [
+        "rpc"
+      ],
+      "fields": [
+        {
+          "name": "Player",
+          "type": "string",
+          "codecs": [
+            "rpc"
+          ]
+        }
+      ],
+      "messages": {
+        "rpc": {
+          "id": "0x515870BB",
+          "fingerprint": "sha256:d25c4670480e53cce1777c30a8fbe43e41f539025c36985afdbc7bd7c7bfea9a",
+          "fingerprint_u64": "0xD25C4670480E53CC",
+          "prefixes": [
+            "sha256:d25c4670480e53cce1777c30a8fbe43e41f539025c36985afdbc7bd7c7bfea9a"
+          ],
+          "prefixes_u64": [
+            "0xD25C4670480E53CC"
+          ],
+          "fields": [
+            {
+              "name": "Player",
+              "type": "string"
+            }
+          ]
+        }
+      }
+    },
+    "PodLogin": {
+      "source": "Assets/Network/Models/Backend/Pods.cs",
+      "fingerprint": "sha256:69a60c66ce9a3e0dd7f36a6579beb9469f6f060f4ed3aca7585bd6822f70aea0",
+      "codecs": [
+        "rpc"
+      ],
+      "fields": [
+        {
+          "name": "Key",
+          "type": "bytes",
+          "codecs": [
+            "rpc"
+          ]
+        }
+      ],
+      "messages": {
+        "rpc": {
+          "id": "0x3A25BFE2",
+          "fingerprint": "sha256:c505bec161a941afff6e03640b962c6440f60750529e78f6c2bc9502a12fcf17",
+          "fingerprint_u64": "0xC505BEC161A941AF",
+          "prefixes": [
+            "sha256:c505bec161a941afff6e03640b962c6440f60750529e78f6c2bc9502a12fcf17"
+          ],
+          "prefixes_u64": [
+            "0xC505BEC161A941AF"
+          ],
+          "fields": [
+            {
+              "name": "Key",
+              "type": "bytes"
+            }
+          ]
+        }
+      }
+    },
     "ReconcileState": {
       "source": "FomoxaSystemModels/ReconcileState.cs",
       "fingerprint": "sha256:0d37aa9d4229f6281e0f8219c21df8612804708fd46cde48c65b269cb1c74b06",
@@ -1957,6 +2158,80 @@
             {
               "name": "Received",
               "type": "u32"
+            }
+          ]
+        }
+      }
+    },
+    "RoomTicket": {
+      "source": "Assets/Network/Models/Backend/Players.cs",
+      "fingerprint": "sha256:467a35b80fc8b81c5b79c4ff5583f9712f2b2112279810f2a8e2cdf027bb5bdc",
+      "codecs": [
+        "rpc"
+      ],
+      "fields": [
+        {
+          "name": "Address",
+          "type": "string",
+          "codecs": [
+            "rpc"
+          ]
+        },
+        {
+          "name": "Port",
+          "type": "u16",
+          "codecs": [
+            "rpc"
+          ]
+        },
+        {
+          "name": "Connection",
+          "type": "bytes",
+          "codecs": [
+            "rpc"
+          ]
+        },
+        {
+          "name": "WebSocketUrl",
+          "type": "string",
+          "codecs": [
+            "rpc"
+          ]
+        }
+      ],
+      "messages": {
+        "rpc": {
+          "id": "0xB5805C55",
+          "fingerprint": "sha256:af29031b611a669f133f20b4d60829d8c714a49df17c4533a978e6a5005c6926",
+          "fingerprint_u64": "0xAF29031B611A669F",
+          "prefixes": [
+            "sha256:e7b732ab44bd11d64d24eb78baf11c79ae458662d36e36edb9de7f5014e72e33",
+            "sha256:5e3ba19fef656246f9c4c0c0264db02382caa76b9d8a47ffe3ffa92f6d8254c0",
+            "sha256:c27cec4cf63a086bc7f9e4ac80bc45587cc9166c7fdbef6465560de2c030a041",
+            "sha256:af29031b611a669f133f20b4d60829d8c714a49df17c4533a978e6a5005c6926"
+          ],
+          "prefixes_u64": [
+            "0xE7B732AB44BD11D6",
+            "0x5E3BA19FEF656246",
+            "0xC27CEC4CF63A086B",
+            "0xAF29031B611A669F"
+          ],
+          "fields": [
+            {
+              "name": "Address",
+              "type": "string"
+            },
+            {
+              "name": "Port",
+              "type": "u16"
+            },
+            {
+              "name": "Connection",
+              "type": "bytes"
+            },
+            {
+              "name": "WebSocketUrl",
+              "type": "string"
             }
           ]
         }
@@ -3406,6 +3681,67 @@
             {
               "name": "InputLead",
               "type": "i16"
+            }
+          ]
+        }
+      }
+    },
+    "TransferPlayerRequest": {
+      "source": "Assets/Network/Models/Backend/Pods.cs",
+      "fingerprint": "sha256:66f25c2d8c26f38087759bbd60786533c2d6dc71ec679e843f495f0c46bede1e",
+      "codecs": [
+        "rpc"
+      ],
+      "fields": [
+        {
+          "name": "Player",
+          "type": "string",
+          "codecs": [
+            "rpc"
+          ]
+        },
+        {
+          "name": "RoomKey",
+          "type": "string",
+          "codecs": [
+            "rpc"
+          ]
+        },
+        {
+          "name": "Version",
+          "type": "string",
+          "codecs": [
+            "rpc"
+          ]
+        }
+      ],
+      "messages": {
+        "rpc": {
+          "id": "0x1CB67C3D",
+          "fingerprint": "sha256:72c6e29eb93ecbbeb8fedaf89be432f3021182248c29abb2993588df1e4a708b",
+          "fingerprint_u64": "0x72C6E29EB93ECBBE",
+          "prefixes": [
+            "sha256:4b311b66578add36789525fdba85cd548efb6c9cd626ae8a3495eacd85d96357",
+            "sha256:bafb540da42c50c793f4503e6172f2523098dc38084096d19b74fdab7b2742e0",
+            "sha256:72c6e29eb93ecbbeb8fedaf89be432f3021182248c29abb2993588df1e4a708b"
+          ],
+          "prefixes_u64": [
+            "0x4B311B66578ADD36",
+            "0xBAFB540DA42C50C7",
+            "0x72C6E29EB93ECBBE"
+          ],
+          "fields": [
+            {
+              "name": "Player",
+              "type": "string"
+            },
+            {
+              "name": "RoomKey",
+              "type": "string"
+            },
+            {
+              "name": "Version",
+              "type": "string"
             }
           ]
         }

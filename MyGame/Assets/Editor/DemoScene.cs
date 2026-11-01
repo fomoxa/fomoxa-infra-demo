@@ -32,10 +32,21 @@ public static class DemoScene
 
             var managerGo = new GameObject("Network Manager");
             var manager = managerGo.AddComponent<NetworkManager>();
+            var encrypted = managerGo.AddComponent<EncryptedUdpNetworkTransport>();
+            AssignTransport(manager, encrypted);
+
+            var backendGo = new GameObject("Backend");
+            var tcp = backendGo.AddComponent<TcpNetworkTransport>();
+            var joiner = backendGo.AddComponent<RoomJoiner>();
+            joiner.manager = manager;
+            joiner.backendTransport = tcp;
+
             var launcher = managerGo.AddComponent<Launcher>();
             launcher.manager = manager;
             launcher.playerPrefab = prefab.GetComponent<NetworkObject>();
             launcher.port = 7777;
+            launcher.encryptedTransport = encrypted;
+            launcher.joiner = joiner;
 
             AssetDatabase.SaveAssets();
             AssetDatabase.Refresh();
@@ -102,6 +113,13 @@ public static class DemoScene
         {
             EditorApplication.Exit(code);
         }
+    }
+
+    private static void AssignTransport(NetworkManager manager, NetworkTransport transport)
+    {
+        var serialized = new SerializedObject(manager);
+        serialized.FindProperty("transport").objectReferenceValue = transport;
+        serialized.ApplyModifiedPropertiesWithoutUndo();
     }
 
     private static void CreateLight()

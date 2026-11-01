@@ -12,7 +12,7 @@ namespace MyGame.Network
         {
             if (target == null)
             {
-                foreach (Player player in FindObjectsByType<Player>(FindObjectsSortMode.None))
+                foreach (Player player in FindObjectsByType<Player>(FindObjectsInactive.Exclude))
                 {
                     if (player.NetworkObject != null && player.NetworkObject.IsOwner)
                     {
