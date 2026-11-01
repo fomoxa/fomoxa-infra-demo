@@ -18,6 +18,10 @@
 /.vscode/
 /.idea/
 
+# Console server (MyGame/Server~) - output dotnet
+/MyGame/Server~/bin/
+/MyGame/Server~/obj/
+
 # Unity (phòng khi mở nhầm ở thư mục gốc)
 /[Ll]ibrary/
 /[Tt]emp/

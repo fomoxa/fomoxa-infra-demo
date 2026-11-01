@@ -1,7 +1,8 @@
 # Kế hoạch cụm Fomoxa + Nakama + Agones
 
 Cập nhật: đã clone repos về `D:\Documents\fomoxa`, đã kiểm tra môi trường máy.
-P1–P4 xong (game + directory + gateway + Nakama). P5 (Agones) đã chốt phạm vi, đang ở bước 1.
+P1–P4 xong (game + directory + gateway + Nakama). P5 (Agones) đã chốt phạm vi, xong bước 1/6
+(console server chạy local), đang ở bước 2 (Agones lifecycle).
 
 ---
 
@@ -318,17 +319,49 @@ không dồn vào 1 room) — làm ở P5.5, kèm test ≥4 client.
 
 #### Các bước (thứ tự commit)
 
-| # | Việc | Commit |
-|---|---|---|
-| 1 | Vendor `com.fomoxa.networking` vào repo; tạo `MyGame/Server~` (csproj, `Program.cs`, `PlayerEntity.cs`) | `P5: console server chay local` |
-| 2 | Wrapper Agones SDK (`Ready/Health/Allocate/Shutdown`) + `OnDrain`/`OnDrainDeadline`, no-op ngoài cluster | `P5: Agones lifecycle` |
-| 3 | 3 Dockerfile: game server, directory, gateway | `P5: dong goi image` |
-| 4 | `deploy/k8s/`: manifest + `directory.toml`/`gateway.toml` bản K8s + script sinh Secret | `P5: manifest k8s + agones fleet` |
-| 5 | `scripts/k8s-up.ps1`, `k8s-down.ps1`, `test-p5.ps1` | `P5: script cum k8s` |
-| 6 | Cập nhật `PLAN.md` + `MyGame/README.md` | `P5: tai lieu` |
+| # | Việc | Commit | Trạng thái |
+|---|---|---|---|
+| 1 | Vendor source 2 package vào `server-deps/`; tạo `MyGame/Server~` (csproj, `PodConfig`, `PodTransport`, `PlayerEntity`, `Program`); `-Server console` cho `start-cluster.ps1`/`run-pod.ps1`; `scripts/test-console-server.ps1` | `P5: console server chay local` | ✅ |
+| 2 | Wrapper Agones SDK (`Ready/Health/Allocate/Shutdown`) + `OnDrain`/`OnDrainDeadline`, no-op ngoài cluster | `P5: Agones lifecycle` | |
+| 3 | 3 Dockerfile: game server, directory, gateway | `P5: dong goi image` | |
+| 4 | `deploy/k8s/`: manifest + `directory.toml`/`gateway.toml` bản K8s + script sinh Secret | `P5: manifest k8s + agones fleet` | |
+| 5 | `scripts/k8s-up.ps1`, `k8s-down.ps1`, `test-p5.ps1` | `P5: script cum k8s` | |
+| 6 | Cập nhật `PLAN.md` + `MyGame/README.md` | `P5: tai lieu` | |
 
 **Bước 1 là cửa ải**: console server chạy local mà 2 client Unity không thấy nhau di chuyển thì
 dừng lại sửa, không đi tiếp. Phần Agones/K8s phía sau chỉ là đóng gói.
+
+##### Bước 1 — đã xong (đo thực tế)
+
+`dotnet build MyGame/Server~/MyGame.Server.csproj` → **0 warning, 0 error**, `MyGame.Server.exe`
+chạy được, `scripts\test-console-server.ps1` pass:
+
+```
+1/3 pod console dang giu arena:1
+   [Pod] registered id=26286610 changed=False
+2/3 hai client cung room arena:1
+   ana/bo thay nhau, doi thu cua bo la id=2
+3/3 bot di chuyen, client kia thay vi tri doi
+   x cua doi thu: 3.00 -> 3.15 (2 gia tri khac nhau)
+OK: console server giu room, 2 client thay nhau, input bot di qua server toi client kia
+```
+
+`scripts\test-p4.ps1` cũng pass với pod console thay cho `MyGame.exe -pod`.
+
+Ghi chú đã gặp và cách xử lý:
+
+- **Vendor cả 2 package**, không chỉ networking: `Fomoxa.Rpc.Directory` (`DirectoryPod`) nằm
+  trong `com.fomoxa.rpc`. `server-deps/` = 267 file / 1.2 MB, sinh bằng
+  `scripts\sync-server-deps.ps1`; cần cả `Runtime/Generators/Fomoxa.Rpc.Generator.dll` để
+  build ra codec directory.
+- **`ConnectTokens` chỉ có sau register**: `EncryptedUdpTransportFactory` bất biến →
+  `PodTransport` giữ token rồi dựng factory thật trong `CreateListener`; đổi `ChangedPodId` thì
+  stop/start listener.
+- **150 cảnh báo CS8632** từ source vendor (`string?` không bật `#nullable`) → `NoWarn CS8632`
+  trong csproj, không sửa file vendor.
+- **Cấu hình theo dòng lệnh**: `PodConfig` đọc `--key=value` trước, rồi env, rồi mặc định — để
+  `start-cluster.ps1` chạy nhiều pod local, còn K8s chỉ cần env.
+
 
 #### DoD
 
@@ -405,6 +438,7 @@ D:\Documents\fomoxa\
 │  ├─ Assets\Network\Generated\     codec fomoxac + codec rpc
 │  ├─ Server~\                      (P5) console server .NET 8 — image game server
 │  └─ Builds\MyGame.exe             build dùng làm client
+├─ server-deps\                (P5) vendor source 2 package Fomoxa (sinh bằng script)
 ├─ MyGame.Backend\             ← backend (template fomoxa-backend, P2)
 ├─ deploy\
 │  ├─ directory.toml
@@ -415,10 +449,11 @@ D:\Documents\fomoxa\
 │  └─ secrets\                 ← sinh bởi gen-keys.ps1, KHÔNG commit
 └─ scripts\
    ├─ gen-keys.ps1
-   ├─ start-cluster.ps1        directory + backend + pod
+   ├─ sync-server-deps.ps1     (P5) sinh lại server-deps\ từ PackageCache
+   ├─ start-cluster.ps1        directory + backend + pod (-Server console|unity)
    ├─ stop-all.ps1
    ├─ k8s-up.ps1 / k8s-down.ps1  (P5)
-   ├─ test-nakama.ps1 / test-p4.ps1
+   ├─ test-nakama.ps1 / test-p4.ps1 / test-console-server.ps1
    └─ run-directory.ps1 / run-backend.ps1 / run-pod.ps1 / run-client.ps1
 ```
 
@@ -457,12 +492,17 @@ D:\Documents\fomoxa\
 
 ## 8. Việc tiếp theo
 
-P5 đã chốt phạm vi (xem mục 4). Bắt đầu ở **bước 1**:
+P5 đã chốt phạm vi (xem mục 4). Bước 1 đã xong:
 
-1. Vendor `com.fomoxa.networking` vào repo (bỏ phụ thuộc `Library/PackageCache/<hash>`).
-2. Tạo `MyGame/Server~`: csproj + `Program.cs` + `PlayerEntity.cs`, chạy `dotnet run`.
-3. 2 client Unity join `arena:1` vào console server, thấy nhau di chuyển → mới đi tiếp.
+1. ✅ `server-deps/` + `MyGame/Server~` build 0 warning, chạy local.
+2. ✅ 2 client Unity join `arena:1` qua backend + gateway vào console server, thấy nhau di chuyển
+   (`scripts\test-console-server.ps1`).
+3. ✅ `start-cluster.ps1 -Server console` / `-Server unity` chạy được cả hai loại pod.
 
-Sau bước 1 mới tới Agones lifecycle (bước 2) và phần K8s (bước 3–5).
+Tiếp theo là **bước 2 — Agones lifecycle**: `AgonesSDK` 1.61.0, `ReadyAsync` trước khi register
+(retry ~60 × 500 ms), `HealthAsync` mỗi 2 s, `AllocateAsync` khi có room đầu tiên, `ReadyAsync`
+lại khi hết người, `ShutDownAsync` sau drain; ngoài cluster thì no-op.
+
+Sau đó là phần K8s (bước 3–5).
 
 

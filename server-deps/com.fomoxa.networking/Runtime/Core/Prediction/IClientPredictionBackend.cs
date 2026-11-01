@@ -1,0 +1,22 @@
+using System.Collections.Generic;
+using Fomoxa.Networking.Simulation;
+
+namespace Fomoxa.Networking.Prediction
+{
+    public interface IClientPredictionBackend
+    {
+        void WorldsOf(INetworkEntity entity, List<IPhysicsSimulation> worlds);
+
+        PhysicsHistory HistoryOf(IPhysicsSimulation world, int capacity);
+
+        void PlaceProxy(INetworkEntity entity);
+
+        void EndProxy(INetworkEntity entity);
+
+        void ForgetDestroyedProxies();
+
+        void BeginCorrection(INetworkEntity entity);
+
+        void EndCorrection(INetworkEntity entity);
+    }
+}

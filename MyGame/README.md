@@ -28,6 +28,12 @@ MyGame/
     FomoxaSettings.asset         Models = Assets/Network/Models, Generated = Assets/Network/Generated
     Scenes/Game.unity            scene đã dựng sẵn
     Prefabs/Player.prefab        capsule + NetworkObject + NetworkTransform + Player
+  Server~/                     (P5) console server .NET 8 — pod không cần Unity
+    MyGame.Server.csproj       build từ ../server-deps (source vendor)
+    Program.cs                 vòng lặp frame + DirectoryPod + spawn theo peer
+    PlayerEntity.cs            StandaloneEntity: PlayerTransform + Player (khớp prefab)
+    PodConfig.cs               --key=value → env → mặc định
+    PodTransport.cs            listener mã hoá, gắn ticket key sau khi register
   Builds/MyGame.exe              bản build dùng làm pod và client
 ```
 
@@ -109,12 +115,70 @@ Ai chạy ở đâu:
 | `MyGame.Backend` | TCP 9600, WS 9601, pod 9602 | đăng nhập (Nakama), `JoinRoom` → ticket + grant |
 | Nakama + Postgres | 7350 / 7351, 5432 | ghép 2 người, phát & verify ticket (tuỳ chọn) |
 | pod (`MyGame.exe -pod`) | UDP 7778 | giữ room `arena:1`, chạy game |
+| pod (`MyGame.Server.exe`) | UDP 7778 | như trên, nhưng không cần Unity (mặc định từ P5) |
 | client | — | login → join → nối gateway bằng grant (encrypted UDP) |
 
 Luồng: client → backend (fRPC/TCP) → directory (allocate) → ticket {address, port,
 grant} → client nối **gateway :7777** bằng grant; gateway bọc datagram trong
 envelope 20 byte rồi chuyển tới pod :7778. Pod đã `AcquireRoom("arena:1")` nên
 directory biết room nằm ở pod nào, còn gateway học bảng pod từ directory.
+
+## Console server (P5)
+
+Từ P5, pod mặc định là `MyGame/Server~` — bản .NET 8 của server, **không cần Unity**,
+để đóng image Linux cho Agones. Nó khớp prefab `Player.prefab` từng behaviour
+(`PlayerTransform` rồi `Player`, `syncPosition/Rotation` bật, `syncScale` tắt,
+ngưỡng `0.01 / 0.1 / 0.01`), nên client Unity join vào không cần sửa gì.
+
+Source của 2 package Fomoxa được vendor vào `server-deps/` vì đường dẫn thật
+(`Library/PackageCache/com.fomoxa.networking@<hash>`) có hash và bị gitignore.
+Sinh lại mỗi khi đổi version trong `Packages/manifest.json`:
+
+```powershell
+cd D:\Documents\fomoxa
+powershell -NoProfile -ExecutionPolicy Bypass -File scripts\sync-server-deps.ps1
+```
+
+Build và chạy:
+
+```powershell
+cd MyGame\Server~
+dotnet build                       # 0 warning (NoWarn CS8632 cho source vendor)
+
+# chạy 1 pod, dùng chung cụm local
+cd D:\Documents\fomoxa
+powershell -NoProfile -ExecutionPolicy Bypass -File scripts\run-pod.ps1
+```
+
+`start-cluster.ps1` chọn loại pod bằng `-Server`:
+
+```powershell
+powershell -NoProfile -ExecutionPolicy Bypass -File scripts\start-cluster.ps1              # console (mặc định)
+powershell -NoProfile -ExecutionPolicy Bypass -File scripts\start-cluster.ps1 -Server unity # MyGame.exe -pod
+powershell -NoProfile -ExecutionPolicy Bypass -File scripts\start-cluster.ps1 -Pods 2       # pod-1 arena:1, pod-2 arena:2
+```
+
+Tham số của `MyGame.Server.exe` (ưu tiên cao hơn biến môi trường):
+
+| Tham số | Biến môi trường | Mặc định |
+|---|---|---|
+| `--name=` | `FOMOXA_POD_NAME` | `pod-1` |
+| `--port=` | `FOMOXA_POD_PORT` | `7778` |
+| `--room=` (nhiều room cách `,`) | `FOMOXA_ROOM` | `arena:1` |
+| `--directory=host:port` | `FOMOXA_DIRECTORY` | `127.0.0.1:9500` |
+| `--address=` | `FOMOXA_POD_ADDRESS` / `POD_IP` | `127.0.0.1` |
+| `--version=` | `FOMOXA_VERSION` | `1.0` (phải khớp `bundleVersion` của client) |
+| `--region=` | `FOMOXA_REGION` | `local` |
+| `--max-players=` | `FOMOXA_MAX_PLAYERS` | `16` |
+| `--behind-gateway=` | `FOMOXA_BEHIND_GATEWAY` | `true` |
+| `--trace` | `FOMOXA_TRACE` | tắt |
+| `--key=` | `POD_KEY_FILE` | (bắt buộc) file key `directory/pod` |
+
+Kiểm chứng lặp lại được (pod giữ room, 2 client thấy nhau, bot di chuyển qua server):
+
+```powershell
+powershell -NoProfile -ExecutionPolicy Bypass -File scripts\test-console-server.ps1
+```
 
 
 ## Chạy nhanh trong Editor (không cần cụm)
@@ -240,6 +304,19 @@ BE    [Nakama] authenticated fomoxa-device-ana as 761d6e7a...
 ```
 
 `test-nakama.ps1` xác nhận: 2 user nhận cùng ticket, user ngoài và ticket bịa bị từ chối.
+
+**P5 bước 1 — pod là console server (`MyGame.Server.exe`), client vẫn là Unity:**
+
+```
+POD   [Pod] registering pod-1 (127.0.0.1:7778, version 1.0) at 127.0.0.1:9500
+POD   [Pod] registered id=26286610 changed=False -> listening on udp 7778 -> holds arena:1
+ANA   [Join] room arena:1 -> 127.0.0.1:7777, grant 250 bytes
+ANA   [Player] spawn on client id=3 mine=False / id=4 mine=True
+BO    [Pos] id=3 x: 3.00 -> 3.15                       <- bot di chuyển qua server console
+```
+
+`dotnet build` 0 warning/0 error; `test-console-server.ps1` lặp lại được; `test-p4.ps1`
+vẫn pass với pod console.
 
 
 ## Ghi chú kỹ thuật đã gặp

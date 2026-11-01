@@ -22,3 +22,6 @@
 sysinfo.txt
 *.stackdump
 crashlytics-build.properties
+
+# Console server (P5): csproj viet tay, khong phai Unity sinh
+!Server~/*.csproj

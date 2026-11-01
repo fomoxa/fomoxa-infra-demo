@@ -1,0 +1,204 @@
+using System;
+using System.Collections.Generic;
+using System.Diagnostics;
+using System.IO;
+using System.Numerics;
+using System.Runtime.InteropServices;
+using System.Text;
+using System.Threading;
+using System.Threading.Tasks;
+using Fomoxa.Networking;
+using Fomoxa.Networking.Sessions;
+using Fomoxa.Networking.Standalone;
+using Fomoxa.Rpc.Directory;
+using Generated;
+using MyGame.Network;
+
+namespace MyGame.Server
+{
+    /// <summary>
+    /// Game server dạng console: thay cho MyGame.exe -pod, chạy được trong container
+    /// mà không cần Unity. Bước 1 của P5 chỉ làm phần này chạy local; Agones thêm sau.
+    /// </summary>
+    public static class Program
+    {
+        public static int Main()
+        {
+            Console.OutputEncoding = Encoding.UTF8;
+
+            PodConfig config;
+            try
+            {
+                config = PodConfig.Read(Environment.GetCommandLineArgs());
+            }
+            catch (PodConfigException problem)
+            {
+                Console.Error.WriteLine($"server: {problem.Message}");
+                return 1;
+            }
+
+            var registry = new FomoxaRegistry();
+            FomoxaAdapters.RegisterAll(registry);
+
+            NetworkRuntime runtime = null!;
+            var prefabs = new StandalonePrefabs();
+            prefabs.Register(
+                FomoxaPrefabs.PlayerId,
+                FomoxaPrefabs.PlayerFingerprint,
+                () => new PlayerEntity(() => runtime.TimeManager.TickDelta));
+
+            var clock = Stopwatch.StartNew();
+            var transport = new PodTransport(registry) { BehindGateway = config.BehindGateway };
+
+            runtime = StandaloneRuntime.Create(
+                registry,
+                new NetworkSettings
+                {
+                    TickRate = 30,
+                    MaxTicksPerFrame = 3,
+                    InputBuffer = 2,
+                    LogSendDropped = false,
+                    LogReceiveDropped = false,
+                },
+                transport,
+                prefabs,
+                new StandaloneBehaviours(),
+                new SceneFileDirectory(Path.Combine(AppContext.BaseDirectory, "Scenes")),
+                () => clock.Elapsed,
+                NetworkLog.Console);
+
+            int slot = 0;
+            runtime.ServerManager.OnRemoteConnectionState += args =>
+            {
+                if (args.State != ConnectionState.Started)
+                {
+                    Console.WriteLine($"[Pod] peer {args.PeerId}: {args.State} {args.Reason}");
+                    return;
+                }
+
+                var player = new PlayerEntity(() => runtime.TimeManager.TickDelta);
+                player.Position = new Vector3(0f, 1f, 0f) + SpawnOffset();
+                runtime.ServerManager.Spawn(player, args.PeerId);
+                Console.WriteLine($"[Pod] peer {args.PeerId}: Started -> spawn at {player.Position}");
+            };
+
+            Vector3 SpawnOffset()
+            {
+                slot = (slot + 1) % 8;
+                float angle = slot * MathF.PI * 2f / 8f;
+                return new Vector3(MathF.Sin(angle) * 3f, 0f, MathF.Cos(angle) * 3f);
+            }
+
+            using var stopping = new ManualResetEventSlim();
+            using var terminate = PosixSignalRegistration.Create(PosixSignal.SIGTERM, Stop);
+            using var interrupt = PosixSignalRegistration.Create(PosixSignal.SIGINT, Stop);
+
+            using var pod = new DirectoryPod(runtime, new DirectoryPodSettings
+            {
+                DirectoryAddress = config.DirectoryHost,
+                DirectoryPort = config.DirectoryPort,
+                Key = File.ReadAllBytes(config.KeyFile),
+                Address = config.PodAddress,
+                Port = config.Port,
+                Target = config.PodName,
+                Version = config.Version,
+                Region = config.Region,
+                MaxPlayers = config.MaxPlayers,
+            });
+
+            bool draining = false;
+
+            pod.OnRegistered += registration =>
+            {
+                Console.WriteLine($"[Pod] registered id={registration.PodId} changed={registration.ChangedPodId}");
+
+                if (registration.ChangedPodId && runtime.ServerManager.State != ServerState.Stopped)
+                {
+                    Console.WriteLine("[Pod] ticket key doi, dung listener de mo lai");
+                    runtime.ServerManager.StopConnection();
+                }
+
+                transport.Use(new ConnectTokens(registry, registration.TicketKey), config.PodName);
+
+                if (runtime.ServerManager.State == ServerState.Stopped)
+                {
+                    runtime.ServerManager.StartConnection(config.Port);
+                    Console.WriteLine($"[Pod] listening on udp {runtime.ServerManager.Port}");
+                }
+
+                foreach (string room in config.Rooms)
+                {
+                    _ = AcquireRoom(room);
+                }
+            };
+
+            pod.OnDrain += deadline =>
+            {
+                draining = true;
+                Console.WriteLine($"[Pod] draining until {deadline:O}");
+            };
+
+            pod.OnDrainDeadline += () =>
+            {
+                Console.WriteLine("[Pod] drain deadline reached");
+                stopping.Set();
+            };
+
+            pod.OnError += error => Console.Error.WriteLine("[Pod] " + error);
+
+            async Task AcquireRoom(string room)
+            {
+                if (draining)
+                {
+                    return;
+                }
+
+                try
+                {
+                    await pod.AcquireRoom(room);
+                    Console.WriteLine($"[Pod] holds {room}");
+                }
+                catch (Exception error)
+                {
+                    Console.Error.WriteLine($"[Pod] acquire {room}: {error.Message}");
+                }
+            }
+
+            pod.Start();
+            Console.WriteLine(
+                $"[Pod] registering {config.PodName} ({config.PodAddress}:{config.Port}, version {config.Version}) at {config.DirectoryHost}:{config.DirectoryPort}");
+
+            TimeSpan last = clock.Elapsed;
+            double nextTrace = 0;
+            while (!stopping.IsSet)
+            {
+                TimeSpan now = clock.Elapsed;
+                runtime.BeginFrame(now, (now - last).TotalSeconds);
+                runtime.EndFrame();
+                last = now;
+
+                if (config.Trace && now.TotalSeconds >= nextTrace)
+                {
+                    nextTrace = now.TotalSeconds + 2;
+                    foreach (KeyValuePair<uint, INetworkEntity> entry in runtime.ServerManager.Spawned)
+                    {
+                        Vector3 position = entry.Value.ReadWorldPosition();
+                        Console.WriteLine($"[Pos] id={entry.Key} pos=({position.X:F2}, {position.Y:F2}, {position.Z:F2})");
+                    }
+                }
+
+                Thread.Sleep(1);
+            }
+
+            runtime.ServerManager.StopConnection();
+            Console.WriteLine("[Pod] stopped");
+            return 0;
+
+            void Stop(PosixSignalContext context)
+            {
+                context.Cancel = true;
+                stopping.Set();
+            }
+        }
+    }
+}

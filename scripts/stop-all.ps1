@@ -1,6 +1,6 @@
 $ErrorActionPreference = "Continue"
 
-$names = @("MyGame", "fomoxa-directory", "fomoxa-gateway", "MyGame.Backend")
+$names = @("MyGame.Server", "MyGame", "fomoxa-directory", "fomoxa-gateway", "MyGame.Backend")
 
 foreach ($name in $names) {
     $running = Get-Process -Name $name -ErrorAction SilentlyContinue

@@ -1,7 +1,9 @@
 param(
     [int]$Pods = 1,
     [string]$Room = "arena:1",
-    [int]$FirstPodPort = 7778
+    [int]$FirstPodPort = 7778,
+    [ValidateSet("console", "unity")]
+    [string]$Server = "console"
 )
 
 $ErrorActionPreference = "Stop"
@@ -14,10 +16,23 @@ $directoryExe = Join-Path $repoRoot "gateway/target/release/fomoxa-directory.exe
 $gatewayExe = Join-Path $repoRoot "gateway/target/release/fomoxa-gateway.exe"
 $backendExe = Join-Path $repoRoot "MyGame.Backend/MyGame.Backend/bin/Debug/net8.0/MyGame.Backend.exe"
 $playerExe = Join-Path $repoRoot "MyGame/Builds/MyGame.exe"
+$serverExe = Join-Path $repoRoot "MyGame/Server~/bin/Debug/net8.0/MyGame.Server.exe"
 
-foreach ($exe in @($directoryExe, $gatewayExe, $playerExe)) {
+foreach ($exe in @($directoryExe, $gatewayExe)) {
     if (-not (Test-Path $exe)) {
         throw "thieu $exe"
+    }
+}
+
+if ($Server -eq "unity" -and -not (Test-Path $playerExe)) {
+    throw "thieu $playerExe"
+}
+
+if ($Server -eq "console" -and -not (Test-Path $serverExe)) {
+    Write-Host "chua build console server, dang build..."
+    & dotnet build (Join-Path $repoRoot "MyGame/Server~/MyGame.Server.csproj") | Select-Object -Last 3
+    if (-not (Test-Path $serverExe)) {
+        throw "build console server that bai: $serverExe"
     }
 }
 
@@ -75,14 +90,29 @@ Start-Sleep -Milliseconds 1500
 
 $env:POD_KEY_FILE = Join-Path $repoRoot "deploy/secrets/directory/pod"
 
+$roomPrefix = if ($Room.Contains(":")) { $Room.Split(":")[0] } else { $Room }
+
 for ($i = 0; $i -lt $Pods; $i++) {
     $name = "pod-$($i + 1)"
     $port = $FirstPodPort + $i
-    Write-Host "4/4 $name udp $port (room $Room)"
-    Start-Process -FilePath $playerExe `
-        -ArgumentList "-batchmode", "-nographics", "-logFile", (Join-Path $logs "$name.log"), "-pod", "-podname:$name", "-podport:$port", "-room:$Room", "-directory:127.0.0.1:9500" `
-        -WorkingDirectory (Split-Path -Parent $playerExe) `
-        -WindowStyle Hidden
+    $podRoom = if ($Pods -eq 1) { $Room } else { "${roomPrefix}:$($i + 1)" }
+    Write-Host "4/4 $name udp $port (room $podRoom, $Server)"
+
+    if ($Server -eq "unity") {
+        Start-Process -FilePath $playerExe `
+            -ArgumentList "-batchmode", "-nographics", "-logFile", (Join-Path $logs "$name.log"), "-pod", "-podname:$name", "-podport:$port", "-room:$podRoom", "-directory:127.0.0.1:9500" `
+            -WorkingDirectory (Split-Path -Parent $playerExe) `
+            -WindowStyle Hidden
+    }
+    else {
+        Start-Process -FilePath $serverExe `
+            -ArgumentList "--name=$name", "--port=$port", "--room=$podRoom", "--directory=127.0.0.1:9500", "--trace" `
+            -WorkingDirectory (Split-Path -Parent $serverExe) `
+            -RedirectStandardOutput (Join-Path $logs "$name.log") `
+            -RedirectStandardError (Join-Path $logs "$name.err.log") `
+            -WindowStyle Hidden
+    }
+
     Start-Sleep -Milliseconds 1500
 }
 
