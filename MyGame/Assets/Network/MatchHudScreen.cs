@@ -1,3 +1,4 @@
+using MyGame.Backend.Models;
 using UnityEngine;
 using UnityEngine.UIElements;
 
@@ -19,6 +20,12 @@ namespace MyGame.Network
         private Label status;
         private Button leaveButton;
         private Button lobbyButton;
+        private ScrollView scoreList;
+        private Label scoreEmpty;
+        private Label inviteTitle;
+        private VisualElement inviteFriends;
+        private int builtBoard = -1;
+        private int builtSocial = -1;
         private string lastSignature = "";
 
         private void OnEnable()
@@ -31,6 +38,10 @@ namespace MyGame.Network
             status = root.Q<Label>("status");
             leaveButton = root.Q<Button>("leave-button");
             lobbyButton = root.Q<Button>("lobby-button");
+            scoreList = root.Q<ScrollView>("score-list");
+            scoreEmpty = root.Q<Label>("score-empty");
+            inviteTitle = root.Q<Label>("invite-title");
+            inviteFriends = root.Q<VisualElement>("invite-friends");
 
             leaveButton.clicked += () => launcher.LeaveRoom();
             root.Q<Button>("host-button").clicked += () => launcher.BeginHost();
@@ -41,6 +52,7 @@ namespace MyGame.Network
                 UnityEngine.SceneManagement.SceneManager.LoadSceneAsync(MatchSession.LobbyScene);
             };
             lastSignature = "";
+            builtBoard = builtSocial = -1;
         }
 
         private void Update()
@@ -56,7 +68,9 @@ namespace MyGame.Network
             bool error = joiner != null && joiner.IsError;
 
             string summary = running ? launcher.ConnectionSummary + "|" + launcher.PodSummary : "";
-            string signature = $"{running}|{MatchSession.FromLobby}|{MatchSession.Room}|{summary}|{notice}|{error}";
+            int boardVersion = joiner != null ? joiner.BoardVersion : 0;
+            int socialVersion = joiner != null ? joiner.SocialVersion : 0;
+            string signature = $"{running}|{MatchSession.FromLobby}|{MatchSession.Room}|{summary}|{notice}|{error}|{boardVersion}|{socialVersion}";
             if (signature == lastSignature)
             {
                 return;
@@ -73,6 +87,85 @@ namespace MyGame.Network
 
             status.text = notice;
             status.EnableInClassList("error", error);
+
+            if (joiner != null && builtBoard != joiner.BoardVersion)
+            {
+                builtBoard = joiner.BoardVersion;
+                RebuildBoard(joiner);
+            }
+
+            if (joiner != null && builtSocial != joiner.SocialVersion)
+            {
+                builtSocial = joiner.SocialVersion;
+                RebuildInvites(joiner);
+            }
+        }
+
+        private void RebuildBoard(RoomJoiner joiner)
+        {
+            scoreList.Clear();
+            int rank = 0;
+            foreach (ScoreEntry entry in joiner.Board)
+            {
+                rank++;
+                var row = new VisualElement();
+                row.AddToClassList("score-row");
+                if (string.Equals(entry.Name, joiner.LoggedInAs, System.StringComparison.OrdinalIgnoreCase))
+                {
+                    row.AddToClassList("me");
+                }
+
+                var rankLabel = new Label(rank.ToString());
+                rankLabel.AddToClassList("score-rank");
+                row.Add(rankLabel);
+
+                var name = new Label(entry.Name);
+                name.AddToClassList("score-name");
+                row.Add(name);
+
+                var steps = new Label($"{entry.Steps} bậc");
+                steps.AddToClassList("score-steps");
+                row.Add(steps);
+
+                var best = new Label($"kỷ lục {entry.Best}");
+                best.AddToClassList("score-best");
+                row.Add(best);
+                scoreList.Add(row);
+            }
+
+            Show(scoreEmpty, joiner.Board.Count == 0);
+        }
+
+        /// <summary>Bạn đang online mà chưa ở phòng này: nút Mời.</summary>
+        private void RebuildInvites(RoomJoiner joiner)
+        {
+            inviteFriends.Clear();
+            int count = 0;
+            if (joiner.Social != null)
+            {
+                foreach (FriendInfo friend in joiner.Social.Friends)
+                {
+                    if (!friend.Online || friend.Room == MatchSession.Room)
+                    {
+                        continue;
+                    }
+
+                    string who = friend.Name;
+                    var row = new VisualElement();
+                    row.AddToClassList("friend-row");
+                    var name = new Label(friend.Name);
+                    name.AddToClassList("friend-name");
+                    row.Add(name);
+                    var invite = new Button(() => _ = joiner.Invite(who)) { text = "Mời" };
+                    invite.AddToClassList("button");
+                    invite.AddToClassList("small");
+                    row.Add(invite);
+                    inviteFriends.Add(row);
+                    count++;
+                }
+            }
+
+            Show(inviteTitle, count > 0);
         }
 
         private static void Show(VisualElement element, bool visible)

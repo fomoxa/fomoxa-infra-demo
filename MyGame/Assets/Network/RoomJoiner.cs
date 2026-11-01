@@ -134,13 +134,54 @@ namespace MyGame.Network
         private const float PollSeconds = 5f;
 
         /// <summary>Client đã rời phòng (Launcher gọi) - quay về sảnh.</summary>
-        public void LeftRoom() => currentRoom = "";
+        public void LeftRoom()
+        {
+            currentRoom = "";
+            board.Clear();
+            boardSignature = "";
+            BoardVersion++;
+        }
 
+        /// <summary>Hồ sơ của chính mình (kỷ lục số bậc, số trận).</summary>
+        public PlayerProfile Profile { get; private set; }
+
+        public int ProfileVersion { get; private set; }
+
+        /// <summary>Bạn bè, lời mời kết bạn, lời mời vào phòng.</summary>
+        public SocialState Social { get; private set; }
+
+        public int SocialVersion { get; private set; }
+
+        /// <summary>Bảng điểm của phòng đang chơi.</summary>
+        public System.Collections.Generic.IReadOnlyList<ScoreEntry> Board => board;
+
+        public int BoardVersion { get; private set; }
+
+        public string CurrentRoom => currentRoom;
+
+        private readonly System.Collections.Generic.List<ScoreEntry> board = new System.Collections.Generic.List<ScoreEntry>();
+        private string socialSignature = "";
+        private string profileSignature = "";
+        private string boardSignature = "";
+        private float nextBoard;
+        private bool boardPolling;
         private string loggedInAs;
         private readonly System.Collections.Generic.List<RoomInfo> rooms = new System.Collections.Generic.List<RoomInfo>();
 
-        /// <summary>Đăng nhập (tên + mật khẩu). Lần đầu dùng một tên thì tài khoản được tạo.</summary>
-        public async Task Login(string player, string password)
+        /// <summary>Mã khôi phục vừa được cấp (sau khi đăng ký / khôi phục). Chỉ hiện một lần: gọi <see cref="AcknowledgeRecoveryCode"/> khi người chơi đã lưu.</summary>
+        public string NewRecoveryCode { get; private set; } = "";
+
+        public void AcknowledgeRecoveryCode() => NewRecoveryCode = "";
+
+        public Task Login(string player, string password) => Authenticate(player, password, "login", "", "");
+
+        /// <summary>Tạo tài khoản mới (tên chưa ai dùng). Thành công thì <see cref="NewRecoveryCode"/> có mã khôi phục.</summary>
+        public Task Register(string player, string password) => Authenticate(player, password, "register", "", "");
+
+        /// <summary>Đặt lại mật khẩu bằng mã khôi phục; thành công thì có mã khôi phục MỚI.</summary>
+        public Task Recover(string player, string recoveryCode, string newPassword) => Authenticate(player, newPassword, "recover", recoveryCode, "");
+
+        private async Task Authenticate(string player, string password, string mode, string recovery, string _)
         {
             if (Busy)
             {
@@ -150,9 +191,17 @@ namespace MyGame.Network
             Busy = true;
             try
             {
-                await LoginCore(player, password);
+                await LoginCore(player, password, mode, recovery);
+                if (mode != "login")
+                {
+                    ActionResult taken = await new LobbyClient(connection).TakeRecoveryCodeAsync(new RecoveryCodeRequest(), CallOptions.Within(TimeSpan.FromSeconds(10)));
+                    NewRecoveryCode = taken.Ok ? taken.Message : "";
+                }
+
                 await RefreshRoomsCore();
                 await PresenceCore();
+                await SocialCore();
+                await ProfileCore();
                 nextPoll = Time.unscaledTime + PollSeconds;
             }
             catch (Exception error)
@@ -180,8 +229,18 @@ namespace MyGame.Network
             online.Clear();
             roomsSignature = "";
             onlineSignature = "";
+            socialSignature = "";
+            profileSignature = "";
+            boardSignature = "";
+            Social = null;
+            Profile = null;
+            board.Clear();
+            NewRecoveryCode = "";
             RoomsVersion++;
             OnlineVersion++;
+            SocialVersion++;
+            ProfileVersion++;
+            BoardVersion++;
             SetStatus("Đã đăng xuất");
         }
 
@@ -254,7 +313,7 @@ namespace MyGame.Network
             Busy = true;
             try
             {
-                await LoginCore(player, "");
+                await LoginCore(player, "", "", "");
                 await JoinCore(roomKey);
             }
             catch (Exception error)
@@ -267,7 +326,7 @@ namespace MyGame.Network
             }
         }
 
-        private async Task LoginCore(string player, string password)
+        private async Task LoginCore(string player, string password, string mode, string recovery)
         {
             player = (player ?? "").Trim();
             if (player.Length == 0)
@@ -287,10 +346,15 @@ namespace MyGame.Network
             ITransport transport = await connecting.Task;
 
             string[] args = Environment.GetCommandLineArgs();
-            var login = new PlayerLogin { Player = player, DeviceId = DeviceId(args, player) };
+            var login = new PlayerLogin { Player = player, DeviceId = DeviceId(args, player), Mode = mode };
             if (!string.IsNullOrEmpty(password))
             {
                 login.Secret = System.Text.Encoding.UTF8.GetBytes(password);
+            }
+
+            if (!string.IsNullOrEmpty(recovery))
+            {
+                login.Recovery = System.Text.Encoding.UTF8.GetBytes(recovery);
             }
 
             var options = new ConnectOptions
@@ -320,6 +384,112 @@ namespace MyGame.Network
             }
         }
 
+        private async Task SocialCore()
+        {
+            SocialState state = await new LobbyClient(connection).SocialAsync(new SocialRequest(), CallOptions.Within(TimeSpan.FromSeconds(10)));
+            string signature = string.Join(";", System.Linq.Enumerable.Select(state.Friends, f => $"{f.Name}|{f.Online}|{f.Room}|{f.BestSteps}"))
+                + "#" + string.Join(",", state.Incoming) + "#" + string.Join(",", state.Outgoing)
+                + "#" + string.Join(";", System.Linq.Enumerable.Select(state.Invites, i => $"{i.From}|{i.Room}"));
+            if (signature != socialSignature)
+            {
+                socialSignature = signature;
+                Social = state;
+                SocialVersion++;
+            }
+        }
+
+        private async Task ProfileCore()
+        {
+            PlayerProfile profile = await new LobbyClient(connection).GetProfileAsync(new ProfileRequest(), CallOptions.Within(TimeSpan.FromSeconds(10)));
+            string signature = $"{profile.Name}|{profile.BestSteps}|{profile.Matches}";
+            if (signature != profileSignature)
+            {
+                profileSignature = signature;
+                Profile = profile;
+                ProfileVersion++;
+            }
+        }
+
+        private async Task BoardCore()
+        {
+            ScoreboardState state = await new LobbyClient(connection).ScoreboardAsync(
+                new ScoreboardRequest { Room = currentRoom }, CallOptions.Within(TimeSpan.FromSeconds(5)));
+            string signature = string.Join(";", System.Linq.Enumerable.Select(state.Entries, e => $"{e.Name}|{e.Steps}|{e.Best}"));
+            if (signature != boardSignature)
+            {
+                boardSignature = signature;
+                board.Clear();
+                board.AddRange(state.Entries);
+                BoardVersion++;
+            }
+        }
+
+        private async Task PollBoard()
+        {
+            boardPolling = true;
+            try
+            {
+                await BoardCore();
+            }
+            catch (Exception error)
+            {
+                Debug.LogWarning($"[Board] {error.Message}");
+            }
+            finally
+            {
+                boardPolling = false;
+            }
+        }
+
+        // ---------------------------------------------------------------- hành động tài khoản / bạn bè
+
+        public async Task ChangePassword(string oldPassword, string newPassword) =>
+            await Act(async () =>
+            {
+                ActionResult result = await new LobbyClient(connection).ChangePasswordAsync(
+                    new ChangePasswordRequest { OldPassword = oldPassword, NewPassword = newPassword }, CallOptions.Within(TimeSpan.FromSeconds(15)));
+                SetStatus(result.Ok ? "Đã đổi mật khẩu" : result.Message, !result.Ok);
+            });
+
+        /// <summary>action: request | accept | decline | remove | dismiss-invite.</summary>
+        public async Task FriendAction(string action, string target) =>
+            await Act(async () =>
+            {
+                ActionResult result = await new LobbyClient(connection).FriendActionAsync(
+                    new FriendActionRequest { Action = action, Target = target }, CallOptions.Within(TimeSpan.FromSeconds(10)));
+                if (!string.IsNullOrEmpty(result.Message))
+                {
+                    SetStatus(result.Message, !result.Ok);
+                }
+
+                await SocialCore();
+            });
+
+        public async Task Invite(string friend) =>
+            await Act(async () =>
+            {
+                ActionResult result = await new LobbyClient(connection).InviteAsync(
+                    new InviteRequest { To = friend, Room = currentRoom }, CallOptions.Within(TimeSpan.FromSeconds(10)));
+                SetStatus(result.Ok ? $"Đã mời {friend} vào {currentRoom}" : result.Message, !result.Ok);
+            });
+
+        private async Task Act(Func<Task> action)
+        {
+            if (!LoggedIn)
+            {
+                return;
+            }
+
+            try
+            {
+                await action();
+            }
+            catch (Exception error)
+            {
+                Fail(error);
+            }
+        }
+
         private async Task PresenceCore()
         {
             OnlineList list = await new LobbyClient(connection).PresenceAsync(
@@ -341,9 +511,11 @@ namespace MyGame.Network
             try
             {
                 await PresenceCore();
+                await SocialCore();
                 if (!Busy && currentRoom.Length == 0)
                 {
                     await RefreshRoomsCore();
+                    await ProfileCore();
                 }
             }
             catch (Exception error)
@@ -381,6 +553,15 @@ namespace MyGame.Network
 
         private void Fail(Exception error)
         {
+            // Đăng nhập bị từ chối: lấy thông điệp thật từ backend (sai mật khẩu, tên đã có người dùng, mã khôi phục sai...).
+            if (error is ConnectException rejected && rejected.Status != null)
+            {
+                Debug.LogWarning($"[Join] rejected: {rejected.Status}");
+                SetStatus(rejected.Status.Message, true);
+                loggedInAs = null;
+                return;
+            }
+
             if (error is RpcException failed)
             {
                 if (failed.Status.Details is NoRoomForVersion missing)
@@ -449,6 +630,12 @@ namespace MyGame.Network
             }
 
             connection?.Tick(MonotonicClock.Now);
+
+            if (LoggedIn && currentRoom.Length > 0 && !boardPolling && Time.unscaledTime >= nextBoard)
+            {
+                nextBoard = Time.unscaledTime + 1.5f;
+                _ = PollBoard();
+            }
 
             if (LoggedIn && !polling && Time.unscaledTime >= nextPoll)
             {

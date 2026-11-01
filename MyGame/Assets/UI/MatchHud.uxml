@@ -7,7 +7,15 @@
             <ui:VisualElement name="match-panel" class="panel">
                 <ui:Label name="match-title" text="" class="subtitle" />
                 <ui:Label name="match-state" text="" class="hint" />
-                <ui:Label text="Di chuyển: WASD / phím mũi tên" class="hint" />
+                <ui:Label text="Di chuyển: WASD / mũi tên  ·  Nhảy: Space" class="hint" />
+
+                <ui:Label text="Bảng điểm (số bậc cao nhất)" class="subtitle small" />
+                <ui:ScrollView name="score-list" class="score-list" />
+                <ui:Label name="score-empty" text="Chưa ai lên bục nào" class="hint" />
+
+                <ui:Label name="invite-title" text="Mời bạn vào phòng" class="subtitle small" />
+                <ui:VisualElement name="invite-friends" />
+
                 <ui:Button name="leave-button" text="Thoát phòng (về sảnh)" class="button danger" />
             </ui:VisualElement>
 

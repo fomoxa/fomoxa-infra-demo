@@ -4,36 +4,78 @@
         <ui:VisualElement name="card" class="card">
             <ui:Label text="MyGame" class="title" />
 
-            <!-- 1. Đăng nhập -->
-            <ui:VisualElement name="login-panel" class="panel">
-                <ui:Label text="Đăng nhập / Đăng ký" class="subtitle" />
+            <!-- 1. Đăng nhập / đăng ký / quên mật khẩu -->
+            <ui:VisualElement name="auth-panel" class="panel">
+                <ui:VisualElement class="row tabs">
+                    <ui:Button name="tab-login" text="Đăng nhập" class="tab" />
+                    <ui:Button name="tab-register" text="Đăng ký" class="tab" />
+                    <ui:Button name="tab-recover" text="Quên mật khẩu" class="tab" />
+                </ui:VisualElement>
                 <ui:TextField name="name-field" label="Tên" max-length="24" class="field" />
+                <ui:TextField name="recovery-field" label="Mã khôi phục" max-length="24" class="field" />
                 <ui:TextField name="password-field" label="Mật khẩu" password="true" max-length="64" class="field" />
-                <ui:Label text="Tên mới sẽ tự tạo tài khoản với mật khẩu này (tối thiểu 8 ký tự)." class="hint" />
-                <ui:Button name="login-button" text="Đăng nhập / Đăng ký" class="button primary" />
+                <ui:Label name="auth-hint" text="" class="hint" />
+                <ui:Button name="auth-button" text="Đăng nhập" class="button primary" />
             </ui:VisualElement>
 
-            <!-- 2. Sảnh: danh sách phòng -->
+            <!-- 2. Mã khôi phục vừa được cấp -->
+            <ui:VisualElement name="recovery-panel" class="panel">
+                <ui:Label text="Hãy lưu mã khôi phục" class="subtitle" />
+                <ui:TextField name="recovery-code" is-readonly="true" class="field code" />
+                <ui:Label text="Mã này giúp đặt lại mật khẩu nếu bạn quên. Nó chỉ hiện một lần - hãy chép lại ở nơi an toàn." class="hint" />
+                <ui:Button name="recovery-ok" text="Tôi đã lưu mã" class="button primary" />
+            </ui:VisualElement>
+
+            <!-- 3. Sảnh -->
             <ui:VisualElement name="lobby-panel" class="panel">
                 <ui:VisualElement class="row header">
                     <ui:Label name="welcome" text="Xin chào" class="welcome" />
                     <ui:Button name="refresh-button" text="Làm mới" class="button small" />
                     <ui:Button name="logout-button" text="Đăng xuất" class="button small" />
                 </ui:VisualElement>
-                <ui:Label text="Chọn phòng (mỗi phòng cần 2 người để ghép trận)" class="hint" />
-                <ui:ScrollView name="room-list" class="room-list" />
-                <ui:Label name="empty-rooms" text="Chưa có dữ liệu phòng - bấm Làm mới" class="hint" />
+                <ui:Label name="profile-label" text="" class="hint profile" />
+
+                <ui:VisualElement class="row tabs">
+                    <ui:Button name="tab-rooms" text="Phòng" class="tab" />
+                    <ui:Button name="tab-friends" text="Bạn bè" class="tab" />
+                    <ui:Button name="tab-account" text="Tài khoản" class="tab" />
+                </ui:VisualElement>
+
+                <ui:VisualElement name="rooms-tab">
+                    <ui:Label text="Chọn phòng và nhảy lên các bục cao nhất có thể" class="hint" />
+                    <ui:ScrollView name="room-list" class="room-list" />
+                    <ui:Label name="empty-rooms" text="Chưa có dữ liệu phòng - bấm Làm mới" class="hint" />
+                </ui:VisualElement>
+
+                <ui:VisualElement name="friends-tab">
+                    <ui:Label name="invites-title" text="Lời mời vào phòng" class="subtitle small" />
+                    <ui:VisualElement name="invite-list" />
+                    <ui:Label name="incoming-title" text="Lời mời kết bạn" class="subtitle small" />
+                    <ui:VisualElement name="incoming-list" />
+                    <ui:Label text="Bạn bè" class="subtitle small" />
+                    <ui:ScrollView name="friend-list" class="friend-list" />
+                    <ui:Label name="empty-friends" text="Chưa có bạn bè - thêm bên dưới" class="hint" />
+                    <ui:VisualElement class="row">
+                        <ui:TextField name="friend-field" label="" max-length="24" class="field grow" />
+                        <ui:Button name="add-friend-button" text="Kết bạn" class="button small" />
+                    </ui:VisualElement>
+                </ui:VisualElement>
+
+                <ui:VisualElement name="account-tab">
+                    <ui:Label text="Đổi mật khẩu" class="subtitle small" />
+                    <ui:TextField name="old-password-field" label="Hiện tại" password="true" max-length="64" class="field" />
+                    <ui:TextField name="new-password-field" label="Mới" password="true" max-length="64" class="field" />
+                    <ui:Button name="change-password-button" text="Đổi mật khẩu" class="button" />
+                </ui:VisualElement>
             </ui:VisualElement>
 
-
-            <!-- Người đang online (hiện khi đã đăng nhập, cả ở sảnh lẫn trong phòng) -->
+            <!-- Người đang online (hiện khi đã đăng nhập) -->
             <ui:VisualElement name="online-panel" class="panel online">
                 <ui:Label name="online-title" text="Đang online" class="subtitle" />
                 <ui:ScrollView name="online-list" class="online-list" />
             </ui:VisualElement>
 
             <ui:Label name="status" text="" class="status" />
-
         </ui:VisualElement>
     </ui:VisualElement>
 </ui:UXML>

@@ -183,6 +183,19 @@ public static class DemoScene
             pillar.transform.position = new Vector3(Mathf.Sin(angle) * 20f, 1.5f, Mathf.Cos(angle) * 20f);
             pillar.GetComponent<Renderer>().sharedMaterial = Material("Pillar", new Color(0.75f, 0.4f, 0.2f));
         }
+
+        // Các bục nhảy xoắn ốc (hình học lấy từ Course - dùng chung với server). Màu đổi dần từ xanh sang đỏ theo độ cao.
+        for (int step = 1; step <= MyGame.Network.Models.Course.Count; step++)
+        {
+            MyGame.Network.Models.Course.Platform(step, out float x, out float z, out float top);
+            GameObject platform = GameObject.CreatePrimitive(PrimitiveType.Cube);
+            platform.name = "Platform " + step;
+            float size = MyGame.Network.Models.Course.PlatformHalf * 2f;
+            platform.transform.localScale = new Vector3(size, MyGame.Network.Models.Course.Thickness, size);
+            platform.transform.position = new Vector3(x, top - MyGame.Network.Models.Course.Thickness / 2f, z);
+            float t = (step - 1) / (float)(MyGame.Network.Models.Course.Count - 1);
+            platform.GetComponent<Renderer>().sharedMaterial = Material("Platform" + step, Color.Lerp(new Color(0.2f, 0.6f, 1f), new Color(1f, 0.35f, 0.25f), t));
+        }
     }
 
     private static void CreateCamera()
