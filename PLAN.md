@@ -325,7 +325,7 @@ không dồn vào 1 room) — làm ở P5.5, kèm test ≥4 client.
 | 2 | Wrapper Agones SDK (`Ready/Health/Allocate/Shutdown`) + `OnDrain`/`OnDrainDeadline`, no-op ngoài cluster | `P5: Agones lifecycle` | ✅ |
 | 3 | 3 Dockerfile: game server, directory, gateway | `P5: dong goi image` | ✅ |
 | 4 | `deploy/k8s/`: manifest + `directory.toml`/`gateway.toml` bản K8s + script sinh Secret | `P5: manifest k8s + agones fleet` | ✅ |
-| 5 | `scripts/k8s-up.ps1`, `k8s-down.ps1`, `test-p5.ps1` | `P5: script cum k8s` | |
+| 5 | `scripts/k8s-up.ps1`, `k8s-down.ps1`, `test-p5.ps1` | `P5: script cum k8s` | ✅ |
 | 6 | Cập nhật `PLAN.md` + `MyGame/README.md` | `P5: tai lieu` | |
 
 **Bước 1 là cửa ải**: console server chạy local mà 2 client Unity không thấy nhau di chuyển thì
@@ -394,6 +394,12 @@ Ghi chú đã gặp và cách xử lý:
 - `deploy/k8s/fleet.yaml`: Agones Fleet `fomoxa-server` 2 replicas, `terminationGracePeriodSeconds: 360`, `portPolicy: None`, tự động gán Pod IP và claim room trong pool (`arena:1..arena:4`).
 - `MyGame/Server~/PodConfig.cs` & `Program.cs`: thêm hỗ trợ `--claim-one` (`FOMOXA_CLAIM_ONE`) để pod trong Fleet tự nhận 1 room trống trong pool.
 - `scripts/gen-k8s-secrets.ps1`: script tự động sinh K8s secrets `fomoxa-directory-keys`, `fomoxa-backend-keys`, `fomoxa-pod-key`.
+
+##### Bước 5 — đã xong
+
+- `scripts/k8s-up.ps1`: tự động kiểm tra công cụ (`docker`, `kubectl`, `k3d`, `helm`), tạo cụm k3d `fomoxa` map ports 7777/udp, 9600/tcp, cài Agones via Helm, import images, sinh secrets và apply toàn bộ manifests.
+- `scripts/k8s-down.ps1`: script tắt và dọn dẹp cụm k3d `fomoxa` (hoặc chỉ dọn namespace `fomoxa`).
+- `scripts/test-p5.ps1`: script kiểm tra toàn diện DoD P5: kiểm tra trạng thái GameServers, cho 2 Unity clients join 2 room độc lập (`arena:1` và `arena:2`) qua gateway 127.0.0.1:7777, kiểm chứng spawn và Agones state chuyển sang `Allocated`, hỗ trợ flag `-TestScale` kiểm tra scale Fleet 2 -> 3.
 
 
 #### DoD
