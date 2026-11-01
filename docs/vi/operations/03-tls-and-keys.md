@@ -6,6 +6,8 @@ Lên đầu tài liệu: [05-VAN-HANH](README.md) · Trước: [02-drain-va-tai-
 
 fRPC của backend không tự mã hoá, mà mật khẩu đăng nhập đi qua đường này, nên môi trường thật phải đi qua proxy TLS (`tls-proxy`, nginx, cổng 9643). Đường UDP game đã được mã hoá bằng ticket của Fomoxa, không cần thêm.
 
+Xem toàn bộ đường đi và cấu hình nginx ở [Đường đi của lưu lượng và nơi cấu hình TLS](../deploy/traffic-and-tls.md).
+
 ### 8.1. Kiểm tra chứng chỉ proxy đang trình ra
 
 ```bash

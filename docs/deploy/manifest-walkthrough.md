@@ -162,6 +162,8 @@ The `prometheus.io/*` annotations let Prometheus discover port 9610 (see [05 par
 
 ## `tls-proxy.yaml`
 
+For the whole path from the client to the backend and where the certificate is configured, see [Traffic path and where TLS is configured](traffic-and-tls.md).
+
 Nginx acts as the lock in front of the backend. The client connects over TLS to 9643, nginx decrypts, and forwards raw bytes to `backend:9600`.
 
 ```

@@ -20,6 +20,7 @@
   * [Test Nakama bằng curl](deploy/07-test-nakama.md)
   * [Test bằng client Unity và dọn dẹp](deploy/08-test-client-and-cleanup.md)
   * [Đọc các file manifest trong `deploy/k8s/`](deploy/manifest-walkthrough.md)
+  * [Đường đi của lưu lượng và nơi cấu hình TLS](deploy/traffic-and-tls.md)
 
 ## Client Unity
 

@@ -162,6 +162,8 @@ Annotation `prometheus.io/*` giúp Prometheus tự tìm cổng 9610 (xem [05 ph�
 
 ## `tls-proxy.yaml`
 
+Xem toàn bộ đường đi từ client tới backend và nơi cấu hình chứng chỉ ở [Đường đi của lưu lượng và nơi cấu hình TLS](traffic-and-tls.md).
+
 Nginx đóng vai ổ khoá phía trước backend. Client nối TLS vào 9643; nginx giải mã rồi chuyển byte thô sang `backend:9600`.
 
 ```

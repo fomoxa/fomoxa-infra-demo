@@ -20,6 +20,7 @@
   * [Test Nakama with curl](deploy/07-test-nakama.md)
   * [Test with the Unity client and clean up](deploy/08-test-client-and-cleanup.md)
   * [Reading the manifests in `deploy/k8s/`](deploy/manifest-walkthrough.md)
+  * [Traffic path and where TLS is configured](deploy/traffic-and-tls.md)
 
 ## Unity client
 

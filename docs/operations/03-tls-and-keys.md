@@ -6,6 +6,8 @@ Top of this document: [05-OPERATIONS](README.md) · Previous: [02-drain-and-acco
 
 The backend's fRPC does not encrypt by itself, and the login password travels over it. In production, put the backend behind a TLS proxy (`tls-proxy`, nginx, port 9643). The UDP game traffic is already encrypted by Fomoxa's ticket mechanism and needs nothing more.
 
+For the full path and the nginx configuration, see [Traffic path and where TLS is configured](../deploy/traffic-and-tls.md).
+
 ### 8.1 See which certificate the proxy presents
 
 ```bash
