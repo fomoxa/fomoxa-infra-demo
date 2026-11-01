@@ -119,3 +119,4 @@ if (-not $v1.ok -or -not $v2.ok) { throw "Verify ticket that bai" }
 
 Write-Host "Verify ca 2 ticket thanh cong!" -ForegroundColor Green
 Write-Host "`n=== DoD P5.5 HOAN TAT THANH CONG! ===" -ForegroundColor Green
+
