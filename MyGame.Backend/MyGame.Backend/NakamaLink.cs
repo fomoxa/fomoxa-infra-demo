@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using System.Net.Http;
 using System.Net.Http.Headers;
 using System.Text;
@@ -44,6 +45,17 @@ namespace MyGame.Backend
         public long Exp { get; init; }
     }
 
+    public sealed class NakamaRoom
+    {
+        public string Room { get; init; } = "";
+
+        public int Players { get; init; }
+
+        public int Capacity { get; init; }
+
+        public string State { get; init; } = "";
+    }
+
     public sealed class NakamaLink : IDisposable
     {
         private static readonly JsonSerializerOptions Json = new JsonSerializerOptions(JsonSerializerDefaults.Web);
@@ -73,6 +85,51 @@ namespace MyGame.Backend
                 ?? throw new NakamaException("Nakama trả về session không có token");
 
             return new NakamaSession { UserId = Subject(token), Token = token };
+        }
+
+        /// <summary>
+        /// Đăng nhập bằng email giả (name@fomoxa.local) + mật khẩu. Lần đầu dùng một tên thì Nakama tạo tài khoản
+        /// (create=true); các lần sau sai mật khẩu sẽ bị Nakama từ chối (401).
+        /// </summary>
+        public async Task<NakamaSession> AuthenticatePassword(string player, string password, CancellationToken cancellation = default)
+        {
+            string email = $"{player.ToLowerInvariant()}@fomoxa.local";
+            var body = JsonSerializer.Serialize(new { email, password }, Json);
+            using var request = new HttpRequestMessage(HttpMethod.Post,
+                $"{url}/v2/account/authenticate/email?create=true&username={Uri.EscapeDataString(player)}");
+            request.Headers.Authorization = Basic(serverKey);
+            request.Content = new StringContent(body, Encoding.UTF8, "application/json");
+
+            using JsonDocument document = await Send(request, cancellation).ConfigureAwait(false);
+            string token = document.RootElement.GetProperty("token").GetString()
+                ?? throw new NakamaException("Nakama trả về session không có token");
+
+            return new NakamaSession { UserId = Subject(token), Token = token };
+        }
+
+        public async Task<List<NakamaRoom>> ListRooms(CancellationToken cancellation = default)
+        {
+            using var request = new HttpRequestMessage(HttpMethod.Post, $"{url}/v2/rpc/list_rooms?unwrap");
+            request.Headers.Authorization = Basic(httpKey);
+            request.Content = new StringContent("{}", Encoding.UTF8, "application/json");
+
+            using JsonDocument document = await Send(request, cancellation).ConfigureAwait(false);
+            var rooms = new List<NakamaRoom>();
+            if (document.RootElement.TryGetProperty("rooms", out JsonElement array) && array.ValueKind == JsonValueKind.Array)
+            {
+                foreach (JsonElement item in array.EnumerateArray())
+                {
+                    rooms.Add(new NakamaRoom
+                    {
+                        Room = item.TryGetProperty("room", out JsonElement r) ? r.GetString() ?? "" : "",
+                        Players = item.TryGetProperty("players", out JsonElement p) ? p.GetInt32() : 0,
+                        Capacity = item.TryGetProperty("capacity", out JsonElement c) ? c.GetInt32() : 2,
+                        State = item.TryGetProperty("state", out JsonElement st) ? st.GetString() ?? "" : "",
+                    });
+                }
+            }
+
+            return rooms;
         }
 
         public Task<MatchState> FindMatch(string token, string room, CancellationToken cancellation = default)

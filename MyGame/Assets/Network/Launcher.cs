@@ -5,6 +5,7 @@ using Fomoxa.Networking;
 using Fomoxa.Networking.Sessions;
 using Fomoxa.Rpc.Directory;
 using Fomoxa.Unity;
+using MyGame.Backend.Models;
 using UnityEngine;
 
 namespace MyGame.Network
@@ -33,11 +34,11 @@ namespace MyGame.Network
         private DirectoryPod pod;
         private int slot;
 
-        // Lobby: tên người chơi + danh sách phòng chọn nhanh.
+        // Lobby: đăng nhập (tên + mật khẩu) rồi chọn phòng từ danh sách backend trả về.
         // "auto" = Nakama tự cấp phòng trống từ pool arena:1..4 khi đủ 2 người.
-        private static readonly string[] LobbyRooms = { "auto", "arena:1", "arena:2", "arena:3", "arena:4" };
         private string playerName = "ana";
         private string lobbyRoom = "";
+        private string password = "";
 
         private void Start()
         {
@@ -76,7 +77,7 @@ namespace MyGame.Network
 
         private void OnGUI()
         {
-            GUILayout.BeginArea(new Rect(10f, 10f, 420f, 360f));
+            GUILayout.BeginArea(new Rect(10f, 10f, 460f, 460f));
             DrawControls();
             GUILayout.EndArea();
         }
@@ -130,24 +131,63 @@ namespace MyGame.Network
             GUILayout.Space(8f);
             GUILayout.Label("=== Lobby ===");
 
-            GUILayout.BeginHorizontal();
-            GUILayout.Label("Tên:", GUILayout.Width(40f));
-            playerName = GUILayout.TextField(playerName ?? "", 24);
-            GUILayout.EndHorizontal();
-
             bool busy = joiner != null && joiner.Busy;
             GUI.enabled = !busy;
-            GUILayout.Label("Chọn phòng (mỗi phòng cần 2 người để ghép trận):");
-            foreach (string room in LobbyRooms)
+
+            if (joiner == null)
             {
-                string label = room == "auto" ? "Tự động ghép trận (auto)" : $"Vào phòng {room}";
-                if (GUILayout.Button(label))
+                GUILayout.Label("Chưa gán RoomJoiner");
+            }
+            else if (!joiner.LoggedIn)
+            {
+                GUILayout.BeginHorizontal();
+                GUILayout.Label("Tên:", GUILayout.Width(70f));
+                playerName = GUILayout.TextField(playerName ?? "", 24);
+                GUILayout.EndHorizontal();
+
+                GUILayout.BeginHorizontal();
+                GUILayout.Label("Mật khẩu:", GUILayout.Width(70f));
+                password = GUILayout.PasswordField(password ?? "", '*', 64);
+                GUILayout.EndHorizontal();
+
+                GUILayout.Label("(Tên mới sẽ được tạo tài khoản với mật khẩu này. Tối thiểu 8 ký tự.)");
+                if (GUILayout.Button("Đăng nhập / Đăng ký"))
                 {
-                    lobbyRoom = room;
-                    if (joiner != null)
+                    _ = joiner.Login(playerName, password);
+                }
+            }
+            else
+            {
+                GUILayout.BeginHorizontal();
+                GUILayout.Label($"Xin chào, {joiner.LoggedInAs}");
+                if (GUILayout.Button("Làm mới", GUILayout.Width(80f)))
+                {
+                    _ = joiner.RefreshRooms();
+                }
+
+                if (GUILayout.Button("Đăng xuất", GUILayout.Width(80f)))
+                {
+                    password = "";
+                    joiner.Logout();
+                }
+
+                GUILayout.EndHorizontal();
+
+                GUILayout.Label("Phòng (mỗi phòng cần 2 người để ghép trận):");
+                foreach (RoomInfo room in joiner.Rooms)
+                {
+                    string name = room.RoomKey == "auto" ? "Tự động ghép trận" : room.RoomKey;
+                    string stateText = room.State == "full" ? "đầy" : room.State == "waiting" ? "có người chờ" : "trống";
+                    if (GUILayout.Button($"{name}   [{room.Players}/{room.Capacity}] {stateText}"))
                     {
-                        _ = joiner.Join(playerName, room);
+                        lobbyRoom = room.RoomKey;
+                        _ = joiner.JoinRoom(room.RoomKey);
                     }
+                }
+
+                if (joiner.Rooms.Count == 0)
+                {
+                    GUILayout.Label("(Chưa có dữ liệu phòng - bấm Làm mới)");
                 }
             }
 

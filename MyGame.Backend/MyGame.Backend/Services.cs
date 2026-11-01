@@ -22,6 +22,9 @@ namespace MyGame.Backend
     {
         [Unary(Requires = Roles.Player, Details = new[] { typeof(NoRoomForVersion) })]
         Task<RoomTicket> JoinRoom(CallContext context, JoinRoomRequest request);
+
+        [Unary(Requires = Roles.Player)]
+        Task<RoomList> ListRooms(CallContext context, ListRoomsRequest request);
     }
 
     [Service("Pods")]

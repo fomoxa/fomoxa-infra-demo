@@ -98,8 +98,6 @@ namespace MyGame.Server
             }
 
             using var stopping = new ManualResetEventSlim();
-            using var terminate = PosixSignalRegistration.Create(PosixSignal.SIGTERM, Stop);
-            using var interrupt = PosixSignalRegistration.Create(PosixSignal.SIGINT, Stop);
 
             using var pod = new DirectoryPod(runtime, new DirectoryPodSettings
             {
@@ -115,6 +113,13 @@ namespace MyGame.Server
             });
 
             bool draining = false;
+
+            // SIGTERM/SIGINT lần 1: xin directory drain (ngừng nhận room mới) rồi chờ hết người chơi.
+            // Lần 2, hoặc khi chưa đăng ký directory, hoặc directory báo lỗi: thoát ngay.
+            // Hết hạn drain_seconds thì OnDrainDeadline xử lý.
+            bool drainRequested = false;
+            using var terminate = PosixSignalRegistration.Create(PosixSignal.SIGTERM, Stop);
+            using var interrupt = PosixSignalRegistration.Create(PosixSignal.SIGINT, Stop);
 
             pod.OnRegistered += registration =>
             {
@@ -247,6 +252,12 @@ namespace MyGame.Server
                     }
                 }
 
+                if (drainRequested && runtime.ServerManager.PeerCount == 0)
+                {
+                    Console.WriteLine("[Pod] drain: het nguoi choi, thoat");
+                    stopping.Set();
+                }
+
                 Thread.Sleep(1);
             }
 
@@ -258,7 +269,24 @@ namespace MyGame.Server
             void Stop(PosixSignalContext context)
             {
                 context.Cancel = true;
-                stopping.Set();
+
+                if (drainRequested || !pod.IsRegistered)
+                {
+                    stopping.Set();
+                    return;
+                }
+
+                drainRequested = true;
+                draining = true;
+                Console.WriteLine($"[Pod] {context.Signal}: xin drain, cho het nguoi choi (gui tin hieu lan nua de thoat ngay)");
+                pod.RequestDrain().ContinueWith(task =>
+                {
+                    if (task.IsFaulted || task.IsCanceled)
+                    {
+                        Console.Error.WriteLine($"[Pod] RequestDrain loi: {task.Exception?.GetBaseException().Message}; thoat ngay");
+                        stopping.Set();
+                    }
+                });
             }
         }
     }

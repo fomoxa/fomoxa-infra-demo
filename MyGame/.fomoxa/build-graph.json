@@ -1,7 +1,7 @@
 {
   "schema_version": 1,
-  "generator": "fomoxac 0.2.2",
-  "schema_fingerprint": "sha256:e51e1b8259622c21e24bc63602be68df0ed4083c7e59f62f87145f9b04f64cee",
+  "generator": "fomoxac 0.2.3",
+  "schema_fingerprint": "sha256:d55606506a636130a19dc770259a30a4cf57df51ed7f36b8d860a6a5a21ce734",
   "sha256_of": "each file with its `// generated-at:` line emptied, so an unchanged schema keeps an unchanged digest",
   "sources": {
     "Assets/Network/Models/Backend/Players.cs": {
@@ -18,35 +18,35 @@
           "model": "JoinRoomRequest",
           "codec": "rpc",
           "fingerprint": "sha256:daeafd90eb282cf1356dbe2f13f0f434449559b4a1da7bb0d005ddcbea8f8bb8",
-          "sha256": "744376878f4a95553badf5b4505ebcfbc492540bde09ee939ce3e0aa8319d9d0"
+          "sha256": "24c2f8af6423a02f557c7e1f08fe22e7a99828aa9d2f87b10fbc473398806113"
         },
         {
           "path": "Assets/Network/Generated/NoRoomForVersionRpcCodec.cs",
           "model": "NoRoomForVersion",
           "codec": "rpc",
           "fingerprint": "sha256:070f96f12081f464091d894a2dd09494685554ea0436fe7640fabaa10cdccc1a",
-          "sha256": "68efa333bcf1b0cf1c58d9a9f532768b941c08e09db98357c3841131dd546ef0"
+          "sha256": "38d9bcae3672d5d2c93e5ecb96b7ca336702f5ecb669e51189a96f98f53771a3"
         },
         {
           "path": "Assets/Network/Generated/PlayerLoginRpcCodec.cs",
           "model": "PlayerLogin",
           "codec": "rpc",
           "fingerprint": "sha256:38ad643c414405aa97f06d51672a4dccd7fff5ac1be16af45a0ef84247c5f858",
-          "sha256": "ead078bc6f905db23f48ab88a0de9e9654b89057632426fccb2310bc0e753803"
+          "sha256": "13db8b718bc654c10deedbe08aa49a46d055b2c1403967aef8285d8b3420d7df"
         },
         {
           "path": "Assets/Network/Generated/PlayerWelcomeRpcCodec.cs",
           "model": "PlayerWelcome",
           "codec": "rpc",
           "fingerprint": "sha256:d25c4670480e53cce1777c30a8fbe43e41f539025c36985afdbc7bd7c7bfea9a",
-          "sha256": "e2b4cff35e4abc33c38a0c5f84b80fc341c54ac9fa3051b4b94f62db8eefcf18"
+          "sha256": "5fe74cd78f3de9be8cf5a9297d4b48abc345233a684319bbdcb5272017a78786"
         },
         {
           "path": "Assets/Network/Generated/RoomTicketRpcCodec.cs",
           "model": "RoomTicket",
           "codec": "rpc",
           "fingerprint": "sha256:af29031b611a669f133f20b4d60829d8c714a49df17c4533a978e6a5005c6926",
-          "sha256": "0b47afc2390c7a785909be2e9246bc5dcd47319fcd1ef1b0a061d3689c30b67e"
+          "sha256": "cfb9198c449973793133550ff32f8cf6c293f7694fa0cbb7b17b6a7f8e7d0401"
         }
       ]
     },
@@ -61,14 +61,44 @@
           "model": "PodLogin",
           "codec": "rpc",
           "fingerprint": "sha256:c505bec161a941afff6e03640b962c6440f60750529e78f6c2bc9502a12fcf17",
-          "sha256": "452b87f50fa69f981bc21551a814d75e6cadb3bf1ce24d6fd547c521ccb446ee"
+          "sha256": "16bd3e73c91e7ac690b0ec1338aef420c0b13d56ba4c92683928d2ee5b842c98"
         },
         {
           "path": "Assets/Network/Generated/TransferPlayerRequestRpcCodec.cs",
           "model": "TransferPlayerRequest",
           "codec": "rpc",
           "fingerprint": "sha256:72c6e29eb93ecbbeb8fedaf89be432f3021182248c29abb2993588df1e4a708b",
-          "sha256": "97328437b0962149f1ca5d55be67c31e18953c44642c602301155c2f9f74755b"
+          "sha256": "50b66de77c4f7ed935955c578f0cfcbc3bc5b0380ad17230279ba3b563bfec1f"
+        }
+      ]
+    },
+    "Assets/Network/Models/Backend/Rooms.cs": {
+      "models": [
+        "ListRoomsRequest",
+        "RoomInfo",
+        "RoomList"
+      ],
+      "outputs": [
+        {
+          "path": "Assets/Network/Generated/ListRoomsRequestRpcCodec.cs",
+          "model": "ListRoomsRequest",
+          "codec": "rpc",
+          "fingerprint": "sha256:ec0077b09426fb42e92c7c22915d30e78c0dcc4e31c29b5ea8ef0203e2aa343b",
+          "sha256": "c1dbbbc36bb8cb2f76ab46eaebc1d479737c21a024e438f85cc6a79a36a07ac4"
+        },
+        {
+          "path": "Assets/Network/Generated/RoomInfoRpcCodec.cs",
+          "model": "RoomInfo",
+          "codec": "rpc",
+          "fingerprint": "sha256:7c4e85165a0556202a93bf639f3e703a5c9efd4b17b24f8da977557ffcc44cd7",
+          "sha256": "e7df74e488c111b2acd049b0e6e985931db84cf7a2f0fd3a12d82e37c63ed9a9"
+        },
+        {
+          "path": "Assets/Network/Generated/RoomListRpcCodec.cs",
+          "model": "RoomList",
+          "codec": "rpc",
+          "fingerprint": "sha256:ca2d0b231c774fba60907bd314b9946cee65822477d79d95e8826e47d42b5adf",
+          "sha256": "8766eb77fdd87ec1a865fec0198a00017fcf0ae2d2bd8ba8ee69582a835dbf5e"
         }
       ]
     },
@@ -82,7 +112,7 @@
           "model": "MoveInput",
           "codec": "net",
           "fingerprint": "sha256:a2d153b269a017b61788679bc3890ee93c97d9d36a7fe8e2cbca2aa426ec28d7",
-          "sha256": "c06bc677364519ce8ed77e67394de7af90160eeedeaaa9535152fc2bf6bb106b"
+          "sha256": "b71f3d682dcaa8b68d0549e11b5ae2eaab1de74b60f184ddc25604c6c9d39221"
         }
       ]
     },
@@ -100,35 +130,35 @@
           "model": "FRpcCtx",
           "codec": "rpc",
           "fingerprint": "sha256:0e639d9a7ba779ae8c6ecbd3eab9df46fa1c8777022f6f4dc1a9a310a786b8de",
-          "sha256": "c46bd155b162d5e1112d256cfda0007b093d4eebcbf409b57212e31a741cd059"
+          "sha256": "97875c442399a4020a11b52188c72f70d33b17d8403d6b4218254c7066010827"
         },
         {
           "path": "Assets/Network/Generated/FRpcErrorRpcCodec.cs",
           "model": "FRpcError",
           "codec": "rpc",
           "fingerprint": "sha256:d52ba5dd04c646124e63d5f67b9ecb74ac50cd4a9c68a248bb80d2c704a7658f",
-          "sha256": "f6ff1a46f5c14f6d59fa69837e5f190c41d187a57a368374e5b017036726ae3c"
+          "sha256": "e9a58e78cac07231e328fe4e69b26f22c80494f75b36e00d551ce6e3145a7c56"
         },
         {
           "path": "Assets/Network/Generated/FRpcHealthRequestRpcCodec.cs",
           "model": "FRpcHealthRequest",
           "codec": "rpc",
           "fingerprint": "sha256:39fb89f8eb3207c74c1cfb92868f0bf57173898081fd777c69872c8eb3a77eed",
-          "sha256": "e97ef3fb7a19c36cf65454cb64e0c8796eae2190f6c27729035e3a4750513609"
+          "sha256": "6da2f91ec0a3ec7050244d600330bac50489c39fb6206b497c8bef7305bd4818"
         },
         {
           "path": "Assets/Network/Generated/FRpcHealthResponseRpcCodec.cs",
           "model": "FRpcHealthResponse",
           "codec": "rpc",
           "fingerprint": "sha256:26b2049d771cfbee1624ff91ac2e23f8e0fcbd76dc9e772db11d278e27d2bb99",
-          "sha256": "09004dab6078fad1b5cc743eff221f7912bc19b853e3ffa19c41b850a845c1aa"
+          "sha256": "b9d40319109454784b9ffe93604b6801f9d0c14f8232a14729ed45659c177465"
         },
         {
           "path": "Assets/Network/Generated/FRpcVoidRpcCodec.cs",
           "model": "FRpcVoid",
           "codec": "rpc",
           "fingerprint": "sha256:2b58fe10f955c83386b3b377b64aa08e695dc84d012a391c80da151205c7bac4",
-          "sha256": "89cd1360cff551558a2592882083c7fe24669c005ed47c9cc58463c79d77bffe"
+          "sha256": "2439a4b0ddf70bf52db13eeaf3696df49d203b4cc028b5a9ed8ec2321b07584f"
         }
       ]
     },
@@ -142,7 +172,7 @@
           "model": "AnimatorState",
           "codec": "net",
           "fingerprint": "sha256:946dea7480b40eb311c883b63d50dfe5b44739433bfe17780a05bbf5102edc27",
-          "sha256": "8f7684f64322dfbd0678be7b89d1ff76405740c6912a5baacd9ba3efecce1c43"
+          "sha256": "1bf40ad270fdface8497672ba84bc90aa07df94792c6e4428e3d134e7f8ba6ce"
         }
       ]
     },
@@ -156,7 +186,7 @@
           "model": "CollectionChanges",
           "codec": "net",
           "fingerprint": "sha256:778cc5b9ff4b77392641fd2814d7460b9b1d74dd8688bff019bf3c140a2d395c",
-          "sha256": "05e43aafa724e7ef1e02d1b30c913bfb58afd5e74a05dc51937d543db00c352c"
+          "sha256": "aa328467a66e3593a7d5ec0f8f427b0136cbc8d2fc4c7d12d038e659af2d7bea"
         }
       ]
     },
@@ -171,14 +201,14 @@
           "model": "CollectionContent",
           "codec": "net",
           "fingerprint": "sha256:5034597a0ca7acad2b6d7c70d2fb928b789990af6b74f8dc7b48d03d50b80822",
-          "sha256": "bbfa23953ad1954907d2a89be498599535b8d85d25dcdeed7f1bf4eab88e9242"
+          "sha256": "23e910f85f6cdb8f90c67cd147016a1fcc290e6f5fed5d5450c195f3ece67597"
         },
         {
           "path": "Assets/Network/Generated/CollectionContentsNetCodec.cs",
           "model": "CollectionContents",
           "codec": "net",
           "fingerprint": "sha256:00e656e9699ab4a788432b156a3c87eeeb546c4b3512d41a8b3a8a70a4a4300d",
-          "sha256": "c6e49ecbd84b2775fbf41e2a2aeb653d877d43241773f7ec997bbc7d28748055"
+          "sha256": "a9436d6cf49dccb67191b1f7ee7ccfceda02412269ac491ac0dc1212ea31b0b3"
         }
       ]
     },
@@ -192,7 +222,7 @@
           "model": "CollectionResync",
           "codec": "net",
           "fingerprint": "sha256:92cd01c58ecea127454104b838be47780827bb1bb8afba2446305abd08557236",
-          "sha256": "0c514552208e95a3872c4fa0c821651374284340f42ea7a9f7673bd50724be3c"
+          "sha256": "8aae700001e1588fb95713c3304aaf9be275699f8dd4214120c092b8b151c4ee"
         }
       ]
     },
@@ -217,84 +247,84 @@
           "model": "BoolValue",
           "codec": "net",
           "fingerprint": "sha256:f6751f5012cb8ec6a6f3d6fef90ff79652a6c3c6e68337d95a8c2de60eaad3f4",
-          "sha256": "35e9a9882627bd2fe4341551fe3376de6392a9fc37d65207d66437f3b6f72754"
+          "sha256": "7a3c80a753cb8cf1aa525277642319f7c33aaee97decaa87906156216dff0de0"
         },
         {
           "path": "Assets/Network/Generated/F32ValueNetCodec.cs",
           "model": "F32Value",
           "codec": "net",
           "fingerprint": "sha256:a5c2697936f8585b91db3ecb36c8a6893d8e41349a5ea9b9fafccb63f85e9dd4",
-          "sha256": "e1a637d961ff98cda1244fd12ded2849ed747c975b068c429da8b92b677c28f4"
+          "sha256": "3604da59ec6c361dc093bb7502bc6231cd2c6e76737d49c463ef10cd723a651b"
         },
         {
           "path": "Assets/Network/Generated/F64ValueNetCodec.cs",
           "model": "F64Value",
           "codec": "net",
           "fingerprint": "sha256:46bcb9a14ee05a47c1cab11c5a7dfd2598f3cdc4ac62bc876ab090101821e4af",
-          "sha256": "d5eda314a491b18702d7232a56b3877427b7356b35956bc98656a07b27f85296"
+          "sha256": "bb11dd762978de12f6ef6393d0e79177533fcba32a74fbd173bd10061418d602"
         },
         {
           "path": "Assets/Network/Generated/I16ValueNetCodec.cs",
           "model": "I16Value",
           "codec": "net",
           "fingerprint": "sha256:39e644fc448a1ec9b59fcba10263277096a4d758fa6ef06c4c2397328c9cf6c3",
-          "sha256": "92c27451982cee61b2e34ce8f0ac7e0e58002093d3d3e7e7296f5389fc5573b6"
+          "sha256": "f9e7abf6dab36cdc84e924bf925ab6ccdee97376d34c6d213adcbd16191fb370"
         },
         {
           "path": "Assets/Network/Generated/I32ValueNetCodec.cs",
           "model": "I32Value",
           "codec": "net",
           "fingerprint": "sha256:34f409d3dda1ed14c17d3a0ef7f69ee8fae594a4880fb39d039981ae2006c953",
-          "sha256": "2793d4a48ae609bf094751d5b34701959723bee22db701627a5bb9294baaa7e4"
+          "sha256": "1d83ca44eba21e6a092f4ec0606b86f41306804fcffababb4c4455242834f278"
         },
         {
           "path": "Assets/Network/Generated/I64ValueNetCodec.cs",
           "model": "I64Value",
           "codec": "net",
           "fingerprint": "sha256:217656529e222e394f055b2df03e964bd6505d51d7f7bc59a9e73a156593e3ba",
-          "sha256": "92c6675b8d5ec709bce69f5747a6409bbd7334d9fbff91f3fe21c7879c514954"
+          "sha256": "e9a0d43524f7c4c8762287af59f0b8dc829a9d9bc06385b936d6f5bc8474c7b4"
         },
         {
           "path": "Assets/Network/Generated/I8ValueNetCodec.cs",
           "model": "I8Value",
           "codec": "net",
           "fingerprint": "sha256:83826193fa462004b2d995d77e772d366399eb6f03403d78029e1130fab1d5c3",
-          "sha256": "aceb714706b85e14eae35a263a7b7c3197c6290fb2d6531a00af61c54ebb3778"
+          "sha256": "d2e2d9f997b2e5f4cd494fde518d00b7b61b009536c017cdef629908f9f74ce9"
         },
         {
           "path": "Assets/Network/Generated/StringValueNetCodec.cs",
           "model": "StringValue",
           "codec": "net",
           "fingerprint": "sha256:b2f90c6b022a24b4a437eae2ab2747cab992abf7716fa17d76af57a6ddc8f656",
-          "sha256": "97d2a10210ff567730e1ad95e75e7377079b374aaeec6641c4bc38b643cff1d9"
+          "sha256": "c4d34360a6a0d69672303a59f57bf4a27ffafcb466deca44f35f94d0ec05294b"
         },
         {
           "path": "Assets/Network/Generated/U16ValueNetCodec.cs",
           "model": "U16Value",
           "codec": "net",
           "fingerprint": "sha256:249692c4d9afd5c73f1c60f4def5895961718b6bd95bfb285b4c8aa218b6758f",
-          "sha256": "22267113b3fd5856b5b0b93f6438833f0ce6bcd9f957f4ce9fbf1d04485b3d6a"
+          "sha256": "a4c77bf3b3e481b118978c543fa2d73e11715d4d353a17a2f8a9ee5c218f3477"
         },
         {
           "path": "Assets/Network/Generated/U32ValueNetCodec.cs",
           "model": "U32Value",
           "codec": "net",
           "fingerprint": "sha256:d9d0cc7362650f7dd609e8c8f9e598ee8156028c7e6e67e00da7b63b23792a68",
-          "sha256": "0f88d30f214de67a01291cc399e9960b0943e6632211a108fa1cd1a016faab1f"
+          "sha256": "35db6d61b1526cb2f495323d33da986c4c6fdb3a070e01788a7717535321e3de"
         },
         {
           "path": "Assets/Network/Generated/U64ValueNetCodec.cs",
           "model": "U64Value",
           "codec": "net",
           "fingerprint": "sha256:2c50b8b30317189e63b92f643e2bcfe586f36c8236c0b2e1a2633942bbed83dd",
-          "sha256": "b78d2ded90607dbee867a1a2849d39ab6592773386229f94226d3b321d2062ff"
+          "sha256": "7b3a07208d63421db8668cedec5619fd2fa303edf6193a8dd6f5ad8474c7b1df"
         },
         {
           "path": "Assets/Network/Generated/U8ValueNetCodec.cs",
           "model": "U8Value",
           "codec": "net",
           "fingerprint": "sha256:414ba260fe687b338166412dfef3f2fd86c1529ab85f0e6e850e73368cd7f65b",
-          "sha256": "554cf201d6a54c14ebb396430212b5894edea502cc16822894567d089a957c63"
+          "sha256": "4e25cbd628d09ac7a900573ad590a3e3626aede252428ab735e5d466af61a6c9"
         }
       ]
     },
@@ -308,7 +338,7 @@
           "model": "ConnectToken",
           "codec": "net",
           "fingerprint": "sha256:6f09034f66b2d8cc38188f647d5a5b8a626644b0093e835b4bd9fae5a992c1f9",
-          "sha256": "1bbdf885eccf575e0834fc08153dbbeb722ba5affe9b07d5526eb3523a7a173b"
+          "sha256": "e0e5893b25cadb15e3c8b5e64a89ed310fc9656947774d97964d110592a17e86"
         }
       ]
     },
@@ -322,7 +352,7 @@
           "model": "ConnectTokenSecret",
           "codec": "net",
           "fingerprint": "sha256:0c607b2e36c3881160b6c9a605b58b1ce927942706863fc88f5fdcc3cf6fb0ec",
-          "sha256": "6d2a4f74b1a3ed39c1592bdd4579220b7de0004187470b45d7b7a98dca1f0326"
+          "sha256": "022766d82a8f1e25dd85cbedf7f2c018260c019df411cce9d5551b658ca6c495"
         }
       ]
     },
@@ -336,7 +366,7 @@
           "model": "ConnectionGrant",
           "codec": "net",
           "fingerprint": "sha256:04bcd6e8c0c4cdb2ba61b71da51ab2804f5d979073c6bed54c8cbd136029297f",
-          "sha256": "eb7b1bb318c7d9ca1ef36e0def264f71a79f0421618842e5f6d0912bda7b54e7"
+          "sha256": "5bb5d8d10c9c41e9c0cd5f79ce9ea28abceb6317804b79df22152f371b523c31"
         }
       ]
     },
@@ -350,7 +380,7 @@
           "model": "FragmentPart",
           "codec": "net",
           "fingerprint": "sha256:b56c76e7e9461508d9857285adcdaafeb1368f34e9797e0436e4703c9f462b61",
-          "sha256": "494317b6187291fa73577a582ffb8eef168ef242af9cafd92d16326df95d1346"
+          "sha256": "7cc39dc10a1c4e499e3b41c76213f2d32c62a0ec847ae63b4a329cb1c58b341c"
         }
       ]
     },
@@ -364,7 +394,7 @@
           "model": "FragmentStart",
           "codec": "net",
           "fingerprint": "sha256:f3f3d65e5a07559896ff6837f6ad6f4319005e610a09edbb9340f8f8d50732b6",
-          "sha256": "704c2dc1be0d898cdeaeaac1df90cd63c76c5300e791a37ad1f84c4766199fc1"
+          "sha256": "aae263b2a362c90c2e39ee048d41639aea17a93cc20230c4ee9577866e252066"
         }
       ]
     },
@@ -378,7 +408,7 @@
           "model": "InputFrames",
           "codec": "net",
           "fingerprint": "sha256:0ff27abfb43d4c62327a56de5389c6b43bc9fc74a24bc97c3711b8790e3bb2ce",
-          "sha256": "d83a66c624ac1b5e2cd906d2e91375c4bc8d427aae49d8c682e98f0ae83396bb"
+          "sha256": "7ce8220c4537a3899fd44d3dbcd24201817160cbe0d09fd08824a0d4676624fc"
         }
       ]
     },
@@ -392,7 +422,7 @@
           "model": "LocalPeer",
           "codec": "net",
           "fingerprint": "sha256:a5d4734ef76f4dfcd539619779903f7f48d2208ba688bd33f635827c3134aa6b",
-          "sha256": "e44f3939a5e0870e812d03fe11a8e75c32c8bf702039cb7377cbfbc103a7bcae"
+          "sha256": "7ab3a34d2f85ff0f919d216a46f309a5653b262e1785b880cd12868ea891604f"
         }
       ]
     },
@@ -407,14 +437,14 @@
           "model": "BundleEntry",
           "codec": "net",
           "fingerprint": "sha256:9adca46177a3570704e3f058abe3ca6e851391cbc460bb7ffa402ec69b68ba34",
-          "sha256": "c0a78586a0c79575685f8c53e716469c7a4cb245eab4dce60048ae1f2753f3e3"
+          "sha256": "397d3e03fa5eb111dc5aa70fe911271555b61d160d63b20658f5b5a4dee02803"
         },
         {
           "path": "Assets/Network/Generated/MessageBundleNetCodec.cs",
           "model": "MessageBundle",
           "codec": "net",
           "fingerprint": "sha256:50cb0322cc54be41084fafb314ee2f3967b6d8b73cf2b231e61afbd04e5a1483",
-          "sha256": "612b3ab5dfeca47fad96ac5ee420f971a9718250983a4eaa000502c2de3fbd88"
+          "sha256": "80de59a134ed9ef7c6346087834563c5f3387ea911d1b4b97e63404545207ab6"
         }
       ]
     },
@@ -428,7 +458,7 @@
           "model": "ObjectDespawn",
           "codec": "net",
           "fingerprint": "sha256:dda307de04ef42963af9d005df6c7c526963d968a3bd55d8fa62d9e0119732f4",
-          "sha256": "fdeb8d54c9fc1b168c7eb1842336ab655e0da11c43680e371a136a146c0c08ec"
+          "sha256": "7d49185102a77e4c6a16c10c45656c8242098eaf4708db6c81fa9ca3ffadf732"
         }
       ]
     },
@@ -442,7 +472,7 @@
           "model": "ObjectOwnerChange",
           "codec": "net",
           "fingerprint": "sha256:6969477015076f2070dcb0d332dc0aae89d969b5c577d6b142d8b026020ccdb2",
-          "sha256": "e26ebe14abff00d8097c1ebd746236ac2e30613b7c0c53b0aa2769247054e687"
+          "sha256": "871318a836dd98ee94ed2659e0348d8a4c8edfc687181bd373c193268201d62e"
         }
       ]
     },
@@ -456,7 +486,7 @@
           "model": "ObjectSceneSpawn",
           "codec": "net",
           "fingerprint": "sha256:387c4247a3e10d645d3a90238afe11af414fb52fb349a9886ad7cedc6f38ae2d",
-          "sha256": "a638effb68d9c06a015315bc88e4a5197b7931dd09d9f42a65e89a28e74050ff"
+          "sha256": "8637873c9a9b9637fe30b00d77a1b616450afeb9bd1a97c5497327ee7767c820"
         }
       ]
     },
@@ -470,7 +500,7 @@
           "model": "ObjectSpawn",
           "codec": "net",
           "fingerprint": "sha256:a7c0963e41c8d496747e2e5800fab7f0a4fb6f214bf183fb4853de0c476e67fc",
-          "sha256": "6ca1eb860352df2929dcf112beaa52a23b5e5cf16a9e4221beb3e27c20a1ab13"
+          "sha256": "62c16dcb3fc6e8e21b1546aed3d80a4bb0625b6488287dc92af47754134418b5"
         }
       ]
     },
@@ -484,7 +514,7 @@
           "model": "PeerLeave",
           "codec": "net",
           "fingerprint": "sha256:2ac3087c85a8996638d23e01aa4bc0349c93b0d498a76b5d2a8c69ce0a1324f8",
-          "sha256": "6556387275f2b497f2b38c3a879fc43eed083612761134ced41ae99c0884fced"
+          "sha256": "bdfe3ba9c4af0ac0e08afdc25273a12546790ca7adef90affc2ca469a043cac3"
         }
       ]
     },
@@ -498,7 +528,7 @@
           "model": "PeerTransfer",
           "codec": "net",
           "fingerprint": "sha256:389f08ce5ffd51b9fdaac4e519f14a40ec775c375482efeebb7b8b8fafe9bc3d",
-          "sha256": "386431f41a1bd18cd47e72e7fe77d469308979e5f75c3e39568c63cf66903b33"
+          "sha256": "d9e8580c312853dae62a5923058aa667d50672080697c91da1177ededfc0a974"
         }
       ]
     },
@@ -512,7 +542,7 @@
           "model": "ReconcileState",
           "codec": "net",
           "fingerprint": "sha256:3d41c0db5e4f6cc28df831a63e1cf59ab9a5ac37062319cbba04161a5928232a",
-          "sha256": "ac8f1d2ec75eb5409bbdb58d8866be21bb551c0a97270af7f16d64fa8d675ed6"
+          "sha256": "c877e00d49cfcd65f40bc4d9700c22f7227f9c2d6041f96759fbf2bfdb5daa64"
         }
       ]
     },
@@ -526,7 +556,7 @@
           "model": "ReliableAck",
           "codec": "net",
           "fingerprint": "sha256:2919cb926d7c0b4b18846f376bddf5fa7fa83924f45afd0b470f3d237a3b6282",
-          "sha256": "7bed5fda9e325b10876d64fbd3869809960c0eb4257cb163db1f9cca91960bc0"
+          "sha256": "9f2680b2eafde3eac0e442c0ead2f73eaad291f6eda0998cb750321bb82359e4"
         }
       ]
     },
@@ -547,56 +577,56 @@
           "model": "SceneFile",
           "codec": "net",
           "fingerprint": "sha256:294725bdf6a3064559d54047ed9f5ec2d1ae2ed89ad1a5316259484026600e7d",
-          "sha256": "f8509e68a0773bdf52b1b8d5a20f75800eb0f73d28acf91c769145d09512c1ac"
+          "sha256": "de1613fb7a4f3f9697b7ae2db8b180f7978c384d3a195eb6287f9932e9489cf3"
         },
         {
           "path": "Assets/Network/Generated/SceneFileBodyNetCodec.cs",
           "model": "SceneFileBody",
           "codec": "net",
           "fingerprint": "sha256:eb56fb3e68044912e842d329753062fa8cda610dcdb5f02f16ef8dbfdab81023",
-          "sha256": "a3d20f3a46d3dff64fa8f4cbbd84cf5654dcfce17034942b6d1331f4edfeee72"
+          "sha256": "11ea57b7772e43870ba12a570587a4aac3b07ae02ba94e9b0f7c419e15fbf033"
         },
         {
           "path": "Assets/Network/Generated/SceneFileBody2DNetCodec.cs",
           "model": "SceneFileBody2D",
           "codec": "net",
           "fingerprint": "sha256:eb00129256754e56c8e74b71e3b5e68a485cd961f7337e131b313efd8da8e15a",
-          "sha256": "a87bafd20e5be8f6473ddecb6e90628fa2da6009020da1a6adda9d46e731092e"
+          "sha256": "0a6d27d31f38018303b406e22699fbedba23cb39bbd7da966642c19fe2d662c8"
         },
         {
           "path": "Assets/Network/Generated/SceneFileColliderNetCodec.cs",
           "model": "SceneFileCollider",
           "codec": "net",
           "fingerprint": "sha256:238cb95ef64c099aba9872a2facb0f50f5e96fd636795e4f74b28d08f1766355",
-          "sha256": "24ddf4ee3d545e3e7e82149921a397946e1d1f6e521fc552336293ade4d50756"
+          "sha256": "eec1e250a341831a7b54cade1f39c339463a09d987319657f3955a50d451c6df"
         },
         {
           "path": "Assets/Network/Generated/SceneFileCollider2DNetCodec.cs",
           "model": "SceneFileCollider2D",
           "codec": "net",
           "fingerprint": "sha256:95e8d55e703fd8b46363c7719ac85efdfca870ccafe8276ef1072962327d28ec",
-          "sha256": "145f6b2b894aa873ad5f2657059706dfb529fcffc71ff36faf9047fd4fe9e1cb"
+          "sha256": "16c245adbb201f0c2f4733b95d9f7e8329dd4d6db8be7482ca4043e03532a511"
         },
         {
           "path": "Assets/Network/Generated/SceneFileMaterialNetCodec.cs",
           "model": "SceneFileMaterial",
           "codec": "net",
           "fingerprint": "sha256:18e04a1f8bc79a1691e7b8d8ef0950172e917a40debcb61ba9cdf68fc6ff69ba",
-          "sha256": "a7f828df183e00f90c3586f2df0f08d3cffe5825810dac14a14ea1bcd301d010"
+          "sha256": "119ccea96d6c33b60d3d8fc16b05566d2d99d2626ee5e3733cdb6415df84b404"
         },
         {
           "path": "Assets/Network/Generated/SceneFileObjectNetCodec.cs",
           "model": "SceneFileObject",
           "codec": "net",
           "fingerprint": "sha256:e85ab6aa6bb6414b5b97089efacceb8013f7ca5db5f2075efb6694c32642aca1",
-          "sha256": "6f7e040ed4386436b7d30c9f7e68234dd6c3daa87654ec12912b4ca0a4df3b7a"
+          "sha256": "abba7cd73f51ebf95334013fd90920df7a887e717be65be083fb1011bb399920"
         },
         {
           "path": "Assets/Network/Generated/SceneFilePoseNetCodec.cs",
           "model": "SceneFilePose",
           "codec": "net",
           "fingerprint": "sha256:402f32a52f8fc3be9f23697a032122f72f48b9bf8256c2a743e73d5777aa6544",
-          "sha256": "01b2c6349ba2487facd650e27838ee429e69233ca580d331f2e3c0cee99dae44"
+          "sha256": "92fbddc36532a50d17c4881591f70ebdea1ab9c182481ce3e54551072dc38a3e"
         }
       ]
     },
@@ -610,7 +640,7 @@
           "model": "SceneLoad",
           "codec": "net",
           "fingerprint": "sha256:0061dc248bd029c7cda79bba1ca10d3a7a22d17b4209c989257d80c9ae3c60dd",
-          "sha256": "08a63bd8299f9a5c31a1435674696eef44ed3fadde45b6b86184f92b5a2ce0bb"
+          "sha256": "33637f99ed3d72c2c70e09b54b4440a33968507eafbbe5302debc0cf63f548a9"
         }
       ]
     },
@@ -624,7 +654,7 @@
           "model": "SceneLoaded",
           "codec": "net",
           "fingerprint": "sha256:d4ba7fc5758aa40087fe6b0295e7db10bed28c47436c5790a3fd222998f23e8a",
-          "sha256": "56e2fda8720beedd0f0a8d1a242b7e43b4cd41648c05ab3d9782d678349b91b3"
+          "sha256": "c55e332e2406da7e1e0d670d8a1fbb454b84ef57ca2100ec0c66908aee46d239"
         }
       ]
     },
@@ -638,7 +668,7 @@
           "model": "SceneUnload",
           "codec": "net",
           "fingerprint": "sha256:4e7375e4e9dc5e6887ad0d0601a1be72e7692932474e4ee4b264147bc980beb7",
-          "sha256": "fb6a9d54eb0a5b3e1809b22c120d44aebc56540cb50accf00a1500e4f38f35f2"
+          "sha256": "c485cc7759de4d1c629ac4e73e58907c6f7512b8da4207c57eac5ac5b1094f5b"
         }
       ]
     },
@@ -652,7 +682,7 @@
           "model": "SessionClose",
           "codec": "net",
           "fingerprint": "sha256:7f93f00ac7a7a60ac302363432c20eb6cb122cb188282d58dd8774864227c097",
-          "sha256": "9f127a998e73df7516e59dbf60edb1d9c4045c942367df697edecfc61a39510f"
+          "sha256": "7f344f84df3d8e1e5232705e0bc7bee98db0e281929b61093864e12a9fee1e9e"
         }
       ]
     },
@@ -666,7 +696,7 @@
           "model": "StateDelta",
           "codec": "net",
           "fingerprint": "sha256:c709753ce0caedb5e7670451807766fa1dac85f57da87f3a52dfad1227ae165c",
-          "sha256": "f22333184931f1169d8b22d833f5a0f2a91d82c4f83a657af88e780e49dad291"
+          "sha256": "ed962c08e066fc4e2541a7cab1ae5cc03f9b8764b83fe95c6ec5ab1b72678265"
         }
       ]
     },
@@ -680,7 +710,7 @@
           "model": "StateResync",
           "codec": "net",
           "fingerprint": "sha256:036db9745ffc78fa23426f2ef3ef2280dc5cd08dbbbf8d29833d2aa7aa72f3dd",
-          "sha256": "1503634f7ec5d06d3413eeec98c3909f060a30530829702e530687ef7bd15a42"
+          "sha256": "ce8efeed4b9d2d1bfa0b7d45bff46e448ff28cbafe0c5f65e2dacbbbe7e61e3b"
         }
       ]
     },
@@ -694,7 +724,7 @@
           "model": "TickPing",
           "codec": "net",
           "fingerprint": "sha256:1d6e28cf0d4b9ab361b7f95524b592406c50d5e9707de7a756d9ddfc70c9d02d",
-          "sha256": "ffed94f2ab0b54f5d2e72db4b90369de2cd6b0be8083dfda9a5b03f66ad308b5"
+          "sha256": "5825c6ae8757d85f721bda4be1d1ae94915a4a32ed43714a0d63f6e4bda6e444"
         }
       ]
     },
@@ -708,7 +738,7 @@
           "model": "TickPong",
           "codec": "net",
           "fingerprint": "sha256:89fef9f4fb791b95a7bd49fea7f4561222387be3f66218ad068f92f6efcf9981",
-          "sha256": "8cffa1c04eb661a4405ff8ce6c1b7a39ffad271377e98c882a891c7c8a8b5a95"
+          "sha256": "5271e860f5d41e19e6b3fa8e1d5b4c7e938579b9733add4a54f75e1f121d776f"
         }
       ]
     },
@@ -722,7 +752,7 @@
           "model": "TransferTicket",
           "codec": "net",
           "fingerprint": "sha256:bb195202f6e6b69b11a124639486150c9e5f744bade77b8f67fb7c93570d4b13",
-          "sha256": "a96037d8892153bacc8f096a30cec29765cf342687bddc929e4b58389f612a12"
+          "sha256": "e200a5bfa864a3f980d5958150f3dea362bbdef458c8fdd186e9a420eb1b2450"
         }
       ]
     },
@@ -736,7 +766,7 @@
           "model": "TransformSettle",
           "codec": "net",
           "fingerprint": "sha256:671368cb7bbe68d822b56311a3ed8cc74db12fcf9406f2798f6ad42f092f28f5",
-          "sha256": "8a8a702242808bb094e3f61e2bae634f276beafdd1e7c19424a679f7a94d0845"
+          "sha256": "8c9799f242091aee44fc4b01975defe7fb2bef5cb4d701dce677940f5ac0b6fe"
         }
       ]
     },
@@ -750,7 +780,7 @@
           "model": "TransformUpdate",
           "codec": "net",
           "fingerprint": "sha256:62cfa8a4088d2d776e87accf044b28b6baf3ff086bef1d73c9ecfc3034a8a68a",
-          "sha256": "6d13d355e805e597816eeeb7d5e9e07cbefde47ad5cffc175559912f22faee65"
+          "sha256": "37cad5a5356e5aa5e2d215e4507587c0e5bb7a2187e8dfcd7eaad5e242b4fe95"
         }
       ]
     }
@@ -759,17 +789,17 @@
     {
       "path": "Assets/Network/Generated/Runtime.cs",
       "kind": "runtime",
-      "sha256": "c3716844cbaa1740b51bc9e705e2835a0b9788f785317168f22cfb3f7815a105"
+      "sha256": "ee1abec709cc3a0d26ff760611ee6277d6e3cff94ca7f7843e255030011dcd56"
     },
     {
       "path": "Assets/Network/Generated/Handshake.cs",
       "kind": "handshake",
-      "sha256": "04abbcc440e38df600c248ebea8dbf40a01f99eec22652a956d4a95b6dfc3651"
+      "sha256": "7f06c917d3e301eb4bfac68cf1b0f84060cd115626bba6c10fe431cc5a2ed957"
     },
     {
       "path": "Assets/Network/Generated/NetSchema.cs",
       "kind": "net_schema",
-      "sha256": "27ca869fa5fc8c63026655e675e65de9cb477ee4eeb2943250226b1005f7306a"
+      "sha256": "746431c1d4b381d5e8eda43a73447ea2bdeb7284105636c461d18957565326f6"
     }
   ]
 }

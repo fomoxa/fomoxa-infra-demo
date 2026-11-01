@@ -18,6 +18,7 @@ local SYSTEM = "00000000-0000-0000-0000-000000000000"
 local QUEUE = "match_queue"
 local RESULT = "match_result"
 local TICKET = "match_ticket"
+local ROOMSTAT = "room_stat"
 local TICKET_TTL = 120
 local QUEUE_TTL = 30
 
@@ -90,6 +91,9 @@ local function ticket_for(assigned_room, queue_key, first, second)
 
     local result = { status = "matched", room = assigned_room, ticket = ticket, exp = exp }
     
+    -- Trạng thái room để list_rooms hiển thị
+    write_one(ROOMSTAT, assigned_room, { users = { first, second }, exp = exp }, "")
+
     -- Lưu theo assigned_room
     write_one(RESULT, assigned_room .. ":" .. first, result, "")
     write_one(RESULT, assigned_room .. ":" .. second, result, "")
@@ -232,6 +236,42 @@ local function reset_match(ctx, payload)
     return respond({ ok = true })
 end
 
+local function waiting_in(queue_key)
+    local record = read_one(QUEUE, queue_key)
+    if record and record.value and record.value.user_id and record.value.user_id ~= "" then
+        if os.time() - (record.value.since or 0) <= QUEUE_TTL then
+            return true
+        end
+    end
+    return false
+end
+
+-- Cho backend (http_key): trạng thái các room trong pool để lobby hiển thị.
+-- players = số người đang chờ hoặc đã được ghép (chưa phải số kết nối thật tại pod).
+local function list_rooms(ctx, payload)
+    local now = os.time()
+    local rooms = {}
+
+    local auto_players, auto_state = 0, "open"
+    if waiting_in("pool:auto") then
+        auto_players, auto_state = 1, "waiting"
+    end
+    rooms[#rooms + 1] = { room = "auto", players = auto_players, capacity = 2, state = auto_state }
+
+    for _, room in ipairs(ROOM_POOL) do
+        local players, state = 0, "open"
+        local stat = read_one(ROOMSTAT, room)
+        if stat and stat.value and stat.value.exp and stat.value.exp > now then
+            players, state = 2, "full"
+        elseif waiting_in(room) then
+            players, state = 1, "waiting"
+        end
+        rooms[#rooms + 1] = { room = room, players = players, capacity = 2, state = state }
+    end
+
+    return respond({ rooms = rooms })
+end
+
 local function health(ctx, payload)
     return respond({ ok = true, now = os.time() })
 end
@@ -240,6 +280,7 @@ nk.register_rpc(find_match, "find_match")
 nk.register_rpc(poll_match, "poll_match")
 nk.register_rpc(verify_ticket, "verify_ticket")
 nk.register_rpc(reset_match, "reset_match")
+nk.register_rpc(list_rooms, "list_rooms")
 nk.register_rpc(health, "health")
 
 nk.logger_info("fomoxa match module da nap (auto pool ho tro)")

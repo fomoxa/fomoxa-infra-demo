@@ -951,9 +951,9 @@ terminationGracePeriodSeconds: 360
 **Ràng buộc quan trọng**: `terminationGracePeriodSeconds` **phải lớn hơn** `drain_seconds`.
 
 **Tại sao?** Khi Kubernetes muốn terminate một pod (rolling update, scale down):
-1. Drain do **directory** phát lệnh (`DirectoryAdmin.Drain`): pod nhận `OnDrain`, ngừng nhận room mới, và khi hết hạn `drain_seconds` thì tự shutdown.
-2. Hiện **chưa có script nào gọi Drain** và SIGTERM chỉ làm tiến trình thoát ngay (chưa kích hoạt drain). Nên `kubectl delete gs` hay rolling update vẫn cắt người chơi.
-3. Kubernetes đợi `terminationGracePeriodSeconds` (360s) trước khi SIGKILL; giá trị này chỉ có ý nghĩa khi drain được kích hoạt trước (việc cần làm sau)
+1. Kubernetes gửi SIGTERM → pod gọi `RequestDrain` lên directory: directory ngừng gán room/người chơi mới cho pod này.
+2. Pod giữ nguyên người chơi hiện tại và tự thoát khi hết người (hoặc khi hết hạn `drain_seconds` = 300s thì directory ép dừng). Gửi tín hiệu lần 2 (hoặc nếu chưa đăng ký directory / `RequestDrain` lỗi) thì thoát ngay.
+3. Kubernetes đợi `terminationGracePeriodSeconds` (360s) trước khi SIGKILL
 
 Nếu `terminationGracePeriodSeconds` ≤ `drain_seconds`, Kubernetes sẽ SIGKILL pod trước khi drain xong → player bị disconnect đột ngột.
 
@@ -1190,13 +1190,13 @@ kubectl apply -f deploy/k8s/fleet.yaml
 
 ### Drain một game server (graceful shutdown)
 
-> **Lưu ý**: graceful drain **chưa được hỗ trợ** trong repo này (chưa có script gọi `DirectoryAdmin.Drain`, SIGTERM chỉ thoát tiến trình). Xóa một GameServer sẽ ngắt người chơi trên pod đó.
+> **Lưu ý**: khi pod nhận SIGTERM (ví dụ `kubectl delete gs`), server xin drain và chờ hết người chơi (tối đa `drain_seconds`) rồi mới thoát. Cần build lại image `fomoxa-server` để có hành vi này.
 
 ```bash
 # Xem GameServer Allocated (đang có người chơi)
 kubectl get gs -n fomoxa
 
-# Xóa một GameServer cụ thể (CẮT người chơi đang ở trên pod đó)
+# Xóa một GameServer cụ thể (pod drain rồi mới tắt)
 kubectl delete gs <gameserver-name> -n fomoxa
 
 # Fleet sẽ tự tạo pod mới để duy trì replicas

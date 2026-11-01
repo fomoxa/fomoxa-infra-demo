@@ -476,7 +476,7 @@ pod-2 `Shutdown` → Fleet tạo pod thay thế.
 
 ### P6 - Hardening 🚧 (một phần)
 
-> Trạng thái: phần vá Backend và health probe đã xong. **Ingress/TLS chưa hoàn thành** (chưa có TLS, fRPC TCP không đi qua Ingress HTTP, `ingress.yaml` chỉ còn route WebSocket thử nghiệm và không được áp dụng mặc định). Drain chưa có script/handler riêng.
+> Trạng thái: phần vá Backend và health probe đã xong. **Ingress/TLS chưa hoàn thành** (chưa có TLS, fRPC TCP không đi qua Ingress HTTP, `ingress.yaml` chỉ còn route WebSocket thử nghiệm và không được áp dụng mặc định). Drain: server bắt SIGTERM và gọi `RequestDrain` (đã làm, chưa test với cụm thật).
 
 - **TLS / Ingress (chưa xong)**: `deploy/k8s/ingress.yaml` chỉ còn route WebSocket (`/ws` -> 9601) qua Traefik, không TLS, không rate limit; chỉ áp dụng khi `APPLY_INGRESS=1`.
 - **fRPC Health Probe**: `deploy/k8s/backend.yaml` đổi `tcpSocket` sang `exec` probe bằng tool `fomoxa-rpc-health` (`dotnet /app/health/fomoxa-rpc-health.dll 127.0.0.1:9600`).

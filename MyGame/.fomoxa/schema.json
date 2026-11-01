@@ -1,8 +1,8 @@
 {
   "schema_version": 1,
-  "generator": "fomoxac 0.2.2",
-  "fingerprint": "sha256:e51e1b8259622c21e24bc63602be68df0ed4083c7e59f62f87145f9b04f64cee",
-  "fingerprint_u64": "0xE51E1B8259622C21",
+  "generator": "fomoxac 0.2.3",
+  "fingerprint": "sha256:d55606506a636130a19dc770259a30a4cf57df51ed7f36b8d860a6a5a21ce734",
+  "fingerprint_u64": "0xD55606506A636130",
   "models": {
     "AnimatorState": {
       "source": "FomoxaSystemModels/AnimatorState.cs",
@@ -1330,6 +1330,24 @@
         }
       }
     },
+    "ListRoomsRequest": {
+      "source": "Assets/Network/Models/Backend/Rooms.cs",
+      "fingerprint": "sha256:7513f7890dc213fc73aaf339aaafca4ac1258259358a95217f3bc959130bf173",
+      "codecs": [
+        "rpc"
+      ],
+      "fields": [],
+      "messages": {
+        "rpc": {
+          "id": "0x79F5DFEB",
+          "fingerprint": "sha256:ec0077b09426fb42e92c7c22915d30e78c0dcc4e31c29b5ea8ef0203e2aa343b",
+          "fingerprint_u64": "0xEC0077B09426FB42",
+          "prefixes": [],
+          "prefixes_u64": [],
+          "fields": []
+        }
+      }
+    },
     "LocalPeer": {
       "source": "FomoxaSystemModels/LocalPeer.cs",
       "fingerprint": "sha256:6b3d297716473a2143336b8fecb4afb64b8755bf114e13f82e40555cd7bfc508",
@@ -2171,6 +2189,115 @@
             {
               "name": "Received",
               "type": "u32"
+            }
+          ]
+        }
+      }
+    },
+    "RoomInfo": {
+      "source": "Assets/Network/Models/Backend/Rooms.cs",
+      "fingerprint": "sha256:c3fd6fde90ad678ef773eaa8209c4ad275575cb2003058a987e48638105ec5f4",
+      "codecs": [
+        "rpc"
+      ],
+      "fields": [
+        {
+          "name": "RoomKey",
+          "type": "string",
+          "codecs": [
+            "rpc"
+          ]
+        },
+        {
+          "name": "Players",
+          "type": "u32",
+          "codecs": [
+            "rpc"
+          ]
+        },
+        {
+          "name": "Capacity",
+          "type": "u32",
+          "codecs": [
+            "rpc"
+          ]
+        },
+        {
+          "name": "State",
+          "type": "string",
+          "codecs": [
+            "rpc"
+          ]
+        }
+      ],
+      "messages": {
+        "rpc": {
+          "id": "0x51954F8F",
+          "fingerprint": "sha256:7c4e85165a0556202a93bf639f3e703a5c9efd4b17b24f8da977557ffcc44cd7",
+          "fingerprint_u64": "0x7C4E85165A055620",
+          "prefixes": [
+            "sha256:36355a4198bc56d34df835ad91ea02cdaa3ad048bfaf71354be07c49b54ce187",
+            "sha256:0704af4aa0d0c76b4f8bf6ebedc3c5ebe2cb5b15e2c904036157dda2392bd9f3",
+            "sha256:935863c0c2e7f3aaf7193fb8ac38fc9817aa1dd9f006be8e9da3044a28baec86",
+            "sha256:7c4e85165a0556202a93bf639f3e703a5c9efd4b17b24f8da977557ffcc44cd7"
+          ],
+          "prefixes_u64": [
+            "0x36355A4198BC56D3",
+            "0x0704AF4AA0D0C76B",
+            "0x935863C0C2E7F3AA",
+            "0x7C4E85165A055620"
+          ],
+          "fields": [
+            {
+              "name": "RoomKey",
+              "type": "string"
+            },
+            {
+              "name": "Players",
+              "type": "u32"
+            },
+            {
+              "name": "Capacity",
+              "type": "u32"
+            },
+            {
+              "name": "State",
+              "type": "string"
+            }
+          ]
+        }
+      }
+    },
+    "RoomList": {
+      "source": "Assets/Network/Models/Backend/Rooms.cs",
+      "fingerprint": "sha256:763355eb0c50d80874b5e75c32dccd3902aa50aba10705f9f9634aa3a054afd0",
+      "codecs": [
+        "rpc"
+      ],
+      "fields": [
+        {
+          "name": "Rooms",
+          "type": "Array<RoomInfo>",
+          "codecs": [
+            "rpc"
+          ]
+        }
+      ],
+      "messages": {
+        "rpc": {
+          "id": "0x3590AAB9",
+          "fingerprint": "sha256:ca2d0b231c774fba60907bd314b9946cee65822477d79d95e8826e47d42b5adf",
+          "fingerprint_u64": "0xCA2D0B231C774FBA",
+          "prefixes": [
+            "sha256:ca2d0b231c774fba60907bd314b9946cee65822477d79d95e8826e47d42b5adf"
+          ],
+          "prefixes_u64": [
+            "0xCA2D0B231C774FBA"
+          ],
+          "fields": [
+            {
+              "name": "Rooms",
+              "type": "Array<RoomInfo>"
             }
           ]
         }

@@ -1,7 +1,7 @@
 {
   "schema_version": 1,
   "generator": "fomoxac 0.2.3",
-  "schema_fingerprint": "sha256:7c007d6fc94431b7af3373bc1b767d011b6ce2295e3957e087891b4bddc6cb58",
+  "schema_fingerprint": "sha256:32f2a4692cd52de7f4821c2a4b374033ca9e1b349b0923b44d10d63226e82c40",
   "sha256_of": "each file with its `// generated-at:` line emptied, so an unchanged schema keeps an unchanged digest",
   "sources": {
     "../fomoxa-rpc/Fomoxa.Rpc/SystemModels/FRpc.cs": {
@@ -117,6 +117,36 @@
           "sha256": "bb007345009a7d7b08f516a37a905d069bd03838325e5b7002b29d1cd53d5ef1"
         }
       ]
+    },
+    "Models/Rooms.cs": {
+      "models": [
+        "ListRoomsRequest",
+        "RoomInfo",
+        "RoomList"
+      ],
+      "outputs": [
+        {
+          "path": "Generated/ListRoomsRequestRpcCodec.cs",
+          "model": "ListRoomsRequest",
+          "codec": "rpc",
+          "fingerprint": "sha256:ec0077b09426fb42e92c7c22915d30e78c0dcc4e31c29b5ea8ef0203e2aa343b",
+          "sha256": "f3fece1f723fa056fa8403b7a787dc92824225140a46c91155669e6b530f67e9"
+        },
+        {
+          "path": "Generated/RoomInfoRpcCodec.cs",
+          "model": "RoomInfo",
+          "codec": "rpc",
+          "fingerprint": "sha256:7c4e85165a0556202a93bf639f3e703a5c9efd4b17b24f8da977557ffcc44cd7",
+          "sha256": "f7924cf3db97b885b2d1c7de1c6e90393a3a4d94cf00b6242d7c1224bcd4be76"
+        },
+        {
+          "path": "Generated/RoomListRpcCodec.cs",
+          "model": "RoomList",
+          "codec": "rpc",
+          "fingerprint": "sha256:ca2d0b231c774fba60907bd314b9946cee65822477d79d95e8826e47d42b5adf",
+          "sha256": "b244d4fca439b5494b000791ff487301880587ca12c0a00cdb1fa215ccc26eed"
+        }
+      ]
     }
   },
   "shared": [
@@ -128,12 +158,12 @@
     {
       "path": "Generated/Handshake.cs",
       "kind": "handshake",
-      "sha256": "6727bf1585193a31f0872769a199edcbbc3ef5364a355618d1cfc55b2b271cf0"
+      "sha256": "0215763a097d94219de7146b37d6469fd0a049e284894de643ea5473b5365dcc"
     },
     {
       "path": "Generated/NetSchema.cs",
       "kind": "net_schema",
-      "sha256": "41017acda13ee63fd38f8ddbba90f866ecf0e948964ed9f761352fea7e320e74"
+      "sha256": "3cd3997a661d5be24138c1db2c960523a454dfced9701ae4023a919c28b07372"
     }
   ]
 }

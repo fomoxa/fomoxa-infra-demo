@@ -43,8 +43,17 @@ namespace MyGame.Backend
 
         public UnaryMethod<PlayerLogin, PlayerWelcome> Method => PlayersMethods.Login;
 
+        private static readonly System.Text.RegularExpressions.Regex ValidName =
+            new System.Text.RegularExpressions.Regex("^[A-Za-z0-9_-]{3,24}$");
+
         public (Identity Identity, PlayerWelcome Response) Authenticate(CallContext context, PlayerLogin request)
         {
+            // Có mật khẩu (Secret) -> đăng nhập tài khoản qua Nakama.
+            if (request.Secret != null && request.Secret.Length > 0)
+            {
+                return WithPassword(request);
+            }
+
             if (!string.IsNullOrEmpty(request.DeviceId))
             {
                 return ThroughNakama(request);
@@ -61,6 +70,53 @@ namespace MyGame.Backend
             }
 
             return (new Identity(request.Player, new[] { Roles.Player }), new PlayerWelcome { Player = request.Player });
+        }
+
+        private (Identity Identity, PlayerWelcome Response) WithPassword(PlayerLogin request)
+        {
+            if (nakama == null)
+            {
+                throw new RpcException(new Status(StatusCode.Unavailable, "backend chưa cấu hình Nakama"));
+            }
+
+            if (!ValidName.IsMatch(request.Player ?? ""))
+            {
+                throw new RpcException(Status.InvalidArgument("tên chỉ gồm chữ, số, '_' hoặc '-', dài 3-24 ký tự"));
+            }
+
+            string password = System.Text.Encoding.UTF8.GetString(request.Secret);
+            if (password.Length < 8)
+            {
+                throw new RpcException(Status.InvalidArgument("mật khẩu phải có ít nhất 8 ký tự"));
+            }
+
+            Console.WriteLine($"[Nakama] password login for {request.Player}");
+            Task<NakamaSession> auth = Task.Run(() => nakama.AuthenticatePassword(request.Player!, password));
+            if (!auth.Wait(TimeSpan.FromSeconds(8)))
+            {
+                throw new RpcException(new Status(StatusCode.Unavailable, "Nakama không trả lời"));
+            }
+
+            NakamaSession session;
+            try
+            {
+                session = auth.GetAwaiter().GetResult();
+            }
+            catch (NakamaException problem) when (problem.Message.Contains("401") || problem.Message.Contains("403"))
+            {
+                // Sai mật khẩu hoặc tên đã có chủ. Không lộ chi tiết từ Nakama.
+                Console.WriteLine($"[Nakama] password rejected for {request.Player}");
+                throw new RpcException(Status.Unauthenticated("sai tên hoặc mật khẩu"));
+            }
+            catch (NakamaException problem)
+            {
+                Console.WriteLine($"[Nakama] password login failed: {problem.Message}");
+                throw new RpcException(new Status(StatusCode.Unavailable, problem.Message));
+            }
+
+            Console.WriteLine($"[Nakama] authenticated {request.Player} as {session.UserId}");
+            sessions.Set(session.UserId, session.Token);
+            return (new Identity(session.UserId, new[] { Roles.Player }), new PlayerWelcome { Player = request.Player! });
         }
 
         private (Identity Identity, PlayerWelcome Response) ThroughNakama(PlayerLogin request)
@@ -148,6 +204,41 @@ namespace MyGame.Backend
                 Console.Error.WriteLine($"[Lobby] FormatException: {formatProblem.Message}");
                 throw new RpcException(new Status(StatusCode.Unavailable, $"du lieu khong hop le: {formatProblem.Message}"));
             }
+        }
+
+        public async Task<RoomList> ListRooms(CallContext context, ListRoomsRequest request)
+        {
+            var list = new RoomList();
+            if (nakama == null)
+            {
+                // Không có Nakama: ai cũng vào được room bất kỳ, chỉ gợi ý pool mặc định.
+                foreach (string room in new[] { "arena:1", "arena:2", "arena:3", "arena:4" })
+                {
+                    list.Rooms.Add(new RoomInfo { RoomKey = room, Players = 0, Capacity = 2, State = "open" });
+                }
+
+                return list;
+            }
+
+            try
+            {
+                foreach (NakamaRoom room in await nakama.ListRooms())
+                {
+                    list.Rooms.Add(new RoomInfo
+                    {
+                        RoomKey = room.Room,
+                        Players = (uint)Math.Max(0, room.Players),
+                        Capacity = (uint)Math.Max(0, room.Capacity),
+                        State = room.State,
+                    });
+                }
+            }
+            catch (NakamaException problem)
+            {
+                throw new RpcException(new Status(StatusCode.Unavailable, problem.Message));
+            }
+
+            return list;
         }
 
         private async Task<string> WaitForMatch(string principal, string roomKey)
