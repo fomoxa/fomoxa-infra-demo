@@ -1,8 +1,8 @@
 # Kế hoạch cụm Fomoxa + Nakama + Agones
 
 Cập nhật: đã clone repos về `D:\Documents\fomoxa`, đã kiểm tra môi trường máy.
-P1–P4 xong (game + directory + gateway + Nakama). P5 (Agones) đã chốt phạm vi, xong bước 1/6
-(console server chạy local), đang ở bước 2 (Agones lifecycle).
+P1–P4 xong (game + directory + gateway + Nakama). P5 (Agones) đã chốt phạm vi, xong bước 1–2/6
+(console server chạy local + Agones lifecycle), đang ở bước 3 (3 Dockerfile đóng gói image).
 
 ---
 
@@ -322,7 +322,7 @@ không dồn vào 1 room) — làm ở P5.5, kèm test ≥4 client.
 | # | Việc | Commit | Trạng thái |
 |---|---|---|---|
 | 1 | Vendor source 2 package vào `server-deps/`; tạo `MyGame/Server~` (csproj, `PodConfig`, `PodTransport`, `PlayerEntity`, `Program`); `-Server console` cho `start-cluster.ps1`/`run-pod.ps1`; `scripts/test-console-server.ps1` | `P5: console server chay local` | ✅ |
-| 2 | Wrapper Agones SDK (`Ready/Health/Allocate/Shutdown`) + `OnDrain`/`OnDrainDeadline`, no-op ngoài cluster | `P5: Agones lifecycle` | |
+| 2 | Wrapper Agones SDK (`Ready/Health/Allocate/Shutdown`) + `OnDrain`/`OnDrainDeadline`, no-op ngoài cluster | `P5: Agones lifecycle` | ✅ |
 | 3 | 3 Dockerfile: game server, directory, gateway | `P5: dong goi image` | |
 | 4 | `deploy/k8s/`: manifest + `directory.toml`/`gateway.toml` bản K8s + script sinh Secret | `P5: manifest k8s + agones fleet` | |
 | 5 | `scripts/k8s-up.ps1`, `k8s-down.ps1`, `test-p5.ps1` | `P5: script cum k8s` | |
@@ -361,6 +361,19 @@ Ghi chú đã gặp và cách xử lý:
   trong csproj, không sửa file vendor.
 - **Cấu hình theo dòng lệnh**: `PodConfig` đọc `--key=value` trước, rồi env, rồi mặc định — để
   `start-cluster.ps1` chạy nhiều pod local, còn K8s chỉ cần env.
+
+##### Bước 2 — đã xong
+
+- Thêm `AgonesSDK` 1.61.0 vào `MyGame/Server~/MyGame.Server.csproj`.
+- Tạo `AgonesLifecycle.cs`:
+  - `ReadyAsync` trước khi `DirectoryPod.Start()`, thử lại tối đa 60 × 500 ms (chờ sidecar gRPC 9357).
+  - `Health()` phát heartbeat `HealthAsync` mỗi 2 s trong game loop.
+  - `AllocateAsync` kích hoạt khi pod chiếm room đầu tiên (`AcquireRoom`).
+  - Theo dõi người chơi qua `OnRemoteConnectionState`: khi hết người chơi trong phòng (`remaining == 0`), tự đưa GameServer về `Ready` (`ReadyAsync`).
+  - `ShutdownAsync` (`ShutDownAsync`) gọi khi đến hạn drain (`OnDrainDeadline`) hoặc khi tiến trình dừng.
+  - Fallback / no-op an toàn khi chạy ngoài cluster (local dev không có sidecar Agones).
+- `PodConfig.cs`: tự động nhận diện `AGONES_SDK_GRPC_PORT` hoặc tham số `--agones=true/false` / env `FOMOXA_AGONES`.
+- Build `MyGame.Server.csproj` đạt **0 warning, 0 error**.
 
 
 #### DoD
@@ -492,17 +505,19 @@ D:\Documents\fomoxa\
 
 ## 8. Việc tiếp theo
 
-P5 đã chốt phạm vi (xem mục 4). Bước 1 đã xong:
+P5 đã chốt phạm vi (xem mục 4). Bước 1 và Bước 2 đã xong:
 
 1. ✅ `server-deps/` + `MyGame/Server~` build 0 warning, chạy local.
 2. ✅ 2 client Unity join `arena:1` qua backend + gateway vào console server, thấy nhau di chuyển
    (`scripts\test-console-server.ps1`).
 3. ✅ `start-cluster.ps1 -Server console` / `-Server unity` chạy được cả hai loại pod.
+4. ✅ **Agones lifecycle**: `AgonesSDK` 1.61.0, `ReadyAsync` trước khi register (retry ~60 × 500 ms),
+   `HealthAsync` mỗi 2 s, `AllocateAsync` khi có room đầu tiên, `ReadyAsync` lại khi hết người,
+   `ShutDownAsync` sau drain; ngoài cluster thì fallback no-op an toàn.
 
-Tiếp theo là **bước 2 — Agones lifecycle**: `AgonesSDK` 1.61.0, `ReadyAsync` trước khi register
-(retry ~60 × 500 ms), `HealthAsync` mỗi 2 s, `AllocateAsync` khi có room đầu tiên, `ReadyAsync`
-lại khi hết người, `ShutDownAsync` sau drain; ngoài cluster thì no-op.
-
-Sau đó là phần K8s (bước 3–5).
+Tiếp theo là **bước 3 — 3 Dockerfile: game server, directory, gateway**:
+- Dockerfile cho console server `MyGame.Server` (.NET 8 runtime).
+- Dockerfile cho `fomoxa-directory` (Rust binary).
+- Dockerfile cho `fomoxa-gateway` (Rust binary).
 
 

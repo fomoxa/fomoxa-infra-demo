@@ -22,7 +22,7 @@ namespace MyGame.Server
     /// </summary>
     public static class Program
     {
-        public static int Main()
+        public static async Task<int> Main()
         {
             Console.OutputEncoding = Encoding.UTF8;
 
@@ -50,6 +50,8 @@ namespace MyGame.Server
             var clock = Stopwatch.StartNew();
             var transport = new PodTransport(registry) { BehindGateway = config.BehindGateway };
 
+            using var agones = await AgonesLifecycle.StartAsync(config.Agones);
+
             runtime = StandaloneRuntime.Create(
                 registry,
                 new NetworkSettings
@@ -70,16 +72,22 @@ namespace MyGame.Server
             int slot = 0;
             runtime.ServerManager.OnRemoteConnectionState += args =>
             {
-                if (args.State != ConnectionState.Started)
+                if (args.State == ConnectionState.Started)
                 {
-                    Console.WriteLine($"[Pod] peer {args.PeerId}: {args.State} {args.Reason}");
+                    agones.OnPlayerConnected(args.PeerId);
+                    var player = new PlayerEntity(() => runtime.TimeManager.TickDelta);
+                    player.Position = new Vector3(0f, 1f, 0f) + SpawnOffset();
+                    runtime.ServerManager.Spawn(player, args.PeerId);
+                    Console.WriteLine($"[Pod] peer {args.PeerId}: Started -> spawn at {player.Position}");
                     return;
                 }
 
-                var player = new PlayerEntity(() => runtime.TimeManager.TickDelta);
-                player.Position = new Vector3(0f, 1f, 0f) + SpawnOffset();
-                runtime.ServerManager.Spawn(player, args.PeerId);
-                Console.WriteLine($"[Pod] peer {args.PeerId}: Started -> spawn at {player.Position}");
+                if (args.State == ConnectionState.Stopped)
+                {
+                    agones.OnPlayerDisconnected(args.PeerId);
+                }
+
+                Console.WriteLine($"[Pod] peer {args.PeerId}: {args.State} {args.Reason}");
             };
 
             Vector3 SpawnOffset()
@@ -141,6 +149,7 @@ namespace MyGame.Server
             pod.OnDrainDeadline += () =>
             {
                 Console.WriteLine("[Pod] drain deadline reached");
+                _ = agones.ShutdownAsync();
                 stopping.Set();
             };
 
@@ -157,6 +166,7 @@ namespace MyGame.Server
                 {
                     await pod.AcquireRoom(room);
                     Console.WriteLine($"[Pod] holds {room}");
+                    await agones.OnRoomAcquiredAsync(room);
                 }
                 catch (Exception error)
                 {
@@ -170,12 +180,19 @@ namespace MyGame.Server
 
             TimeSpan last = clock.Elapsed;
             double nextTrace = 0;
+            double nextHealth = 0;
             while (!stopping.IsSet)
             {
                 TimeSpan now = clock.Elapsed;
                 runtime.BeginFrame(now, (now - last).TotalSeconds);
                 runtime.EndFrame();
                 last = now;
+
+                if (now.TotalSeconds >= nextHealth)
+                {
+                    nextHealth = now.TotalSeconds + 2;
+                    agones.Health();
+                }
 
                 if (config.Trace && now.TotalSeconds >= nextTrace)
                 {
@@ -191,6 +208,7 @@ namespace MyGame.Server
             }
 
             runtime.ServerManager.StopConnection();
+            await agones.ShutdownAsync();
             Console.WriteLine("[Pod] stopped");
             return 0;
 

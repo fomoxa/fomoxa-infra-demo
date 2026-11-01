@@ -42,6 +42,8 @@ namespace MyGame.Server
 
         public bool Trace { get; private set; }
 
+        public bool Agones { get; private set; }
+
         public string KeyFile { get; private set; } = "";
 
         public static PodConfig Read(string[] argv)
@@ -67,6 +69,8 @@ namespace MyGame.Server
             config.MaxPlayers = (uint)Number(config.Value("max-players", "FOMOXA_MAX_PLAYERS", "16"), "--max-players", 1, 10000);
             config.BehindGateway = config.Flag("behind-gateway", "FOMOXA_BEHIND_GATEWAY", true);
             config.Trace = config.Flag("trace", "FOMOXA_TRACE", false);
+            bool agonesDefault = !string.IsNullOrEmpty(Environment.GetEnvironmentVariable("AGONES_SDK_GRPC_PORT"));
+            config.Agones = config.Flag("agones", "FOMOXA_AGONES", agonesDefault);
 
             var rooms = new List<string>();
             foreach (string room in config.Value("room", "FOMOXA_ROOM", "arena:1").Split(','))

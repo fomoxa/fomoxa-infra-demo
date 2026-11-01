@@ -47,6 +47,7 @@
   </ItemGroup>
 
   <ItemGroup>
+    <PackageReference Include="AgonesSDK" Version="1.61.0" />
     <PackageReference Include="BouncyCastle.Cryptography" Version="2.6.2" />
   </ItemGroup>
 
