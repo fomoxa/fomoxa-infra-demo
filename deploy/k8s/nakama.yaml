@@ -6,14 +6,15 @@ metadata:
 data:
   main.lua: |
     -- Module cho Nakama: ghép 2 người chơi vào cùng một room rồi phát ticket.
+    -- Hỗ trợ cả room cụ thể (arena:1) và tự động cấp room từ pool (arena:1 .. arena:4).
     --
     -- Nakama nạp file này như một script (không có InitModule); RPC đăng ký khi nạp.
     -- Chạy trong Nakama, mount từ deploy/nakama -> /nakama/data.
     --
     -- RPC cho client (Bearer token):
-    --   find_match  { "room": "arena:1" }  -> { status = "waiting" }
-    --                                        { status = "matched", room, ticket, exp }
-    --   poll_match  { "room": "arena:1" }  -> như trên
+    --   find_match  { "room": "auto" }     -> { status = "waiting", room = "auto" }
+    --                                        { status = "matched", room = "arena:1", ticket = "...", exp }
+    --   poll_match  { "room": "auto" }     -> như trên
     -- RPC cho backend (http_key), không lộ ra client:
     --   verify_ticket { "ticket": "...", "room": "arena:1", "user_id": "..." }
     --     -> { ok = true, room = "...", exp = <unix> }
@@ -26,6 +27,9 @@ data:
     local TICKET = "match_ticket"
     local TICKET_TTL = 120
     local QUEUE_TTL = 30
+
+    local ROOM_POOL = { "arena:1", "arena:2", "arena:3", "arena:4" }
+    local POOL_COUNTER_KEY = "pool:counter"
 
     local function decode(payload)
         if payload == nil or payload == "" then
@@ -67,27 +71,63 @@ data:
         nk.storage_write({ record })
     end
 
-    local function ticket_for(room, first, second)
+    local function next_pool_room()
+        for _ = 1, 5 do
+            local record = read_one(QUEUE, POOL_COUNTER_KEY)
+            local cur = 0
+            local version = ""
+            if record and record.value and record.value.index then
+                cur = record.value.index
+                version = record.version or ""
+            end
+            local next_idx = (cur % #ROOM_POOL) + 1
+            local ok = pcall(write_one, QUEUE, POOL_COUNTER_KEY, { index = next_idx }, version)
+            if ok then
+                return ROOM_POOL[next_idx]
+            end
+        end
+        return ROOM_POOL[1]
+    end
+
+    local function ticket_for(assigned_room, queue_key, first, second)
         local ticket = nk.uuid_v4()
         local exp = os.time() + TICKET_TTL
 
-        write_one(TICKET, ticket, { room = room, users = { first, second }, exp = exp }, "")
+        write_one(TICKET, ticket, { room = assigned_room, users = { first, second }, exp = exp }, "")
 
-        local result = { status = "matched", room = room, ticket = ticket, exp = exp }
-        write_one(RESULT, room .. ":" .. first, result, "")
-        write_one(RESULT, room .. ":" .. second, result, "")
+        local result = { status = "matched", room = assigned_room, ticket = ticket, exp = exp }
+        
+        -- Lưu theo assigned_room
+        write_one(RESULT, assigned_room .. ":" .. first, result, "")
+        write_one(RESULT, assigned_room .. ":" .. second, result, "")
+
+        -- Lưu theo queue_key (nếu là auto pool)
+        if queue_key ~= assigned_room then
+            write_one(RESULT, queue_key .. ":" .. first, result, "")
+            write_one(RESULT, queue_key .. ":" .. second, result, "")
+        end
+
+        -- Lưu theo user_id để fallback tra cứu nhanh
+        write_one(RESULT, "user:" .. first, result, "")
+        write_one(RESULT, "user:" .. second, result, "")
 
         return result
     end
 
+    local function is_auto_room(room)
+        return room == nil or room == "" or room == "auto" or room == "pool" or room == "arena:pool"
+    end
+
     local function find_match(ctx, payload)
         local data = decode(payload)
-        local room = data.room or "arena:1"
+        local requested_room = data.room
+        local is_auto = is_auto_room(requested_room)
+        local queue_key = is_auto and "pool:auto" or requested_room
         local user = ctx.user_id
         local stamp = os.time()
 
         for _ = 1, 5 do
-            local record = read_one(QUEUE, room)
+            local record = read_one(QUEUE, queue_key)
             local waiting = nil
 
             if record and record.value and record.value.user_id and record.value.user_id ~= "" then
@@ -99,22 +139,23 @@ data:
             local version = record and record.version or ""
 
             if waiting == user then
-                return respond({ status = "waiting", room = room })
+                return respond({ status = "waiting", room = is_auto and "auto" or requested_room })
             end
 
             if waiting then
-                local cleared, clearError = pcall(write_one, QUEUE, room, { user_id = "", since = 0 }, version)
+                local cleared, clearError = pcall(write_one, QUEUE, queue_key, { user_id = "", since = 0 }, version)
                 if cleared then
-                    local result = ticket_for(room, waiting, user)
-                    nk.logger_info("match: " .. waiting .. " + " .. user .. " -> " .. result.ticket)
+                    local assigned_room = is_auto and next_pool_room() or requested_room
+                    local result = ticket_for(assigned_room, queue_key, waiting, user)
+                    nk.logger_info("match: " .. waiting .. " + " .. user .. " -> " .. assigned_room .. " ticket " .. result.ticket)
                     return respond(result)
                 end
 
                 nk.logger_info("find_match: xoa queue loi: " .. tostring(clearError))
             else
-                local queued, queueError = pcall(write_one, QUEUE, room, { user_id = user, since = stamp }, version)
+                local queued, queueError = pcall(write_one, QUEUE, queue_key, { user_id = user, since = stamp }, version)
                 if queued then
-                    return respond({ status = "waiting", room = room })
+                    return respond({ status = "waiting", room = is_auto and "auto" or requested_room })
                 end
 
                 nk.logger_info("find_match: ghi queue loi: " .. tostring(queueError))
@@ -126,19 +167,30 @@ data:
 
     local function poll_match(ctx, payload)
         local data = decode(payload)
-        local room = data.room or "arena:1"
-        local record = read_one(RESULT, room .. ":" .. ctx.user_id)
+        local requested_room = data.room
+        local is_auto = is_auto_room(requested_room)
+        local user = ctx.user_id
+        local queue_key = is_auto and "pool:auto" or requested_room
+
+        -- Thử đọc từ queue_key:user_id, sau đó fallback user:user_id
+        local record = read_one(RESULT, queue_key .. ":" .. user)
+        if not record then
+            record = read_one(RESULT, "user:" .. user)
+        end
 
         if record and record.value then
             if record.value.exp and record.value.exp < os.time() then
-                nk.storage_delete({ { collection = RESULT, key = room .. ":" .. ctx.user_id, user_id = SYSTEM } })
-                return respond({ status = "waiting", room = room })
+                nk.storage_delete({ 
+                    { collection = RESULT, key = queue_key .. ":" .. user, user_id = SYSTEM },
+                    { collection = RESULT, key = "user:" .. user, user_id = SYSTEM }
+                })
+                return respond({ status = "waiting", room = is_auto and "auto" or requested_room })
             end
 
             return respond(record.value)
         end
 
-        return respond({ status = "waiting", room = room })
+        return respond({ status = "waiting", room = is_auto and "auto" or requested_room })
     end
 
     local function verify_ticket(ctx, payload)
@@ -158,7 +210,8 @@ data:
             return respond({ ok = false, message = "ticket het han" })
         end
 
-        if data.room and value.room ~= data.room then
+        -- Nếu data.room là auto hoặc rỗng thì bỏ qua check room
+        if data.room and not is_auto_room(data.room) and value.room ~= data.room then
             return respond({ ok = false, message = "ticket cua room khac" })
         end
 
@@ -180,8 +233,9 @@ data:
 
     local function reset_match(ctx, payload)
         local data = decode(payload)
-        local room = data.room or "arena:1"
-        nk.storage_delete({ { collection = QUEUE, key = room, user_id = SYSTEM } })
+        local requested_room = data.room
+        local queue_key = is_auto_room(requested_room) and "pool:auto" or (requested_room or "arena:1")
+        nk.storage_delete({ { collection = QUEUE, key = queue_key, user_id = SYSTEM } })
         return respond({ ok = true })
     end
 
@@ -195,7 +249,7 @@ data:
     nk.register_rpc(reset_match, "reset_match")
     nk.register_rpc(health, "health")
 
-    nk.logger_info("fomoxa match module da nap")
+    nk.logger_info("fomoxa match module da nap (auto pool ho tro)")
 ---
 apiVersion: apps/v1
 kind: Deployment
@@ -276,4 +330,3 @@ spec:
     - name: console
       port: 7351
       targetPort: 7351
-

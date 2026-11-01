@@ -124,17 +124,17 @@ namespace MyGame.Backend
 
             string principal = context.Session!.Principal;
             Console.WriteLine($"[Lobby] {principal} asks for {request.RoomKey}");
-            await WaitForMatch(principal, request.RoomKey);
-            RoomTicket ticket = await directory.Ticket(principal, request.RoomKey, request.Version);
-            Console.WriteLine($"[Lobby] {principal} -> {ticket.Address}:{ticket.Port}");
+            string matchedRoom = await WaitForMatch(principal, request.RoomKey);
+            RoomTicket ticket = await directory.Ticket(principal, matchedRoom, request.Version);
+            Console.WriteLine($"[Lobby] {principal} -> {ticket.Address}:{ticket.Port} (room: {matchedRoom})");
             return ticket;
         }
 
-        private async Task WaitForMatch(string principal, string roomKey)
+        private async Task<string> WaitForMatch(string principal, string roomKey)
         {
             if (nakama == null)
             {
-                return;
+                return roomKey;
             }
 
             if (!sessions.TryGet(principal, out string token))
@@ -165,10 +165,12 @@ namespace MyGame.Backend
                     $"không ghép được trận cho {roomKey} trong {MatchTimeout.TotalSeconds:N0} giây"));
             }
 
+            string assignedRoom = !string.IsNullOrEmpty(state.Room) ? state.Room : roomKey;
+
             NakamaTicket granted;
             try
             {
-                granted = await nakama.VerifyTicket(state.Ticket, roomKey, principal);
+                granted = await nakama.VerifyTicket(state.Ticket, assignedRoom, principal);
             }
             catch (NakamaException problem)
             {
@@ -180,6 +182,8 @@ namespace MyGame.Backend
                 Console.WriteLine($"[Lobby] ticket bị từ chối: {granted.Message}");
                 throw new RpcException(Status.FailedPrecondition(granted.Message));
             }
+
+            return assignedRoom;
         }
     }
 }
