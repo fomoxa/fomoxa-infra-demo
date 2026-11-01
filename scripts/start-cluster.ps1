@@ -14,9 +14,17 @@ $directoryExe = Join-Path $repoRoot "gateway/target/release/fomoxa-directory.exe
 $backendExe = Join-Path $repoRoot "MyGame.Backend/MyGame.Backend/bin/Debug/net8.0/MyGame.Backend.exe"
 $playerExe = Join-Path $repoRoot "MyGame/Builds/MyGame.exe"
 
-foreach ($exe in @($directoryExe, $backendExe, $playerExe)) {
+foreach ($exe in @($directoryExe, $playerExe)) {
     if (-not (Test-Path $exe)) {
         throw "thieu $exe"
+    }
+}
+
+if (-not (Test-Path $backendExe)) {
+    Write-Host "chua build backend, dang build..."
+    & dotnet build (Join-Path $repoRoot "MyGame.Backend/MyGame.Backend.sln") | Select-Object -Last 3
+    if (-not (Test-Path $backendExe)) {
+        throw "build backend that bai: $backendExe"
     }
 }
 
