@@ -29,3 +29,4 @@ gen_key "$DIR_SECRETS/pod" 24
 gen_key "$SECRETS_DIR/backend-pod" 24
 
 echo "Hoan tat sinh keys tai $SECRETS_DIR"
+

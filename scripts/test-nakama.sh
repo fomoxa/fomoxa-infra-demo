@@ -125,3 +125,4 @@ if echo "$BAD" | grep -q '"ok":true'; then
 fi
 
 echo -e "\nOK: 2 client ghep dung room, ticket dung, user ngoai bi chan!"
+

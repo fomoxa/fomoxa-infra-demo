@@ -13,3 +13,4 @@ else
     k3d cluster delete "$CLUSTER_NAME"
     echo "Da xoa cum k3d $CLUSTER_NAME."
 fi
+

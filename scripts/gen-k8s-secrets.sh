@@ -33,3 +33,4 @@ kubectl create secret generic fomoxa-pod-key \
     --dry-run=client -o yaml | kubectl apply -f -
 
 echo "[gen-k8s-secrets] Hoan tat tao K8s secrets!"
+

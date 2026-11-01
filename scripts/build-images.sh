@@ -21,3 +21,4 @@ docker build -f MyGame.Backend/Dockerfile -t "fomoxa-backend:$TAG" MyGame.Backen
 
 echo -e "\n=== All images built successfully ==="
 docker images | grep fomoxa || true
+

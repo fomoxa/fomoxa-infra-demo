@@ -20,3 +20,4 @@ if command -v taskkill.exe >/dev/null 2>&1; then
 fi
 
 echo "Da dung cac tien trinh."
+

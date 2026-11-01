@@ -29,3 +29,4 @@ fi
 
 echo -e "\n3/3 Kiem tra lai trang thai Agones GameServers:"
 kubectl get gs -n fomoxa
+

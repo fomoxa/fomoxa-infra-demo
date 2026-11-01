@@ -104,3 +104,4 @@ echo -e "\nKiem tra GameServers:"
 kubectl get gs -n fomoxa
 
 echo -e "\n=== Cum K8s Fomoxa da san sang tren WSL! ==="
+
