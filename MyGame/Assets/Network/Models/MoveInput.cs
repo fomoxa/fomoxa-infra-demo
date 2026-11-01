@@ -13,5 +13,9 @@ namespace MyGame.Network.Models
         [Network("f32")]
         [Codec("net")]
         public float Z { get; set; }
+
+        [Network("bool")]
+        [Codec("net")]
+        public bool Jump { get; set; }
     }
 }

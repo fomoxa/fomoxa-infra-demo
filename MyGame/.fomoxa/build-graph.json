@@ -1,7 +1,7 @@
 {
   "schema_version": 1,
   "generator": "fomoxac 0.2.3",
-  "schema_fingerprint": "sha256:3a351421319daba008bc66de0c433d9da9dff651591377f97fdb50e323bacb27",
+  "schema_fingerprint": "sha256:b4542cc90a9808018f280a650c47c5c882b3ef8667458d98a838c2cc5f401703",
   "sha256_of": "each file with its `// generated-at:` line emptied, so an unchanged schema keeps an unchanged digest",
   "sources": {
     "Assets/Network/Models/Backend/Players.cs": {
@@ -277,8 +277,8 @@
           "path": "Assets/Network/Generated/MoveInputNetCodec.cs",
           "model": "MoveInput",
           "codec": "net",
-          "fingerprint": "sha256:a2d153b269a017b61788679bc3890ee93c97d9d36a7fe8e2cbca2aa426ec28d7",
-          "sha256": "b71f3d682dcaa8b68d0549e11b5ae2eaab1de74b60f184ddc25604c6c9d39221"
+          "fingerprint": "sha256:2ea51d665a14a664f6e376dd3bc911522bb9d8e3415a9879d5dd35bb8976bd55",
+          "sha256": "8b4e791b76374426ad4fa56a7dd0262251888619da52e6f15a817a4ce61c452d"
         }
       ]
     },
@@ -960,12 +960,12 @@
     {
       "path": "Assets/Network/Generated/Handshake.cs",
       "kind": "handshake",
-      "sha256": "7a047a3feb34c060963e85eab7ae6eff5e3c82d37a1f08c399f43d0c7cfe06e8"
+      "sha256": "1768d7800b09ccd0555216cacc0a03594210c547a38395e5c306667e58ede8ea"
     },
     {
       "path": "Assets/Network/Generated/NetSchema.cs",
       "kind": "net_schema",
-      "sha256": "4c6f98d6dea8f85158ddbb113d365fecf8596c18511bcb508632861b7702b9d1"
+      "sha256": "5f432274d6cd34fce2abb5543268ea1127fe8570527f3bca625414cf3d8df16a"
     }
   ]
 }

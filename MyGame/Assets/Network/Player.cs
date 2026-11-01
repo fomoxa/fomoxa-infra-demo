@@ -9,10 +9,11 @@ namespace MyGame.Network
 {
     public sealed class Player : NetworkBehaviour
     {
-        [SerializeField] private float speed = 6f;
-        [SerializeField] private float bounds = 23f;
-
         private NetworkManager manager;
+        private float verticalSpeed;
+
+        /// <summary>Số bậc cao nhất đã đứng lên (0 = chưa lên bục nào).</summary>
+        public int Steps { get; private set; }
         private bool bot;
         private bool trace;
         private float nextTrace;
@@ -58,11 +59,13 @@ namespace MyGame.Network
                 float time = Time.time;
                 input.X = Mathf.Cos(time);
                 input.Z = Mathf.Sin(time);
+                input.Jump = Mathf.Repeat(time, 1.5f) < 0.1f;
                 return;
             }
 
             input.X = Input.GetAxisRaw("Horizontal");
             input.Z = Input.GetAxisRaw("Vertical");
+            input.Jump = Input.GetKey(KeyCode.Space);
         }
 
         private void Apply(MoveInput input, InputContext context)
@@ -78,11 +81,21 @@ namespace MyGame.Network
                 transform.rotation = Quaternion.LookRotation(direction, Vector3.up);
             }
 
-            Vector3 next = transform.position + direction * speed * (float)manager.TimeManager.TickDelta;
-            next.x = Mathf.Clamp(next.x, -bounds, bounds);
-            next.z = Mathf.Clamp(next.z, -bounds, bounds);
-            next.y = 1f;
-            transform.position = next;
+            Vector3 position = transform.position;
+            float x = position.x;
+            float z = position.z;
+            float feet = position.y - Course.HalfHeight;
+            Course.Simulate(ref x, ref feet, ref z, ref verticalSpeed, direction.x, direction.z, input.Jump, (float)manager.TimeManager.TickDelta);
+            transform.position = new Vector3(x, feet + Course.HalfHeight, z);
+
+            if (verticalSpeed == 0f)
+            {
+                int step = Course.StepAt(x, z, feet);
+                if (step > Steps)
+                {
+                    Steps = step;
+                }
+            }
         }
     }
 }

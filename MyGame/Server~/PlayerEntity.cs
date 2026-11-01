@@ -22,7 +22,12 @@ namespace MyGame.Network
             : base(FomoxaPrefabs.PlayerId, new EntityBehaviour[] { transform, player })
         {
             player.Entity = this;
+            Behaviour = player;
+            transform.OnPose = position => player.Replicated = position;
         }
+
+        /// <summary>Hành vi Player để đọc điểm số.</summary>
+        public Player Behaviour { get; }
     }
 
     /// <summary>
@@ -43,21 +48,29 @@ namespace MyGame.Network
         {
         }
 
+        /// <summary>Chỉ client giả lập (bot test) dùng: nhận vị trí do server gửi về.</summary>
+        public Action<Vector3> OnPose { get; set; }
+
         public void Receive(in TransformSample sample)
         {
+            OnPose?.Invoke(sample.LocalPosition);
         }
     }
 
     /// <summary>
-    /// Bản console của Assets/Network/Player.cs. Cùng hằng số (speed 6, bounds 23),
-    /// cùng model MoveInput; khác là dùng System.Numerics thay UnityEngine.
+    /// Bản console của Assets/Network/Player.cs. Dùng chung <see cref="Course.Simulate"/> nên di chuyển / nhảy /
+    /// đáp bục khớp bản Unity; khác là dùng System.Numerics thay UnityEngine.
     /// </summary>
     public sealed class Player : EntityBehaviour
     {
-        private const float Speed = 6f;
-        private const float Bounds = 23f;
+        /// <summary>Chỉ dùng cho client giả lập (bot test): nếu đặt, thay cho đầu vào rỗng của Gather.</summary>
+        public static Action<Player, MoveInput> BotGather { get; set; }
+
+        /// <summary>Vị trí do server gửi về (chỉ có ở client giả lập).</summary>
+        public Vector3? Replicated { get; set; }
 
         private readonly Func<double> tickDelta;
+        private float verticalSpeed;
 
         public Player(Func<double> tickDelta)
         {
@@ -66,15 +79,20 @@ namespace MyGame.Network
 
         public StandaloneEntity Entity { get; set; }
 
+        /// <summary>Số bậc cao nhất đã đứng lên (0 = chưa lên bục nào).</summary>
+        public int Steps { get; private set; }
+
         protected override void OnRegisterInput(NetworkInput input)
         {
             input.Use(MoveInputNetAdapter.Instance, Gather, Apply);
         }
 
-        private static void Gather(MoveInput input)
+        private void Gather(MoveInput input)
         {
             input.X = 0f;
             input.Z = 0f;
+            input.Jump = false;
+            BotGather?.Invoke(this, input);
         }
 
         private void Apply(MoveInput input, InputContext context)
@@ -97,11 +115,21 @@ namespace MyGame.Network
                 Entity.Rotation = Quaternion.CreateFromAxisAngle(Vector3.UnitY, yaw);
             }
 
-            Vector3 next = Entity.Position + direction * (Speed * (float)tickDelta());
-            next.X = Math.Clamp(next.X, -Bounds, Bounds);
-            next.Z = Math.Clamp(next.Z, -Bounds, Bounds);
-            next.Y = 1f;
-            Entity.Position = next;
+            Vector3 position = Entity.Position;
+            float x = position.X;
+            float z = position.Z;
+            float feet = position.Y - Course.HalfHeight;
+            Course.Simulate(ref x, ref feet, ref z, ref verticalSpeed, direction.X, direction.Z, input.Jump, (float)tickDelta());
+            Entity.Position = new Vector3(x, feet + Course.HalfHeight, z);
+
+            if (verticalSpeed == 0f)
+            {
+                int step = Course.StepAt(x, z, feet);
+                if (step > Steps)
+                {
+                    Steps = step;
+                }
+            }
         }
     }
 }

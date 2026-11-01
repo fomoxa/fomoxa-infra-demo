@@ -22,6 +22,8 @@
 
   <ItemGroup>
     <Compile Include="$(Core)/Runtime/Core/**/*.cs" />
+    <Compile Include="$(Core)/Standalone~/**/*.cs" />
+    <Compile Include="$(Game)/Server~/PlayerEntity.cs" />
     <Compile Include="$(Rpc)/Runtime/Fomoxa.Rpc/**/*.cs" />
     <Compile Include="$(Rpc)/Runtime/Directory/**/*.cs" />
     <Compile Include="$(Game)/Assets/Network/Models/**/*.cs" />
@@ -31,6 +33,10 @@
     <!-- Dùng chung với backend thật để hành vi Presence giống nhau -->
     <Compile Include="$(MSBuildThisFileDirectory)../../MyGame.Backend/MyGame.Backend/OnlinePlayers.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)../../MyGame.Backend/MyGame.Backend/Accounts/*.cs" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <None Include="$(Game)/Assets/Network/Generated/*.fomoxascene" Link="Scenes/%(Filename)%(Extension)" CopyToOutputDirectory="PreserveNewest" />
   </ItemGroup>
 
   <ItemGroup>

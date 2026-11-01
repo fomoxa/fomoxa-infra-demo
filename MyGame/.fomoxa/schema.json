@@ -1,8 +1,8 @@
 {
   "schema_version": 1,
   "generator": "fomoxac 0.2.3",
-  "fingerprint": "sha256:3a351421319daba008bc66de0c433d9da9dff651591377f97fdb50e323bacb27",
-  "fingerprint_u64": "0x3A351421319DABA0",
+  "fingerprint": "sha256:b4542cc90a9808018f280a650c47c5c882b3ef8667458d98a838c2cc5f401703",
+  "fingerprint_u64": "0xB4542CC90A980801",
   "models": {
     "ActionResult": {
       "source": "Assets/Network/Models/Backend/Social.cs",
@@ -1760,7 +1760,7 @@
     },
     "MoveInput": {
       "source": "Assets/Network/Models/MoveInput.cs",
-      "fingerprint": "sha256:52fbcd773caec5cde54baf19df287ee916bd31733ec907df1e08e5fba54e6119",
+      "fingerprint": "sha256:e55ef0b9bb084a1a7de12378399fa905b523ac96b7243ecd3c420b95fe2ad193",
       "codecs": [
         "net"
       ],
@@ -1778,20 +1778,29 @@
           "codecs": [
             "net"
           ]
+        },
+        {
+          "name": "Jump",
+          "type": "bool",
+          "codecs": [
+            "net"
+          ]
         }
       ],
       "messages": {
         "net": {
           "id": "0x7F6376FC",
-          "fingerprint": "sha256:a2d153b269a017b61788679bc3890ee93c97d9d36a7fe8e2cbca2aa426ec28d7",
-          "fingerprint_u64": "0xA2D153B269A017B6",
+          "fingerprint": "sha256:2ea51d665a14a664f6e376dd3bc911522bb9d8e3415a9879d5dd35bb8976bd55",
+          "fingerprint_u64": "0x2EA51D665A14A664",
           "prefixes": [
             "sha256:04dd4966df9c5712493792f28c14b914585c3bceea36c0680289b2abbfc562f2",
-            "sha256:a2d153b269a017b61788679bc3890ee93c97d9d36a7fe8e2cbca2aa426ec28d7"
+            "sha256:a2d153b269a017b61788679bc3890ee93c97d9d36a7fe8e2cbca2aa426ec28d7",
+            "sha256:2ea51d665a14a664f6e376dd3bc911522bb9d8e3415a9879d5dd35bb8976bd55"
           ],
           "prefixes_u64": [
             "0x04DD4966DF9C5712",
-            "0xA2D153B269A017B6"
+            "0xA2D153B269A017B6",
+            "0x2EA51D665A14A664"
           ],
           "fields": [
             {
@@ -1801,6 +1810,10 @@
             {
               "name": "Z",
               "type": "f32"
+            },
+            {
+              "name": "Jump",
+              "type": "bool"
             }
           ]
         }

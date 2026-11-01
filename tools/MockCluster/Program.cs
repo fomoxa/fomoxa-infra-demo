@@ -117,6 +117,11 @@ namespace MockCluster
                     Console.WriteLine($"[Mock] {podCount} pod da dang ky. Cum gia san sang. Ctrl+C de tat.");
                 }
 
+                if (args.Has("bot-test"))
+                {
+                    return await BotClient.Run(playersServer.LocalEndPoint.Port, int.Parse(args.Get("bot-seconds", "25"))) ? 0 : 4;
+                }
+
                 if (args.Has("selftest"))
                 {
                     return await SelfTest(playersServer.LocalEndPoint.Port, podsServer.LocalEndPoint.Port) ? 0 : 3;

@@ -24,11 +24,13 @@ namespace MyGame.Server
         private readonly uint capacity;
         private readonly Func<IReadOnlyCollection<string>> rooms;
         private readonly Func<int> players;
+        private readonly Func<IReadOnlyList<(string Player, uint Steps)>> scores;
         private readonly CancellationTokenSource stop = new CancellationTokenSource();
         private readonly Task loop;
 
-        private BackendReporter(string address, byte[] key, uint capacity, Func<IReadOnlyCollection<string>> rooms, Func<int> players)
+        private BackendReporter(string address, byte[] key, uint capacity, Func<IReadOnlyCollection<string>> rooms, Func<int> players, Func<IReadOnlyList<(string Player, uint Steps)>> scores)
         {
+            this.scores = scores;
             this.address = address;
             this.key = key;
             this.capacity = capacity;
@@ -37,7 +39,7 @@ namespace MyGame.Server
             loop = Task.Run(Run);
         }
 
-        public static BackendReporter StartIfConfigured(PodConfig config, Func<IReadOnlyCollection<string>> rooms, Func<int> players)
+        public static BackendReporter StartIfConfigured(PodConfig config, Func<IReadOnlyCollection<string>> rooms, Func<int> players, Func<IReadOnlyList<(string Player, uint Steps)>> scores)
         {
             if (string.IsNullOrEmpty(config.BackendAddress))
             {
@@ -45,7 +47,7 @@ namespace MyGame.Server
             }
 
             Console.WriteLine($"[Backend] bao so nguoi choi ve {config.BackendAddress}");
-            return new BackendReporter(config.BackendAddress, File.ReadAllBytes(config.BackendKeyFile), config.MaxPlayers, rooms, players);
+            return new BackendReporter(config.BackendAddress, File.ReadAllBytes(config.BackendKeyFile), config.MaxPlayers, rooms, players, scores);
         }
 
         private async Task Run()
@@ -71,6 +73,18 @@ namespace MyGame.Server
                         await gate.ReportRoomAsync(
                             new RoomReport { RoomKey = room, Players = count, Capacity = capacity },
                             CallOptions.Within(TimeSpan.FromSeconds(3)));
+
+                        // Bảng điểm: pod claim-one giữ đúng một room nên mọi người chơi trên pod thuộc room đó.
+                        var report = new ScoreReport { Room = room };
+                        foreach (var entry in scores())
+                        {
+                            if (entry.Player.Length > 0)
+                            {
+                                report.Entries.Add(new PodScore { Player = entry.Player, Steps = entry.Steps });
+                            }
+                        }
+
+                        await gate.ReportScoresAsync(report, CallOptions.Within(TimeSpan.FromSeconds(3)));
                     }
                 }
                 catch (Exception error)

@@ -70,6 +70,11 @@ namespace MyGame.Server
                 NetworkLog.Console);
 
             int slot = 0;
+            var authenticator = new PodAuthenticator();
+            runtime.ServerManager.Authenticator = authenticator;
+            var entities = new Dictionary<ulong, PlayerEntity>();
+            var scoreGate = new object();
+            IReadOnlyList<(string Player, uint Steps)> scoreSnapshot = Array.Empty<(string, uint)>();
             runtime.ServerManager.OnRemoteConnectionState += args =>
             {
                 if (args.State == ConnectionState.Started)
@@ -78,6 +83,11 @@ namespace MyGame.Server
                     var player = new PlayerEntity(() => runtime.TimeManager.TickDelta);
                     player.Position = new Vector3(0f, 1f, 0f) + SpawnOffset();
                     runtime.ServerManager.Spawn(player, args.PeerId);
+                    lock (scoreGate)
+                    {
+                        entities[args.PeerId] = player;
+                    }
+
                     Console.WriteLine($"[Pod] peer {args.PeerId}: Started -> spawn at {player.Position}");
                     return;
                 }
@@ -85,6 +95,12 @@ namespace MyGame.Server
                 if (args.State == ConnectionState.Stopped)
                 {
                     agones.OnPlayerDisconnected(args.PeerId);
+                    lock (scoreGate)
+                    {
+                        entities.Remove(args.PeerId);
+                    }
+
+                    authenticator.Forget(args.PeerId);
                 }
 
                 Console.WriteLine($"[Pod] peer {args.PeerId}: {args.State} {args.Reason}");
@@ -115,7 +131,8 @@ namespace MyGame.Server
             using var backendReporter = BackendReporter.StartIfConfigured(
                 config,
                 () => pod.Rooms,
-                () => runtime.ServerManager.PeerCount);
+                () => runtime.ServerManager.PeerCount,
+                () => scoreSnapshot);
 
             bool draining = false;
 
@@ -234,12 +251,28 @@ namespace MyGame.Server
             TimeSpan last = clock.Elapsed;
             double nextTrace = 0;
             double nextHealth = 0;
+            double nextScores = 0;
             while (!stopping.IsSet)
             {
                 TimeSpan now = clock.Elapsed;
                 runtime.BeginFrame(now, (now - last).TotalSeconds);
                 runtime.EndFrame();
                 last = now;
+
+                if (now.TotalSeconds >= nextScores)
+                {
+                    nextScores = now.TotalSeconds + 1;
+                    var snapshot = new List<(string Player, uint Steps)>();
+                    lock (scoreGate)
+                    {
+                        foreach (KeyValuePair<ulong, PlayerEntity> entry in entities)
+                        {
+                            snapshot.Add((authenticator.NameOf(entry.Key), (uint)entry.Value.Behaviour.Steps));
+                        }
+                    }
+
+                    scoreSnapshot = snapshot;
+                }
 
                 if (now.TotalSeconds >= nextHealth)
                 {

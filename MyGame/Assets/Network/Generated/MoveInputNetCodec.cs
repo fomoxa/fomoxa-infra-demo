@@ -4,9 +4,9 @@
 // source: Assets/Network/Models/MoveInput.cs
 // model: MoveInput
 // codec: net
-// fingerprint: sha256:a2d153b269a017b61788679bc3890ee93c97d9d36a7fe8e2cbca2aa426ec28d7
+// fingerprint: sha256:2ea51d665a14a664f6e376dd3bc911522bb9d8e3415a9879d5dd35bb8976bd55
 // fomoxac-version: 0.2.3
-// generated-at: 2026-11-01T10:10:46Z
+// generated-at: 2026-11-01T11:24:54Z
 
 namespace Generated
 {
@@ -17,6 +17,7 @@ namespace Generated
 /// <list type="number">
 /// <item><description><c>X</c>: <c>f32</c></description></item>
 /// <item><description><c>Z</c>: <c>f32</c></description></item>
+/// <item><description><c>Jump</c>: <c>bool</c></description></item>
 /// </list>
 /// </remarks>
 public static class MoveInputNetCodec
@@ -29,13 +30,14 @@ public static class MoveInputNetCodec
 
     /// <summary>This message's wire-contract fingerprint - the same value
     /// <c>Handshake.cs</c> publishes, and the one a peer compares against.</summary>
-    public const ulong Fingerprint = 0xA2D153B269A017B6;
+    public const ulong Fingerprint = 0x2EA51D665A14A664;
 
     /// <summary>Writes the <c>net</c> fields of <paramref name="value"/>, in declaration order.</summary>
     public static void Encode(Writer writer, MyGame.Network.Models.MoveInput value)
     {
         writer.WriteF32(value.X);
         writer.WriteF32(value.Z);
+        writer.WriteBool(value.Jump);
     }
 
     /// <summary>Reads the <c>net</c> fields into <paramref name="value"/>, in declaration order.</summary>
@@ -51,6 +53,7 @@ public static class MoveInputNetCodec
     {
         value.X = reader.FieldAbsent() ? 0f : reader.ReadF32();
         value.Z = reader.FieldAbsent() ? 0f : reader.ReadF32();
+        value.Jump = reader.FieldAbsent() ? false : reader.ReadBool();
     }
 }
 
