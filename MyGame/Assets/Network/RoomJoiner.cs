@@ -21,6 +21,12 @@ namespace MyGame.Network
         public string backendAddress = "127.0.0.1";
         public ushort backendPort = 9600;
 
+        [Header("TLS (mã hoá đường client - backend)")]
+        [Tooltip("Bật khi backend đứng sau proxy TLS (cổng 9643). Mật khẩu đi qua đường này nên bật khi ra khỏi mạng nội bộ.")]
+        public bool useTls;
+        [Tooltip("Vân tay SHA-256 của chứng chỉ (hex). Dùng cho chứng chỉ tự ký; để trống nếu chứng chỉ do CA công cộng cấp.")]
+        public string tlsPinSha256 = "";
+
         /// <summary>
         /// RoomJoiner sống xuyên suốt các scene (sảnh ↔ trận): giữ phiên đăng nhập và tiếp tục báo online khi đang chơi.
         /// </summary>
@@ -63,6 +69,53 @@ namespace MyGame.Network
         {
             Status = text;
             IsError = error;
+        }
+
+        private void ApplyCommandLine(string[] args)
+        {
+            foreach (string arg in args)
+            {
+                if (arg.StartsWith("-backend:", StringComparison.Ordinal))
+                {
+                    string value = arg.Substring("-backend:".Length);
+                    int colon = value.LastIndexOf(':');
+                    if (colon > 0 && ushort.TryParse(value.Substring(colon + 1), out ushort port))
+                    {
+                        backendAddress = value.Substring(0, colon);
+                        backendPort = port;
+                    }
+                }
+                else if (arg == "-tls")
+                {
+                    useTls = true;
+                }
+                else if (arg.StartsWith("-tlspin:", StringComparison.Ordinal))
+                {
+                    useTls = true;
+                    tlsPinSha256 = arg.Substring("-tlspin:".Length);
+                }
+            }
+        }
+
+        private ITransportFactory BackendFactory()
+        {
+            if (!useTls)
+            {
+                return backendTransport.CreateFactory();
+            }
+
+            var settings = new TlsSettings();
+            if (!string.IsNullOrWhiteSpace(tlsPinSha256))
+            {
+                if (!PinnedCertificateCheck.IsValidPin(tlsPinSha256))
+                {
+                    throw new InvalidOperationException("tlsPinSha256 không phải SHA-256 dạng hex (64 ký tự hex, có thể có dấu ':')");
+                }
+
+                settings.CertificateCheck = new PinnedCertificateCheck(tlsPinSha256);
+            }
+
+            return new TcpTransportFactory(settings);
         }
 
         private void Start()
@@ -342,7 +395,8 @@ namespace MyGame.Network
             connecting = new TaskCompletionSource<ITransport>();
             SetStatus($"Đang kết nối backend {backendAddress}:{backendPort}...");
             Debug.Log($"[Join] connecting to {backendAddress}:{backendPort}");
-            connector = backendTransport.CreateFactory().CreateConnector(backendAddress, backendPort);
+            ApplyCommandLine(Environment.GetCommandLineArgs());
+            connector = BackendFactory().CreateConnector(backendAddress, backendPort);
             ITransport transport = await connecting.Task;
 
             string[] args = Environment.GetCommandLineArgs();
@@ -623,9 +677,12 @@ namespace MyGame.Network
                 }
                 else if (status != ConnectStatus.Pending)
                 {
+                    string detail = status == ConnectStatus.TlsRejected && connector is ITlsRejection rejection
+                        ? $" ({rejection.TlsRejection})"
+                        : "";
                     connector.Dispose();
                     connector = null;
-                    connecting.SetException(new InvalidOperationException($"cannot reach the backend: {status}"));
+                    connecting.SetException(new InvalidOperationException($"không kết nối được backend: {status}{detail}"));
                 }
             }
 

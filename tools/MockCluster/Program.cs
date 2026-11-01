@@ -9,7 +9,11 @@ using System.Security.Cryptography;
 using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
+using Fomoxa.Net;
+using Fomoxa.Net.Transports;
+using MyGame.Network;
 using Fomoxa.Networking;
+using Fomoxa.Networking.Transports;
 using Fomoxa.Rpc;
 using Fomoxa.Rpc.Directory;
 using Fomoxa.Rpc.Net;
@@ -76,6 +80,15 @@ namespace MockCluster
             Console.WriteLine($"[Mock] directory giả  : {directoryServer.LocalEndPoint}");
             Console.WriteLine($"[Mock] backend giả    : {playersServer.LocalEndPoint}  (client Unity: 127.0.0.1:{playersServer.LocalEndPoint.Port})");
             Console.WriteLine($"[Mock] cổng pod giả   : {podsServer.LocalEndPoint}");
+
+            // TLS: giống proxy TLS đặt trước backend thật. Tắt bằng --no-tls.
+            TlsTerminator tls = null;
+            if (!args.Has("no-tls"))
+            {
+                tls = new TlsTerminator(args.Get("tls-listen", "0.0.0.0:9643"), "127.0.0.1", playersServer.LocalEndPoint.Port, args.Get("tls-cert", ".mock/mock-tls.pfx"));
+                Console.WriteLine($"[Mock] backend TLS    : cổng {tls.Port}  pin SHA-256 = {tls.PinSha256}");
+                Console.WriteLine($"[Mock]   Unity: -backend:127.0.0.1:{tls.Port} -tlspin:{tls.PinSha256}");
+            }
             Console.WriteLine(dataFile.Length == 0 ? "[Mock] tài khoản: trong bộ nhớ (mất khi tắt; dùng --data=file.json để giữ lại)" : $"[Mock] tài khoản lưu ở {dataFile}");
 
             using var stopping = new ManualResetEventSlim();
@@ -124,7 +137,9 @@ namespace MockCluster
 
                 if (args.Has("selftest"))
                 {
-                    return await SelfTest(playersServer.LocalEndPoint.Port, podsServer.LocalEndPoint.Port) ? 0 : 3;
+                    bool passed = await SelfTest(playersServer.LocalEndPoint.Port, podsServer.LocalEndPoint.Port);
+                    passed &= await TlsSelfTest(tls);
+                    return passed ? 0 : 3;
                 }
 
                 stopping.Wait();
@@ -391,6 +406,77 @@ namespace MockCluster
             using RpcConnection connection = RpcConnection.Connect($"127.0.0.1:{port}", NetSchema.Build(), LobbyClient.Declare(PlayersClient.Registry()).Build(), options).GetAwaiter().GetResult();
             ActionResult taken = new LobbyClient(connection).TakeRecoveryCodeAsync(new RecoveryCodeRequest(), CallOptions.Within(TimeSpan.FromSeconds(8))).GetAwaiter().GetResult();
             return taken.Ok ? taken.Message : "";
+        }
+
+        /// <summary>Kết nối qua TLS tới cổng đầu cuối: đúng pin thì vào được và gọi RPC; sai pin thì bị từ chối.</summary>
+        private static async Task<bool> TlsSelfTest(TlsTerminator tls)
+        {
+            if (tls == null)
+            {
+                return true;
+            }
+
+            bool ok = true;
+            void Check(string name, bool pass, string detail = "")
+            {
+                Console.WriteLine($"[selftest] {(pass ? "OK  " : "FAIL")} {name} {detail}");
+                ok &= pass;
+            }
+
+            async Task<ITransport> ConnectTls(string pin)
+            {
+                var settings = new TlsSettings { CertificateCheck = new PinnedCertificateCheck(pin) };
+                using ITransportConnector connector = new TcpTransportFactory(settings).CreateConnector("127.0.0.1", (ushort)tls.Port);
+                DateTime deadline = DateTime.UtcNow.AddSeconds(8);
+                while (DateTime.UtcNow < deadline)
+                {
+                    ConnectStatus status = connector.Poll(out ITransport transport);
+                    if (status == ConnectStatus.Connected)
+                    {
+                        return transport;
+                    }
+
+                    if (status != ConnectStatus.Pending)
+                    {
+                        throw new InvalidOperationException(status.ToString());
+                    }
+
+                    await Task.Delay(10);
+                }
+
+                throw new TimeoutException("TLS handshake quá hạn");
+            }
+
+            try
+            {
+                ITransport transport = await ConnectTls(tls.PinSha256);
+                var login = new PlayerLogin { Player = "tlsguest" };
+                var options = new ConnectOptions { Credential = Credential.Of(PlayersMethods.Login, login) };
+                using RpcConnection connection = await RpcConnection.Open(transport, NetSchema.Build(), LobbyClient.Declare(PlayersClient.Registry()).Build(), options);
+                RoomList rooms = await new LobbyClient(connection).ListRoomsAsync(new ListRoomsRequest(), CallOptions.Within(TimeSpan.FromSeconds(8)));
+                Check("Ket noi qua TLS (dung pin) va goi RPC", rooms.Rooms.Count > 0, $"({rooms.Rooms.Count} phong)");
+            }
+            catch (Exception problem)
+            {
+                Check("Ket noi qua TLS (dung pin) va goi RPC", false, problem.Message);
+            }
+
+            try
+            {
+                await ConnectTls(new string('0', 64));
+                Check("Sai pin bi tu choi", false);
+            }
+            catch (InvalidOperationException problem)
+            {
+                Check("Sai pin bi tu choi", problem.Message == "TlsRejected", $"({problem.Message})");
+            }
+            catch (Exception problem)
+            {
+                Check("Sai pin bi tu choi", false, problem.Message);
+            }
+
+            Console.WriteLine(ok ? "[selftest] TLS DAT" : "[selftest] TLS CO LOI");
+            return ok;
         }
 
         private sealed class Args

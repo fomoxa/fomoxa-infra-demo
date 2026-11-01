@@ -30,6 +30,7 @@
     <Compile Include="$(Game)/Assets/Network/Generated/**/*.cs" />
     <Compile Include="$(Game)/Assets/Network/Rpc/Services.cs" />
     <Compile Include="*.cs" />
+    <Compile Include="$(Game)/Assets/Network/PinnedCertificateCheck.cs" />
     <!-- Dùng chung với backend thật để hành vi Presence giống nhau -->
     <Compile Include="$(MSBuildThisFileDirectory)../../MyGame.Backend/MyGame.Backend/OnlinePlayers.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)../../MyGame.Backend/MyGame.Backend/Accounts/*.cs" />
