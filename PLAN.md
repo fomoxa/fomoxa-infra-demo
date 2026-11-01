@@ -136,14 +136,37 @@ Mục tiêu: **2 client spawn, đi lại, nhìn thấy nhau.**
 
 ---
 
-### P2 — Directory + Backend (1–2 ngày)
+### P2 — Directory + Backend (1–2 ngày) ✅ XONG
 
-- `cargo build --release -p fomoxa-directory -p fomoxa-gateway` trong `gateway/`.
+- `cargo build --release -p fomoxa-directory -p fomoxa-gateway` trong `gateway/` (20 s, `target/release/*.exe`).
 - Sinh keys (`scripts/gen-keys.ps1`), chạy directory với `deploy/directory.toml`.
-- Pod: `DirectoryPodSettings { DirectoryAddress, DirectoryPort=9500, Key, Address, Port=7778, Version="1.0.0", Region, MaxPlayers }` → pod tự register.
-- Backend: chạy `MyGame.Backend` với `Fomoxa__Directory__Address=127.0.0.1:9500` + key file.
+- Pod: `DirectoryPodSettings { DirectoryAddress, DirectoryPort=9500, Key, Address, Port=7778, Version, Region, MaxPlayers }` → pod tự register rồi `AcquireRoom("arena:1")`.
+- Backend: `MyGame.Backend` (từ `dotnet new fomoxa-backend`), `Fomoxa__Directory__Address` + 2 key file.
 
-**DoD**: `JoinRoom("arena:1","1.0.0")` trả ticket có `Address:Port` = pod thật; client nối pod bằng grant; 2 client vào cùng room.
+**DoD**: `JoinRoom("arena:1","1.0.0")` trả ticket có `Address:Port` = pod thật; client nối pod bằng grant; 2 client vào cùng room. ✅
+
+**Kết quả đo được** (`logs/`):
+
+```
+[Join] logged in as ana
+[Join] room arena:1 -> 127.0.0.1:7778, grant 217 bytes
+client: Started
+[Player] spawn on client id=3 owner=3 mine=True
+```
+
+- Pod: `[Pod] registered id=26276111` → `[Pod] holds arena:1` → `peer 3: Started`.
+- Client 2 thấy cả 2 object (`mine=True` / `mine=False`), vị trí khớp khi một client chạy `-bot`.
+- Client tắt → pod `peer 1: Stopped Timeout` và thư viện **tự despawn** object của peer (không cần code).
+
+**Quyết định & bẫy của P2**
+
+- Pod P2 = **chính Unity build** (`MyGame.exe -pod`), chưa phải console server. Lý do: tái dùng đúng code Unity, không phải nhân đôi `Player`/`NetworkTransform`. Console server (Linux, container) để dành cho P5 (Agones).
+- Vì pod dùng encrypted UDP, **host mode** phải tự đặt `ConnectTokens` (key random) trước `StartConnection`, nếu không `ServerManager` ném lỗi. Client localhost bỏ qua grant.
+- `Version` của pod và client đều là `Application.version` = `1.0` (bundleVersion mặc định), nên `filter = "pod.version == client.version"` luôn khớp. Đổi `bundleVersion` phải đổi cả hai đầu.
+- Directory giữ mapping room → pod **cho tới khi reap pod chết**; pod mới `AcquireRoom` cùng key sẽ nhận `FAILED_PRECONDITION`. Khi test lại: restart directory hoặc đổi roomKey.
+- Model rpc phải có codec **trước khi** compile `Services.cs`, nếu không `FRPC003`. Vì fomoxac chạy sau compile: copy `Models/` → generate → rồi mới thêm `Services.cs`.
+- `-logFile -` của Unity player **không** ghi ra stdout (buffer) → luôn `-logFile <đường dẫn>`.
+- Backend net8.0 trên máy chỉ có .NET 9 → cần `RollForward=Major` (đã đặt trong csproj).
 
 ---
 
@@ -192,26 +215,24 @@ Mục tiêu: **2 client spawn, đi lại, nhìn thấy nhau.**
 ```
 D:\Documents\fomoxa\
 ├─ PLAN.md                     ← file này
-├─ gateway\                    (clone) → target/release/*.exe
-├─ com.fomoxa.networking\      (clone) — package
-├─ com.fomoxa.rpc\             (clone) — package
-├─ unity-codecs\               (clone) — package
-├─ RedRunner\                  (clone) — tham chiếu gameplay
-├─ unity-docs\                 (clone) — docs offline + bản vi/
-├─ backend\                    (clone) — template gốc
-├─ MyGame\                     ← Unity project (tạo ở P1)
-│  ├─ Assets\Network\Models\
-│  ├─ Assets\Network\Generated\
-│  └─ Server~\MyGame.Server.csproj   ← pod
+├─ gateway\                    (clone, ignore) → target/release/fomoxa-directory.exe
+├─ unity-docs\                 (clone, ignore) — docs offline
+├─ MyGame\                     ← Unity project (P1, P2)
+│  ├─ Assets\Network\Models\        model net (MoveInput) + Backend (rpc)
+│  ├─ Assets\Network\Rpc\Services.cs  bản copy từ backend (để sinh fRPC client)
+│  ├─ Assets\Network\Generated\     codec fomoxac + codec rpc
+│  └─ Builds\MyGame.exe             build dùng làm pod + client
+├─ MyGame.Backend\             ← backend (template fomoxa-backend, P2)
 ├─ deploy\
 │  ├─ directory.toml
-│  ├─ gateway.toml
-│  └─ compose.yaml             (P4: + postgres + nakama)
-├─ keys\                       ← sinh bởi script, KHÔNG commit
+│  ├─ gateway.toml             (P3)
+│  └─ secrets\                 ← sinh bởi gen-keys.ps1, KHÔNG commit
 └─ scripts\
    ├─ gen-keys.ps1
-   ├─ up.ps1  / down.ps1
-   └─ smoke.ps1
+   ├─ start-cluster.ps1        directory + backend + pod
+   ├─ stop-all.ps1
+   ├─ run-directory.ps1 / run-backend.ps1 / run-pod.ps1 / run-client.ps1
+   └─ (P3) gateway
 ```
 
 ---
@@ -241,10 +262,11 @@ D:\Documents\fomoxa\
 
 ---
 
-## 8. Việc tiếp theo
+## 8. Việc tiếp theo (P3 — gateway)
 
-1. `scripts/gen-keys.ps1` — 5 role key + root (64 hex) + pod key backend + hmac.
-2. Tạo `MyGame` bằng Unity CLI + sửa `manifest.json`.
-3. Viết `PlayerBehaviour`, spawn, input, camera.
-4. Viết `Server~/Program.cs` + csproj.
-5. `deploy/directory.toml`, `deploy/gateway.toml`.
+1. `deploy/gateway.toml`: `listen = "0.0.0.0:7777"`, key file `secrets/directory/gateway`, trỏ directory `127.0.0.1:9500`.
+2. `deploy/directory.toml`: thêm `public_address = "127.0.0.1:7777"` để ticket trả về cổng gateway thay vì pod.
+3. Pod: `behindGateway = true` trên `EncryptedUdpNetworkTransport` + `DirectoryPodSettings.Address/Port` vẫn là địa chỉ thật của pod.
+4. Chạy lại chuỗi, xác nhận ticket trỏ `7777`, log gateway thấy datagram có envelope 20 byte và không giữ state per-session.
+5. `scripts/start-cluster.ps1` thêm gateway vào chuỗi khởi động.
+
