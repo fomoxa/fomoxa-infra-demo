@@ -1,6 +1,7 @@
 # Kế hoạch cụm Fomoxa + Nakama + Agones
 
 Cập nhật: đã clone repos về `D:\Documents\fomoxa`, đã kiểm tra môi trường máy.
+P1–P4 xong (game + directory + gateway + Nakama). P5 (Agones) đã chốt phạm vi, đang ở bước 1.
 
 ---
 
@@ -15,6 +16,22 @@ Cập nhật: đã clone repos về `D:\Documents\fomoxa`, đã kiểm tra môi 
 | Docker | **29.4.1** | OK |
 | Git | **2.52.0** | OK |
 | GitHub | truy cập được | ✓ |
+
+### 0.1. Đo lại cho P5 (Agones)
+
+| Hạng mục | Đo được | Hệ quả |
+|---|---|---|
+| `MyGame/Server~` | **không tồn tại** | phải tạo console server từ đầu |
+| Unity Linux Build Support | **chưa cài** (chỉ WebGL + windowsstandalonesupport) | không build được Unity Linux player → chọn console server |
+| `k3d` / `helm` | **thiếu** | phải cài trước khi làm P5 |
+| `kubectl` | có (Windows `Docker\...\kubectl.exe`, và trong Ubuntu) | dùng bản Windows, context `k3d-*` |
+| Docker Desktop | 8.1 GB RAM / 20 CPU | đủ cho 2 game server + 5 service phụ |
+| WSL2 Ubuntu | 7.7 GB RAM, **engine docker riêng** | **không** dùng; k3d chạy trên engine Docker Desktop |
+| Ổ đĩa | C: 62 GB trống, D: 22.6 GB trống | build image trên C: để tránh đầy D: |
+
+**Sửa so với dự định cũ**: P5 **không** chạy k3d trong WSL2 Ubuntu. Máy có 2 Docker engine
+(`docker-desktop` và engine trong Ubuntu); dùng lẫn sẽ ra 2 cluster khác nhau. Chốt: k3d +
+Agones chạy trên **Docker Desktop engine**, gọi từ PowerShell trên Windows.
 
 ---
 
@@ -251,14 +268,119 @@ ticket bịa bị từ chối.
 
 ---
 
-### P5 — Agones (3–5 ngày) ⚠️
+### P5 — Agones (4–5 ngày) 🚧
 
-- **WSL2 + k3d** (không dùng Docker Desktop + kind trên Windows).
-- Agones helm + Fleet 2 replicas (image = console server).
-- Directory/gateway/backend/nakama = Deployments; gateway **trong cluster** để tới pod IP.
-- Pod đọc env Agones → register với pod IP.
+Mục tiêu: game server chạy như `GameServer` của Agones, tự register với directory, giữ room,
+`Allocated` khi có room, và rời fleet sau khi drain.
 
-**DoD**: `kubectl scale fleet` → pod mới tự register; room mới đặt lên pod mới; drain 1 pod → relocate.
+#### Phạm vi đã chốt
+
+| # | Quyết định | Chốt | Lý do |
+|---|---|---|---|
+| D1 | Game server | **Console server** `MyGame/Server~` (.NET 8) | không có Unity Linux module; image nhỏ, không cần GPU/X |
+| D2 | Gateway | **Trong cluster**, 1 replica, `portPolicy: None` | chỉ mở 1 cổng UDP ra host; pod không cần host port động |
+| D3 | Nakama + Postgres | **Trong cluster** | giữ nguyên luồng P4 end-to-end |
+| D4 | Drain | **`DirectoryAdmin.Drain`** (RPC qua port-forward 9501) | `kubectl drain` không cho thời gian relocate room |
+| D5 | Transfer người chơi | **Không làm** | P5 chỉ drain room rỗng; client join lại sau drain |
+
+#### Kiến trúc đích
+
+```
+Unity client (Windows host)
+   │ TCP 9600 (login + join)
+   ▼
+k3d: 9600 ──► backend pod ──► nakama pod (7350) ──► postgres
+                  │ Allocate(roomKey)
+                  ▼
+             directory pod (9500)
+                  ▲ register / AcquireRoom / report_load / WatchDrain
+                  │
+k3d: 7777/udp ──► gateway pod ──► game-server pod-1 / pod-2  (:7778)
+                                       ▲
+                                       └── Agones sidecar (9357)
+```
+
+Client chỉ thấy 2 cổng: TCP **9600** (backend) và UDP **7777** (gateway).
+Directory đặt `public_address = "127.0.0.1:7777"` để ticket trỏ gateway, không trỏ pod.
+
+#### Room-key cho nhiều pod
+
+Cơ chế hiện tại có một lỗ hổng: `allocate` gán room cho pod theo `placement`, nhưng pod **chỉ
+báo** room mình giữ nếu đã gọi `AcquireRoom`; `report_load` → `reconcile` **xoá** room mà pod
+không báo. Vì vậy room gán cho pod không biết key sẽ biến mất sau ≤5 s.
+
+Phương án chọn cho P5 (không sửa Rust): **pool cố định** `arena:1 … arena:4`; pod thứ *i* gọi
+`AcquireRoom("arena:<i>")` ngay trong `OnRegistered`. `allocate` thấy key đã có chủ → trả đúng
+pod đó. Nakama vẫn trả `roomKey` client yêu cầu nên test bằng 2 key tường minh.
+
+**Nợ kỹ thuật ghi lại**: module Lua tự chọn room trống trong pool (để nhiều client cùng lúc
+không dồn vào 1 room) — làm ở P5.5, kèm test ≥4 client.
+
+#### Các bước (thứ tự commit)
+
+| # | Việc | Commit |
+|---|---|---|
+| 1 | Vendor `com.fomoxa.networking` vào repo; tạo `MyGame/Server~` (csproj, `Program.cs`, `PlayerEntity.cs`) | `P5: console server chay local` |
+| 2 | Wrapper Agones SDK (`Ready/Health/Allocate/Shutdown`) + `OnDrain`/`OnDrainDeadline`, no-op ngoài cluster | `P5: Agones lifecycle` |
+| 3 | 3 Dockerfile: game server, directory, gateway | `P5: dong goi image` |
+| 4 | `deploy/k8s/`: manifest + `directory.toml`/`gateway.toml` bản K8s + script sinh Secret | `P5: manifest k8s + agones fleet` |
+| 5 | `scripts/k8s-up.ps1`, `k8s-down.ps1`, `test-p5.ps1` | `P5: script cum k8s` |
+| 6 | Cập nhật `PLAN.md` + `MyGame/README.md` | `P5: tai lieu` |
+
+**Bước 1 là cửa ải**: console server chạy local mà 2 client Unity không thấy nhau di chuyển thì
+dừng lại sửa, không đi tiếp. Phần Agones/K8s phía sau chỉ là đóng gói.
+
+#### DoD
+
+```powershell
+kubectl get gs
+#   pod-1   Ready      10.42.0.x
+#   pod-2   Ready      10.42.0.y
+
+kubectl get gs -o custom-columns=NAME:.metadata.name,STATE:.status.state
+#   pod-1   Allocated
+#   pod-2   Allocated
+
+powershell -File scripts\test-p5.ps1
+#   ana -> arena:1 -> 127.0.0.1:7777 ... mine=True
+#   bo  -> arena:2 -> 127.0.0.1:7777 ... mine=True
+```
+
+Thêm: scale Fleet 2 → 3 thì pod-3 `Ready` và register; drain pod-2 (room rỗng) → room relocate →
+pod-2 `Shutdown` → Fleet tạo pod thay thế.
+
+#### Bẫy dự kiến
+
+- **Hai Docker engine**: `docker` trên Windows = Docker Desktop; `wsl -d Ubuntu -- docker` là
+  engine khác. Luôn kiểm `kubectl config current-context` = `k3d-fomoxa`.
+- **Grace period < drain**: `drain_seconds = 300` > mặc định 30 → đặt
+  `terminationGracePeriodSeconds: 360`, nếu không pod bị SIGKILL giữa drain.
+- **`Ready` trước register**: sidecar Agones khởi động chậm hơn container vài trăm ms → retry
+  60 × 500 ms rồi mới `DirectoryPod.Start()`.
+- **Đổi pod id sau reconnect**: `DirectoryPod` cấp key ticket mới → stop listener, set
+  `ConnectTokens`, start lại (xử lý trong `OnRegistered` khi `ChangedPodId`).
+- **Package path có hash**: `Library/PackageCache/com.fomoxa.networking@<hash>` không commit
+  được → phải vendor trước khi viết Dockerfile.
+- **Behaviour + threshold**: console phải là `NetworkTransform` rồi `Player`, với
+  `(true, true, false, 0.01, 0.1, 0.01)`; sai là `SchemaConflict` (trông như lỗi mạng).
+- **Version `1.0`**: placement `filter = "pod.version == client.version"`; console hardcode sai
+  version thì `Allocate` trả `NoPodAvailable` dù Fleet đầy pod `Ready`.
+- **`public_address`**: phải là địa chỉ client thấy (`127.0.0.1:7777`), không phải DNS trong
+  cluster.
+- **k3d + UDP**: phải map cổng lúc tạo cluster (`--port "7777:7777/udp@loadbalancer"`,
+  `--port "9600:9600@loadbalancer"`), không thêm sau được.
+
+#### Ước lượng
+
+| Việc | Ngày |
+|---|---|
+| Bước 1: vendor + `Server~` + test local 2 client | 1.5 |
+| Bước 2: Agones lifecycle | 0.5 |
+| Bước 3: Dockerfile | 0.5 |
+| Bước 4: manifest + config K8s | 1 |
+| Bước 5: script + debug placement/reconcile | 1 |
+| Buffer | 0.5 |
+| **Tổng** | **~5** |
 
 ---
 
@@ -281,20 +403,23 @@ D:\Documents\fomoxa\
 │  ├─ Assets\Network\Models\        model net (MoveInput) + Backend (rpc)
 │  ├─ Assets\Network\Rpc\Services.cs  bản copy từ backend (để sinh fRPC client)
 │  ├─ Assets\Network\Generated\     codec fomoxac + codec rpc
-│  └─ Builds\MyGame.exe             build dùng làm pod + client
+│  ├─ Server~\                      (P5) console server .NET 8 — image game server
+│  └─ Builds\MyGame.exe             build dùng làm client
 ├─ MyGame.Backend\             ← backend (template fomoxa-backend, P2)
 ├─ deploy\
 │  ├─ directory.toml
 │  ├─ gateway.toml             (P3)
 │  ├─ compose.yaml             (P4 — Postgres + Nakama)
 │  ├─ nakama\modules\main.lua  (P4 — matchmaking 2 người)
+│  ├─ k8s\                     (P5 — manifest + config bản K8s)
 │  └─ secrets\                 ← sinh bởi gen-keys.ps1, KHÔNG commit
 └─ scripts\
    ├─ gen-keys.ps1
    ├─ start-cluster.ps1        directory + backend + pod
    ├─ stop-all.ps1
-   ├─ run-directory.ps1 / run-backend.ps1 / run-pod.ps1 / run-client.ps1
-   └─ (P3) gateway
+   ├─ k8s-up.ps1 / k8s-down.ps1  (P5)
+   ├─ test-nakama.ps1 / test-p4.ps1
+   └─ run-directory.ps1 / run-backend.ps1 / run-pod.ps1 / run-client.ps1
 ```
 
 ---
@@ -311,7 +436,11 @@ D:\Documents\fomoxa\
 | Deadline fRPC mặc định 5 s < match timeout 15 s | `JoinRoomAsync` phải truyền `CallOptions.Within(30s)` |
 | Hai client trùng device id → không ghép được | Mỗi client một `-name:` / `-device:` riêng |
 | Agones + Directory cùng placement | Agones chỉ giữ pod sống, không gọi `GameServerAllocation` |
-| Windows/Docker Desktop + UDP + kind | P5 dùng WSL2 + k3d |
+| Windows/Docker Desktop + UDP + kind | P5 dùng **k3d trên engine Docker Desktop** (không dùng engine trong WSL Ubuntu) |
+| Hai Docker engine (Desktop vs Ubuntu) → 2 cluster | Luôn kiểm `kubectl config current-context` = `k3d-fomoxa` |
+| `reconcile` xoá room pod không báo | Pod phải `AcquireRoom` lại sau **mỗi** lần register (pool `arena:i`) |
+| `terminationGracePeriodSeconds` 30 < `drain_seconds` 300 | Đặt 360 trong Fleet |
+| Cổng UDP không map được sau khi tạo k3d cluster | Map ngay lúc `k3d cluster create` |
 
 ---
 
@@ -326,11 +455,14 @@ D:\Documents\fomoxa\
 
 ---
 
-## 8. Việc tiếp theo (P5 — Agones)
+## 8. Việc tiếp theo
 
-1. WSL2 + k3d, Agones helm, Fleet 2 replicas (image = console server ở `MyGame/Server~`, P5).
-2. Directory/gateway/backend/Nakama chạy trong cluster; gateway là địa chỉ công khai.
-3. Pod đọc env Agones → register với pod IP.
-4. Kiểm chứng: scale fleet → pod mới tự register; drain 1 pod → relocate.
+P5 đã chốt phạm vi (xem mục 4). Bắt đầu ở **bước 1**:
+
+1. Vendor `com.fomoxa.networking` vào repo (bỏ phụ thuộc `Library/PackageCache/<hash>`).
+2. Tạo `MyGame/Server~`: csproj + `Program.cs` + `PlayerEntity.cs`, chạy `dotnet run`.
+3. 2 client Unity join `arena:1` vào console server, thấy nhau di chuyển → mới đi tiếp.
+
+Sau bước 1 mới tới Agones lifecycle (bước 2) và phần K8s (bước 3–5).
 
 
