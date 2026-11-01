@@ -18,22 +18,21 @@ Cập nhật: đã clone repos về `D:\Documents\fomoxa`, đã kiểm tra môi 
 
 ---
 
-## 1. Repos đã clone
+## 1. Repo & package đang dùng
 
-| Repo | Dùng để | Bắt buộc? |
+| Thứ | Vai trò | Trạng thái |
 |---|---|---|
-| `gateway` | **`fomoxa-directory` + `fomoxa-gateway`** (Rust, tag `0.2.0`) | ✅ |
-| `com.fomoxa.networking` | Package Unity: netcode client + server, có `Standalone~/` (console server) | ✅ |
-| `com.fomoxa.rpc` | fRPC phía Unity/pod: `DirectoryPod`, `TransferPlayer` | ✅ |
-| `backend` | Backend template gốc (bản `MyGame.Backend` đang dùng là clone của nó) | ✅ tham chiếu |
-| `RedRunner` | Game mẫu Unity 6000.5.7f1 — **dùng làm nền cho "game cơ bản"** | ✅ |
-| `unity-docs` | Toàn bộ docs offline, **có cả bản tiếng Việt ở `unity-docs/vi/`** | ✅ |
-| `fomoxac` | Code generator (đã có binary trong `com.fomoxa.networking/Tools~/fomoxac`) | ⚪ |
-| `unity-codecs` | Codec cho `Vector3`/`Quaternion`… khi model dùng type Unity | ✅ nếu model có Vector3 |
-| `networking-rapier` | Physics Rapier cho console server | ⚪ (chưa cần) |
-| `specification` | Wire format — để debug khi lệch schema | ⚪ |
-| `implementation-guide` | Hướng dẫn implement client/server ở ngôn ngữ khác | ⚪ |
-| `csharp`, `attributes-csharp`, `csharp-websocket` | Runtime .NET dùng bởi backend/pod | ⚪ (đã có DLL trong package) |
+| `MyGame` | Project Unity 6000.5.7f1, game demo (P1 xong) | ✅ trong repo git |
+| `com.fomoxa.networking` | Netcode Unity + `Standalone~/` (console server cho P2) | ✅ package git `#0.2.0`, không clone |
+| `com.fomoxa.rpc` | fRPC phía Unity/pod: `DirectoryPod`, `TransferPlayer` | ✅ package git `#0.1.0`, không clone |
+| `backend` | Backend template gốc (bản `MyGame.Backend` là clone của nó) | ✅ clone, git ignore |
+| `gateway` | **`fomoxa-directory` + `fomoxa-gateway`** (Rust, tag `0.2.0`) | ✅ clone, git ignore |
+| `unity-docs` | Docs offline, có bản tiếng Việt ở `unity-docs/vi/` | ✅ clone, git ignore |
+| `implementation-guide` | Mô tả handshake/transport ở mức khái niệm — chỉ để tra khi debug sâu | ⚪ còn, xóa được |
+
+Đã xóa: `RedRunner`, `networking-rapier`, `unity-codecs`, `fomoxac`, `csharp`,
+`attributes-csharp`, `csharp-websocket`, và `specification` — wire format đã
+được fomoxac + codec sinh sẵn thể hiện, không cần đọc RFC khi làm P1–P3.
 
 Bỏ qua (không cần): `rust`, `go`, `typescript`, `c`, `interop`, `fomoxa-codec-bench`, `fomoxa-example-game`, `attributes-rust`, `fomoxa.github.io`, `.github`, `community`.
 
