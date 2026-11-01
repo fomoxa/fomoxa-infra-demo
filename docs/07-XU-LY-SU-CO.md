@@ -57,7 +57,7 @@ k3d cluster delete fomoxa                         # nếu là cụm cũ
 
 ### Cluster đã tạo mà thiếu cổng (client không nối được 9600/7777)
 - **Nguyên nhân:** k3d chỉ nhận `--port` lúc **tạo** cluster.
-- **Xử lý:** xoá và tạo lại: `k3d cluster delete fomoxa` rồi lặp [03, Bước 5-9](03-TRIEN-KHAI-K8S.md#bước-5-tạo-cluster-k3d).
+- **Xử lý:** xoá và tạo lại: `k3d cluster delete fomoxa` rồi lặp [03, Bước 5-9](k8s/03-cluster-va-agones.md#bước-5-tạo-cluster-k3d).
 
 ---
 
@@ -66,13 +66,13 @@ k3d cluster delete fomoxa                         # nếu là cụm cũ
 | Trạng thái pod | Nguyên nhân thường gặp | Xử lý |
 |---|---|---|
 | `ImagePullBackOff` / `ErrImagePull` | image `fomoxa-*:latest` chưa có trong k3d (chúng không có trên Docker Hub) | `k3d image import fomoxa-<tên>:latest -c fomoxa`, rồi `kubectl rollout restart deployment/<tên> -n fomoxa` |
-| `CreateContainerConfigError` | thiếu secret hoặc thiếu khoá trong secret | `kubectl describe pod <pod> -n fomoxa` (dòng `Error:` ghi rõ secret/khoá thiếu); làm lại [03, Bước 8](03-TRIEN-KHAI-K8S.md#bước-8-namespace-và-secrets) |
+| `CreateContainerConfigError` | thiếu secret hoặc thiếu khoá trong secret | `kubectl describe pod <pod> -n fomoxa` (dòng `Error:` ghi rõ secret/khoá thiếu); làm lại [03, Bước 8](k8s/04-secrets.md#bước-8-namespace-và-secrets) |
 | `CrashLoopBackOff` | ứng dụng thoát ngay | `kubectl logs <pod> -n fomoxa --previous` đọc lý do |
 | `Pending` rất lâu | thiếu CPU/RAM trong node | `kubectl describe pod <pod> -n fomoxa` (mục *Events*: `Insufficient memory`); giảm số pod (`kubectl scale fleet ... --replicas=2`) hoặc tăng RAM Docker/WSL2 |
 | `Init:Error` (nakama) | initContainer `migrate` không nối được Postgres | xem mục [Nakama](#4-nakama) |
 | `Evicted` / `OOMKilled` | hết bộ nhớ, bị giới hạn `limits` | `kubectl describe pod ...` mục *Last State*; tăng RAM máy hoặc nới `limits` trong manifest |
 
-**Sau mỗi lần build lại image:** nhớ import + restart. Với Fleet phải xoá và apply lại ([05](05-VAN-HANH.md#cập-nhật-sau-khi-build-lại-image)). Dấu hiệu quên: sửa mã xong mà hành vi không đổi.
+**Sau mỗi lần build lại image:** nhớ import + restart. Với Fleet phải xoá và apply lại ([05](ops/01-trang-thai-va-cap-nhat.md#cập-nhật-sau-khi-build-lại-image)). Dấu hiệu quên: sửa mã xong mà hành vi không đổi.
 
 ---
 
@@ -127,13 +127,13 @@ kubectl logs deploy/nakama -n fomoxa | grep -iE 'lua|error' | tail
 
 ### Ghép trận: một người `waiting` mãi
 - **Nguyên nhân:** phòng cụ thể (ví dụ `arena:1`) cần **đúng 2 người cùng xin phòng đó** trong vòng 30 giây; hoặc hai người xin hai phòng khác nhau; hoặc hàng chờ cũ chưa xoá.
-- **Xử lý:** dùng "Tự động ghép trận" (`auto`); hoặc xoá hàng chờ bằng `reset_match` (cần `http_key`) - xem [03, Bước 12.2](03-TRIEN-KHAI-K8S.md#bước-12-test-nakama-bằng-curl).
+- **Xử lý:** dùng "Tự động ghép trận" (`auto`); hoặc xoá hàng chờ bằng `reset_match` (cần `http_key`) - xem [03, Bước 12.2](k8s/07-test-nakama.md#bước-12-test-nakama-bằng-curl).
 
 ### Người vừa chơi xong xin phòng khác lại bị đưa vào phòng cũ
 - Đã sửa trong `main.lua` (poll không còn trả kết quả của trận cũ). Nếu còn gặp, kiểm tra Nakama đang chạy đúng bản `main.lua` mới (so ConfigMap, restart Nakama).
 
 ### `401 Unauthorized` khi gọi Nakama
-- Sai `server-key`/`http-key`. Cụm K8s dùng khoá **riêng** trong secret `fomoxa-nakama`; `docker compose` dùng `defaultkey`/`defaulthttpkey`. Xem [03, Bước 12](03-TRIEN-KHAI-K8S.md#bước-12-test-nakama-bằng-curl).
+- Sai `server-key`/`http-key`. Cụm K8s dùng khoá **riêng** trong secret `fomoxa-nakama`; `docker compose` dùng `defaultkey`/`defaulthttpkey`. Xem [03, Bước 12](k8s/07-test-nakama.md#bước-12-test-nakama-bằng-curl).
 
 ### `{"code":7,...,"message":"chi backend duoc goi RPC nay"}`
 - **Không phải lỗi.** Người chơi (token Bearer) không được gọi các RPC nội bộ; chỉ backend (có `http_key`) gọi được.
@@ -152,7 +152,7 @@ kubectl apply -f deploy/k8s/postgres.yaml -f deploy/k8s/nakama.yaml
   **Hoặc giữ dữ liệu:** đặt lại secret về giá trị **cũ** (file `deploy/secrets/nakama/db-password` cũ), hoặc vào Postgres đổi mật khẩu trước: `kubectl exec -n fomoxa deploy/postgres -- psql -U postgres -c "ALTER USER postgres PASSWORD '<mật-khẩu-mới>';"` rồi mới cập nhật secret.
 
 ### Console Nakama (7351) không vào được
-- Console không mở ra ngoài. Dùng `kubectl port-forward -n fomoxa svc/nakama-console 7351:7351`, mật khẩu trong secret (xem [05, mục 2](05-VAN-HANH.md#2-truy-cập-dịch-vụ-nội-bộ)).
+- Console không mở ra ngoài. Dùng `kubectl port-forward -n fomoxa svc/nakama-console 7351:7351`, mật khẩu trong secret (xem [05, mục 2](ops/01-trang-thai-va-cap-nhat.md#2-truy-cập-dịch-vụ-nội-bộ)).
 
 ---
 
@@ -169,7 +169,7 @@ kubectl apply -f deploy/k8s/postgres.yaml -f deploy/k8s/nakama.yaml
 - Tên đã đăng ký (không phân biệt hoa thường) / sai mật khẩu / 5 lần sai liên tiếp → khoá tên đó 60 giây (đợi một phút).
 
 ### Quên mật khẩu **và** mất mã khôi phục
-- Không có công cụ đặt lại thủ công. Cách tạm: xoá bản ghi `account` của tên đó trong console Nakama (*Storage*) để đăng ký lại ([05, mục 7](05-VAN-HANH.md#7-tài-khoản-và-dữ-liệu-người-chơi)).
+- Không có công cụ đặt lại thủ công. Cách tạm: xoá bản ghi `account` của tên đó trong console Nakama (*Storage*) để đăng ký lại ([05, mục 7](ops/02-drain-va-tai-khoan.md#7-tài-khoản-và-dữ-liệu-người-chơi)).
 
 ### Mã khôi phục không hiện sau khi đăng ký
 - Mã chỉ lưu tạm 10 phút trong bộ nhớ backend và client lấy **một lần** ngay sau đăng ký. Nếu client đóng ngay hoặc backend restart đúng lúc đó thì mất. Dùng đổi mật khẩu (khi còn đăng nhập) hoặc đăng ký tài khoản khác.
@@ -191,7 +191,7 @@ kubectl get configmap directory-config -n fomoxa -o jsonpath='{.data.directory\.
 docker port k3d-fomoxa-serverlb | grep 7777
 ```
 
-  Phải có `public_address = "127.0.0.1:7777"` và `7777/udp -> 0.0.0.0:7777`. Client ở máy khác: xem [05, mục 14](05-VAN-HANH.md#14-đổi-địa-chỉ-công-khai-public_address).
+  Phải có `public_address = "127.0.0.1:7777"` và `7777/udp -> 0.0.0.0:7777`. Client ở máy khác: xem [05, mục 14](ops/05-scale-bao-mat-sao-luu.md#14-đổi-địa-chỉ-công-khai-public_address).
 
 ### Client Windows không nối được cụm trong WSL2
 - **Triệu chứng:** TCP 9600 đăng nhập được nhưng UDP 7777 không tới.
@@ -221,8 +221,8 @@ docker port k3d-fomoxa-serverlb | grep 7777
 |---|---|---|
 | "không kết nối được backend: TlsRejected (vân tay chứng chỉ ... không khớp)" | pin trong client khác chứng chỉ server đang trình | lấy pin đúng: `openssl s_client -connect 127.0.0.1:9643 </dev/null 2>/dev/null \| openssl x509 -noout -fingerprint -sha256`, bỏ dấu `:`; hoặc `./scripts/gen-tls-cert.sh` in pin của file hiện có. Chứng chỉ đã tạo lại thì phải cập nhật pin ở mọi client |
 | "không kết nối được backend: Failed" khi dùng `-backend:...:9643` | proxy TLS không chạy hoặc cổng 9643 chưa được map | `kubectl get pods -n fomoxa \| grep tls-proxy`; `docker port k3d-fomoxa-serverlb \| grep 9643` (cluster tạo trước khi có cổng 9643 thì phải tạo lại) |
-| `tls-proxy` `CrashLoopBackOff` | thiếu/sai secret `fomoxa-tls` | `kubectl get secret fomoxa-tls -n fomoxa`; tạo lại ([03, Bước 8](03-TRIEN-KHAI-K8S.md#bước-8-namespace-và-secrets)) |
-| Muốn dùng chứng chỉ CA thật nhưng client vẫn đòi pin | để trống pin, truyền `-tls` | [05, mục 8.4](05-VAN-HANH.md#84-môi-trường-thật-có-tên-miền) |
+| `tls-proxy` `CrashLoopBackOff` | thiếu/sai secret `fomoxa-tls` | `kubectl get secret fomoxa-tls -n fomoxa`; tạo lại ([03, Bước 8](k8s/04-secrets.md#bước-8-namespace-và-secrets)) |
+| Muốn dùng chứng chỉ CA thật nhưng client vẫn đòi pin | để trống pin, truyền `-tls` | [05, mục 8.4](ops/03-tls-va-khoa.md#84-môi-trường-thật-có-tên-miền) |
 
 ---
 

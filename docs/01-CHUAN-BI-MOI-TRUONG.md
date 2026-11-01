@@ -208,7 +208,7 @@ k3s version v1.30.4-k3s1 (default)
 ```
 
 **Lưu ý phiên bản k3s:** k3d 5.7.4 mặc định dùng k3s v1.30. Agones chỉ chạy với các phiên bản Kubernetes mà bản Agones đó hỗ trợ.
-Nếu cài Agones mới nhất mà báo lỗi tương thích, ghim `AGONES_VERSION` (xem [03, Bước 6](03-TRIEN-KHAI-K8S.md#bước-6-cài-agones-bằng-helm)).
+Nếu cài Agones mới nhất mà báo lỗi tương thích, ghim `AGONES_VERSION` (xem [03, Bước 6](k8s/03-cluster-va-agones.md#bước-6-cài-agones-bằng-helm)).
 
 ---
 

@@ -114,7 +114,7 @@ docker compose -f deploy/compose.yaml down -v
 
 **Ý nghĩa của `ALLOW_COMPOSE=1`:** script từ chối chạy nếu cổng 7350 đang do `docker compose` giữ (để bạn không vô tình test nhầm Nakama của compose khi tưởng đang test cụm). Đặt biến này để xác nhận bạn *cố ý*.
 
-**Các bước script làm** (bung ra thành `curl` tay ở [03, Bước 12](03-TRIEN-KHAI-K8S.md#bước-12-test-nakama-bằng-curl)): đăng nhập 2 device → `reset_match` → ana `find_match` (`waiting`) → bo `find_match` (`matched` + ticket) → ana `poll_match` → backend `verify_ticket` (đúng người `ok:true`, người lạ `ok:false`).
+**Các bước script làm** (bung ra thành `curl` tay ở [03, Bước 12](k8s/07-test-nakama.md#bước-12-test-nakama-bằng-curl)): đăng nhập 2 device → `reset_match` → ana `find_match` (`waiting`) → bo `find_match` (`matched` + ticket) → ana `poll_match` → backend `verify_ticket` (đúng người `ok:true`, người lạ `ok:false`).
 Bài `pool` cho 4 người vào "auto": cặp 1 vào một phòng, cặp 2 vào phòng **khác**.
 
 **Kết quả mong đợi (thật):**
@@ -243,7 +243,7 @@ print("main.lua == ConfigMap: ok")
 PY
 ```
 
-**Ý nghĩa:** `main.lua` tồn tại ở hai nơi (file cho docker compose và bản nhúng trong ConfigMap cho K8s). Sửa một nơi mà quên nơi kia là lỗi hay gặp, bài kiểm này bắt nó. Lệnh `promtool`/`amtool` kiểm cấu hình giám sát: xem [05, mục Giám sát](05-VAN-HANH.md#104-cảnh-báo-có-sẵn).
+**Ý nghĩa:** `main.lua` tồn tại ở hai nơi (file cho docker compose và bản nhúng trong ConfigMap cho K8s). Sửa một nơi mà quên nơi kia là lỗi hay gặp, bài kiểm này bắt nó. Lệnh `promtool`/`amtool` kiểm cấu hình giám sát: xem [05, mục Giám sát](ops/04-giam-sat.md#104-cảnh-báo-có-sẵn).
 
 **Kết quả mong đợi (thật):** `Lien ket noi bo: OK`; `fomoxac: up to date` hai lần; `ok scripts/...`; `main.lua == ConfigMap: ok`.
 
@@ -251,7 +251,7 @@ PY
 
 ## 6. `test-p5`: GameServer trên K8s + Agones (cần Unity Player)
 
-Xem [03, Bước 13](03-TRIEN-KHAI-K8S.md#bước-13-test-bằng-client-unity-người-chơi-thật) để biết script làm gì từng bước.
+Xem [03, Bước 13](k8s/08-test-client-va-don-dep.md#bước-13-test-bằng-client-unity-người-chơi-thật) để biết script làm gì từng bước.
 
 ```bash
 ./scripts/test-p5.sh                 # 4 client tự động, kiểm đúng 2 pod Allocated

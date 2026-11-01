@@ -63,20 +63,20 @@ That is normal for images of a few hundred MB. Wait. To confirm the result: `doc
 
 Cause: k3d accepts `--port` only when the cluster is created.
 
-Fix: delete and recreate it: `k3d cluster delete fomoxa`, then repeat [03, Steps 5 to 9](03-DEPLOY-KUBERNETES.md#step-5-create-the-k3d-cluster).
+Fix: delete and recreate it: `k3d cluster delete fomoxa`, then repeat [03, Steps 5 to 9](k8s/03-cluster-and-agones.md#step-5-create-the-k3d-cluster).
 
 ## 2. Pods and images
 
 | Pod state | Common cause | Fix |
 |---|---|---|
 | `ImagePullBackOff` or `ErrImagePull` | the `fomoxa-*:latest` image is not in k3d (these images are not on Docker Hub) | `k3d image import fomoxa-<name>:latest -c fomoxa`, then `kubectl rollout restart deployment/<name> -n fomoxa` |
-| `CreateContainerConfigError` | a secret or a key in a secret is missing | `kubectl describe pod <pod> -n fomoxa` (the `Error:` line names the missing secret or key); redo [03, Step 8](03-DEPLOY-KUBERNETES.md#step-8-namespace-and-secrets) |
+| `CreateContainerConfigError` | a secret or a key in a secret is missing | `kubectl describe pod <pod> -n fomoxa` (the `Error:` line names the missing secret or key); redo [03, Step 8](k8s/04-secrets.md#step-8-namespace-and-secrets) |
 | `CrashLoopBackOff` | the application exits immediately | `kubectl logs <pod> -n fomoxa --previous` shows why |
 | `Pending` for a long time | not enough CPU or RAM on the node | `kubectl describe pod <pod> -n fomoxa` (Events: `Insufficient memory`); reduce pods (`kubectl scale fleet ... --replicas=2`) or give Docker or WSL2 more RAM |
 | `Init:Error` (nakama) | the `migrate` init container cannot reach Postgres | see [Nakama](#4-nakama) |
 | `Evicted` or `OOMKilled` | out of memory, or over the `limits` | `kubectl describe pod ...` (Last State); add RAM or raise `limits` in the manifest |
 
-After every image rebuild, remember to import and restart. A Fleet must be deleted and applied again ([05](05-OPERATIONS.md#updating-after-rebuilding-an-image)). The sign that you forgot: you changed the code and the behavior did not change.
+After every image rebuild, remember to import and restart. A Fleet must be deleted and applied again ([05](ops/01-status-and-updates.md#updating-after-rebuilding-an-image)). The sign that you forgot: you changed the code and the behavior did not change.
 
 ## 3. Agones and game servers
 
@@ -141,7 +141,7 @@ Fix: catch the mismatch with the [static checks](06-TESTING.md#5-static-checks-g
 
 Cause: a specific room such as `arena:1` needs exactly two players to ask for that same room within 30 seconds. Or the two asked for different rooms, or an old queue entry remains.
 
-Fix: use "Auto matchmaking" (`auto`), or clear the queue with `reset_match` (needs the `http_key`). See [03, Step 12.2](03-DEPLOY-KUBERNETES.md#step-12-test-nakama-with-curl).
+Fix: use "Auto matchmaking" (`auto`), or clear the queue with `reset_match` (needs the `http_key`). See [03, Step 12.2](k8s/07-test-nakama.md#step-12-test-nakama-with-curl).
 
 ### A player who just finished a match asks for another room and lands in the old one
 
@@ -149,7 +149,7 @@ Fixed in `main.lua`: polling no longer returns the result of the previous match.
 
 ### `401 Unauthorized` from Nakama
 
-The `server-key` or `http-key` is wrong. The Kubernetes cluster uses its own keys in the secret `fomoxa-nakama`, while `docker compose` uses `defaultkey` and `defaulthttpkey`. See [03, Step 12](03-DEPLOY-KUBERNETES.md#step-12-test-nakama-with-curl).
+The `server-key` or `http-key` is wrong. The Kubernetes cluster uses its own keys in the secret `fomoxa-nakama`, while `docker compose` uses `defaultkey` and `defaulthttpkey`. See [03, Step 12](k8s/07-test-nakama.md#step-12-test-nakama-with-curl).
 
 ### `{"code":7,...,"message":"chi backend duoc goi RPC nay"}`
 
@@ -173,7 +173,7 @@ Or keep the data: set the secret back to the old value (the old `deploy/secrets/
 
 ### The Nakama console (7351) is unreachable
 
-The console is not exposed. Use `kubectl port-forward -n fomoxa svc/nakama-console 7351:7351`. The password is in the secret (see [05, section 2](05-OPERATIONS.md#2-reaching-internal-services)).
+The console is not exposed. Use `kubectl port-forward -n fomoxa svc/nakama-console 7351:7351`. The password is in the secret (see [05, section 2](ops/01-status-and-updates.md#2-reaching-internal-services)).
 
 ## 5. Backend and accounts
 
@@ -193,7 +193,7 @@ The name is already registered (case-insensitive), the password is wrong, or fiv
 
 ### Forgot the password and lost the recovery code
 
-No tool resets it by hand. As a workaround, delete that name's `account` record in the Nakama console (Storage) so it can be registered again ([05, section 7](05-OPERATIONS.md#7-accounts-and-player-data)).
+No tool resets it by hand. As a workaround, delete that name's `account` record in the Nakama console (Storage) so it can be registered again ([05, section 7](ops/02-drain-and-accounts.md#7-accounts-and-player-data)).
 
 ### The recovery code does not show after registering
 
@@ -216,7 +216,7 @@ kubectl get configmap directory-config -n fomoxa -o jsonpath='{.data.directory\.
 docker port k3d-fomoxa-serverlb | grep 7777
 ```
 
-You should see `public_address = "127.0.0.1:7777"` and `7777/udp -> 0.0.0.0:7777`. For a client on another machine, see [05, section 14](05-OPERATIONS.md#14-changing-the-public-address-public_address).
+You should see `public_address = "127.0.0.1:7777"` and `7777/udp -> 0.0.0.0:7777`. For a client on another machine, see [05, section 14](ops/05-scaling-security-backup.md#14-changing-the-public-address-public_address).
 
 ### A Windows client cannot reach a cluster in WSL2
 
@@ -252,8 +252,8 @@ Check the Console for `[Player] spawn on client ... mine=True`. If it is missing
 |---|---|---|
 | "không kết nối được backend: TlsRejected (… không khớp)" (cannot connect: TLS rejected, fingerprint mismatch) | the client's pin differs from the certificate the server presents | Get the right pin: `openssl s_client -connect 127.0.0.1:9643 </dev/null 2>/dev/null \| openssl x509 -noout -fingerprint -sha256`, and remove the colons. Or `./scripts/gen-tls-cert.sh` prints the pin of the existing file. If you regenerated the certificate, update the pin in every client |
 | "không kết nối được backend: Failed" with `-backend:...:9643` | the TLS proxy is not running or port 9643 is not mapped | `kubectl get pods -n fomoxa \| grep tls-proxy`; `docker port k3d-fomoxa-serverlb \| grep 9643` (a cluster created before port 9643 existed must be recreated) |
-| `tls-proxy` is in `CrashLoopBackOff` | the `fomoxa-tls` secret is missing or wrong | `kubectl get secret fomoxa-tls -n fomoxa`; recreate it ([03, Step 8](03-DEPLOY-KUBERNETES.md#step-8-namespace-and-secrets)) |
-| You want a public CA certificate but the client still asks for a pin | leave the pin empty and pass `-tls` | [05, section 8.4](05-OPERATIONS.md#84-production-with-a-domain-name) |
+| `tls-proxy` is in `CrashLoopBackOff` | the `fomoxa-tls` secret is missing or wrong | `kubectl get secret fomoxa-tls -n fomoxa`; recreate it ([03, Step 8](k8s/04-secrets.md#step-8-namespace-and-secrets)) |
+| You want a public CA certificate but the client still asks for a pin | leave the pin empty and pass `-tls` | [05, section 8.4](ops/03-tls-and-keys.md#84-production-with-a-domain-name) |
 
 ## 8. Monitoring and NetworkPolicy
 

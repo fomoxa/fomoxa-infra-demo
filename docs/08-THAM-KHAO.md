@@ -76,7 +76,7 @@ sort = "packed"                              # dồn người vào pod đã có 
 
 | Khoá | Ý nghĩa | Ràng buộc |
 |---|---|---|
-| `public_address` | Khi có gateway phía trước, `Allocate` trả địa chỉ này **thay cho địa chỉ thật của pod**. Phải là địa chỉ UDP mà *client* tới được | local: `127.0.0.1:7777`; xem [05, mục 14](05-VAN-HANH.md#14-đổi-địa-chỉ-công-khai-public_address) |
+| `public_address` | Khi có gateway phía trước, `Allocate` trả địa chỉ này **thay cho địa chỉ thật của pod**. Phải là địa chỉ UDP mà *client* tới được | local: `127.0.0.1:7777`; xem [05, mục 14](ops/05-scale-bao-mat-sao-luu.md#14-đổi-địa-chỉ-công-khai-public_address) |
 | `drain_seconds` | Thời gian tối đa pod được chờ hết người khi drain | `terminationGracePeriodSeconds` của Fleet (360) phải **lớn hơn** |
 | `[keys].root` | khoá gốc | đúng **64 ký tự hex** (32 byte); các khoá còn lại ≥ 16 byte |
 
@@ -98,7 +98,7 @@ Sửa ConfigMap xong phải `kubectl rollout restart deployment/<directory|gatew
 
 ## 3. Secrets
 
-Sinh bằng `scripts/gen-keys.sh` + `scripts/gen-tls-cert.sh` (bung ra ở [03, Bước 2](03-TRIEN-KHAI-K8S.md#bước-2-sinh-khoá-và-chứng-chỉ-secrets)); nạp vào cluster bằng `scripts/gen-k8s-secrets.sh` ([Bước 8](03-TRIEN-KHAI-K8S.md#bước-8-namespace-và-secrets)).
+Sinh bằng `scripts/gen-keys.sh` + `scripts/gen-tls-cert.sh` (bung ra ở [03, Bước 2](k8s/01-chuan-bi-va-khoa.md#bước-2-sinh-khoá-và-chứng-chỉ-secrets)); nạp vào cluster bằng `scripts/gen-k8s-secrets.sh` ([Bước 8](k8s/04-secrets.md#bước-8-namespace-và-secrets)).
 
 **File trong `deploy/secrets/` (không commit):**
 
@@ -137,15 +137,15 @@ Mọi script chỉ là đường tắt. Bảng dưới cho biết mỗi script *
 
 | Script | Việc script làm (bung ra) | Lệnh tay ở |
 |---|---|---|
-| `scripts/gen-keys.sh [-f]` | với mỗi file: `openssl rand -hex N \| tr -d '\n' > file` (12 khoá); bỏ qua file đã có trừ khi `-f` | [03 Bước 2](03-TRIEN-KHAI-K8S.md#bước-2-sinh-khoá-và-chứng-chỉ-secrets) |
-| `scripts/gen-tls-cert.sh [-f]` | `openssl req -x509 -newkey rsa:2048 -nodes -days 730 -keyout tls.key -out tls.crt -subj "/CN=$TLS_HOST" -addext "subjectAltName=..."`, rồi in `openssl x509 -outform DER \| openssl dgst -sha256 -hex` (pin) | [03 Bước 2](03-TRIEN-KHAI-K8S.md#bước-2-sinh-khoá-và-chứng-chỉ-secrets) |
-| `scripts/gen-k8s-secrets.sh [ns]` | gọi `gen-keys.sh` nếu thiếu; 6 lệnh `kubectl create secret ... --dry-run=client -o yaml \| kubectl apply -f -` | [03 Bước 8](03-TRIEN-KHAI-K8S.md#bước-8-namespace-và-secrets) |
-| `scripts/build-images.sh [tag]` | `git clone -b 0.2.0 .../gateway` nếu thiếu; 4 lệnh `docker build -f ... -t fomoxa-*:tag` | [03 Bước 3-4](03-TRIEN-KHAI-K8S.md#bước-3-lấy-mã-nguồn-gateway-rust) |
+| `scripts/gen-keys.sh [-f]` | với mỗi file: `openssl rand -hex N \| tr -d '\n' > file` (12 khoá); bỏ qua file đã có trừ khi `-f` | [03 Bước 2](k8s/01-chuan-bi-va-khoa.md#bước-2-sinh-khoá-và-chứng-chỉ-secrets) |
+| `scripts/gen-tls-cert.sh [-f]` | `openssl req -x509 -newkey rsa:2048 -nodes -days 730 -keyout tls.key -out tls.crt -subj "/CN=$TLS_HOST" -addext "subjectAltName=..."`, rồi in `openssl x509 -outform DER \| openssl dgst -sha256 -hex` (pin) | [03 Bước 2](k8s/01-chuan-bi-va-khoa.md#bước-2-sinh-khoá-và-chứng-chỉ-secrets) |
+| `scripts/gen-k8s-secrets.sh [ns]` | gọi `gen-keys.sh` nếu thiếu; 6 lệnh `kubectl create secret ... --dry-run=client -o yaml \| kubectl apply -f -` | [03 Bước 8](k8s/04-secrets.md#bước-8-namespace-và-secrets) |
+| `scripts/build-images.sh [tag]` | `git clone -b 0.2.0 .../gateway` nếu thiếu; 4 lệnh `docker build -f ... -t fomoxa-*:tag` | [03 Bước 3-4](k8s/02-build-image.md#bước-3-lấy-mã-nguồn-gateway-rust) |
 | `scripts/k8s-up.sh [--build]` | kiểm `docker info`, tự cài k3d/helm nếu thiếu → kiểm cổng trống → `k3d cluster create fomoxa --port ...@loadbalancer` → `helm repo add` + `helm install agones ...` → (`--build`: `build-images.sh`) → `k3d image import` → `kubectl apply namespace` + `gen-k8s-secrets.sh` → `kubectl apply` 7 manifest → `kubectl rollout status` | [03, toàn bộ](03-TRIEN-KHAI-K8S.md#đường-tắt-một-lệnh-dựng-cả-cụm) |
-| `scripts/k8s-down.sh [--keep-cluster]` | `kubectl delete namespace fomoxa` (có `--keep-cluster`) hoặc `k3d cluster delete fomoxa` | [03 Bước 14](03-TRIEN-KHAI-K8S.md#bước-14-dọn-dẹp) |
-| `scripts/test-nakama.sh`, `test-nakama-pool.sh` | `curl` tới Nakama: đăng nhập device → `reset_match` → `find_match` ×2 → `poll_match` → `verify_ticket`; tự đọc khoá qua `lib-nakama-keys.sh` | [03 Bước 12](03-TRIEN-KHAI-K8S.md#bước-12-test-nakama-bằng-curl), [06 §3](06-KIEM-THU.md#3-module-lua-của-nakama) |
-| `scripts/lib-nakama-keys.sh` | (được `source`) nếu cổng 7350 do container `k3d-*` giữ → đọc `server-key`/`http-key` từ secret `fomoxa-nakama`; ngược lại dùng khoá mặc định của compose | [05 mục 9](05-VAN-HANH.md#9-khoá-và-mật-khẩu-nakama) |
-| `scripts/test-p5.sh [phòng1 phòng2]` | `kubectl get gs` → gọi `powershell.exe test-p5.ps1` (4 client `MyGame.exe -autojoin`) với `FOMOXA_KUBECTL_WSL=1` → kiểm đúng 2 pod `Allocated` | [03 Bước 13](03-TRIEN-KHAI-K8S.md#bước-13-test-bằng-client-unity-người-chơi-thật) |
+| `scripts/k8s-down.sh [--keep-cluster]` | `kubectl delete namespace fomoxa` (có `--keep-cluster`) hoặc `k3d cluster delete fomoxa` | [03 Bước 14](k8s/08-test-client-va-don-dep.md#bước-14-dọn-dẹp) |
+| `scripts/test-nakama.sh`, `test-nakama-pool.sh` | `curl` tới Nakama: đăng nhập device → `reset_match` → `find_match` ×2 → `poll_match` → `verify_ticket`; tự đọc khoá qua `lib-nakama-keys.sh` | [03 Bước 12](k8s/07-test-nakama.md#bước-12-test-nakama-bằng-curl), [06 §3](06-KIEM-THU.md#3-module-lua-của-nakama) |
+| `scripts/lib-nakama-keys.sh` | (được `source`) nếu cổng 7350 do container `k3d-*` giữ → đọc `server-key`/`http-key` từ secret `fomoxa-nakama`; ngược lại dùng khoá mặc định của compose | [05 mục 9](ops/03-tls-va-khoa.md#9-khoá-và-mật-khẩu-nakama) |
+| `scripts/test-p5.sh [phòng1 phòng2]` | `kubectl get gs` → gọi `powershell.exe test-p5.ps1` (4 client `MyGame.exe -autojoin`) với `FOMOXA_KUBECTL_WSL=1` → kiểm đúng 2 pod `Allocated` | [03 Bước 13](k8s/08-test-client-va-don-dep.md#bước-13-test-bằng-client-unity-người-chơi-thật) |
 | `scripts/run-mock-cluster.sh [tuỳ chọn]` | `dotnet publish` game server + MockCluster vào `.mock/` → `dotnet .mock/cluster/MockCluster.dll --server=... [tuỳ chọn]` | [02 Bước 1-2](02-CHAY-NHANH-CUM-GIA.md) |
 | `scripts/test-real-backend.sh` | `docker compose up -d` → 3× `dotnet publish` → chạy backend thật với biến `Fomoxa__*` → `MockCluster --selftest-target=9600,9602 --selftest` → `curl /metrics` → dọn | [06 §4](06-KIEM-THU.md#4-backend-thật--nakama-thật) |
 | `scripts/stop-all.sh` | `pkill -9 -f` các tiến trình tên `fomoxa-directory`, `fomoxa-gateway`, `MyGame.Server`, `MyGame.Backend`, `MyGame` (và `taskkill.exe` trên Windows); dùng cho cách chạy **không K8s** | — |

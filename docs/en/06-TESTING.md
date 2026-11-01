@@ -104,7 +104,7 @@ docker compose -f deploy/compose.yaml down -v
 
 `ALLOW_COMPOSE=1` exists because the script refuses to run when the compose Nakama holds port 7350. That protects you from testing the wrong Nakama when you think you are testing the cluster. Set it to say you mean it.
 
-The scripts' steps are expanded into manual `curl` commands in [03, Step 12](03-DEPLOY-KUBERNETES.md#step-12-test-nakama-with-curl): log in two devices, `reset_match`, ana's `find_match` (`waiting`), bo's `find_match` (`matched` plus a ticket), ana's `poll_match`, then the backend's `verify_ticket` (the right person gets `ok:true`, a stranger gets `ok:false`). The pool test sends four players to "auto": pair 1 lands in one room and pair 2 in a different one.
+The scripts' steps are expanded into manual `curl` commands in [03, Step 12](k8s/07-test-nakama.md#step-12-test-nakama-with-curl): log in two devices, `reset_match`, ana's `find_match` (`waiting`), bo's `find_match` (`matched` plus a ticket), ana's `poll_match`, then the backend's `verify_ticket` (the right person gets `ok:true`, a stranger gets `ok:false`). The pool test sends four players to "auto": pair 1 lands in one room and pair 2 in a different one.
 
 Expected output (real):
 
@@ -229,13 +229,13 @@ print("main.lua == ConfigMap: ok")
 PY
 ```
 
-`main.lua` exists in two places: the file used by docker compose, and the copy embedded in the ConfigMap for Kubernetes. Editing one and forgetting the other is a common mistake, and this check catches it. `promtool` and `amtool` check the monitoring config: see [05, built-in alerts](05-OPERATIONS.md#104-built-in-alerts).
+`main.lua` exists in two places: the file used by docker compose, and the copy embedded in the ConfigMap for Kubernetes. Editing one and forgetting the other is a common mistake, and this check catches it. `promtool` and `amtool` check the monitoring config: see [05, built-in alerts](ops/04-monitoring.md#104-built-in-alerts).
 
 Expected output (real): `Lien ket noi bo: OK`, `fomoxac: up to date` twice, `ok scripts/...` lines, and `main.lua == ConfigMap: ok`.
 
 ## 6. `test-p5`: GameServers on Kubernetes and Agones (needs the Unity player)
 
-[03, Step 13](03-DEPLOY-KUBERNETES.md#step-13-test-with-the-unity-client-real-players) shows what the script does step by step.
+[03, Step 13](k8s/08-test-client-and-cleanup.md#step-13-test-with-the-unity-client-real-players) shows what the script does step by step.
 
 ```bash
 ./scripts/test-p5.sh                 # four automatic clients, checks exactly 2 Allocated pods

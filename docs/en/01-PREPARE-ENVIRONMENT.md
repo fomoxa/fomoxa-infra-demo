@@ -187,7 +187,7 @@ k3d version v5.7.4
 k3s version v1.30.4-k3s1 (default)
 ```
 
-k3d 5.7.4 defaults to k3s v1.30. Agones only runs on the Kubernetes versions that release supports. If the newest Agones reports a compatibility error, pin `AGONES_VERSION` (see [03, Step 6](03-DEPLOY-KUBERNETES.md#step-6-install-agones-with-helm)).
+k3d 5.7.4 defaults to k3s v1.30. Agones only runs on the Kubernetes versions that release supports. If the newest Agones reports a compatibility error, pin `AGONES_VERSION` (see [03, Step 6](k8s/03-cluster-and-agones.md#step-6-install-agones-with-helm)).
 
 ## Step 6. Install Helm
 

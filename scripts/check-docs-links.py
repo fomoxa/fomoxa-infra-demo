@@ -6,7 +6,8 @@ import re
 import sys
 
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-FILES = sorted(glob.glob(os.path.join(ROOT, "docs", "*.md")) + glob.glob(os.path.join(ROOT, "docs", "en", "*.md"))) + [os.path.join(ROOT, "README.md"), os.path.join(ROOT, "MyGame", "README.md"),
+DOC_DIRS = ["docs", "docs/en", "docs/k8s", "docs/ops", "docs/en/k8s", "docs/en/ops"]
+FILES = sorted(f for d in DOC_DIRS for f in glob.glob(os.path.join(ROOT, d, "*.md"))) + [os.path.join(ROOT, "README.md"), os.path.join(ROOT, "MyGame", "README.md"),
                                                                   os.path.join(ROOT, "tools", "MockCluster", "README.md")]
 
 
