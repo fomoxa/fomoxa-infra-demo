@@ -30,3 +30,8 @@
 /[Bb]uilds/
 /[Ll]ogs/
 /[Uu]ser[Ss]ettings/
+
+# Cum gia (tools/MockCluster)
+/.mock/
+/tools/MockCluster/bin/
+/tools/MockCluster/obj/

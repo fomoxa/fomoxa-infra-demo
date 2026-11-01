@@ -1,0 +1,50 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <!-- Cụm giả để test client Unity trên một máy: directory giả (:9500) + backend giả (:9600)
+       + (tuỳ chọn) khởi chạy các pod thật của MyGame.Server. Dùng cùng source/codec với Server~
+       nên không cần Nakama, Agones, K8s hay gateway. -->
+  <PropertyGroup>
+    <OutputType>Exe</OutputType>
+    <TargetFramework>net8.0</TargetFramework>
+    <LangVersion>9.0</LangVersion>
+    <Nullable>disable</Nullable>
+    <ImplicitUsings>disable</ImplicitUsings>
+    <EnableDefaultCompileItems>false</EnableDefaultCompileItems>
+    <RollForward>Major</RollForward>
+    <AssemblyName>MockCluster</AssemblyName>
+    <RootNamespace>MockCluster</RootNamespace>
+    <NoWarn>$(NoWarn);CS8632</NoWarn>
+    <Game>$(MSBuildThisFileDirectory)../../MyGame</Game>
+    <Deps>$(MSBuildThisFileDirectory)../../server-deps</Deps>
+    <Core>$(Deps)/com.fomoxa.networking</Core>
+    <Rpc>$(Deps)/com.fomoxa.rpc</Rpc>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <Compile Include="$(Core)/Runtime/Core/**/*.cs" />
+    <Compile Include="$(Rpc)/Runtime/Fomoxa.Rpc/**/*.cs" />
+    <Compile Include="$(Rpc)/Runtime/Directory/**/*.cs" />
+    <Compile Include="$(Game)/Assets/Network/Models/**/*.cs" />
+    <Compile Include="$(Game)/Assets/Network/Generated/**/*.cs" />
+    <Compile Include="$(Game)/Assets/Network/Rpc/Services.cs" />
+    <Compile Include="*.cs" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Reference Include="Fomoxa.Attributes">
+      <HintPath>$(Core)/Runtime/Plugins/Fomoxa.Attributes.dll</HintPath>
+    </Reference>
+    <Reference Include="Fomoxa.Net">
+      <HintPath>$(Core)/Runtime/Plugins/Fomoxa.Net.dll</HintPath>
+    </Reference>
+    <Reference Include="Fomoxa.Net.WebSockets">
+      <HintPath>$(Core)/Runtime/Plugins/Fomoxa.Net.WebSockets.dll</HintPath>
+    </Reference>
+    <Analyzer Include="$(Rpc)/Runtime/Generators/Fomoxa.Rpc.Generator.dll" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="BouncyCastle.Cryptography" Version="2.6.2" />
+  </ItemGroup>
+
+</Project>
