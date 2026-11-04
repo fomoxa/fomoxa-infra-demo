@@ -1,6 +1,6 @@
 # Development guide
 
-Top of this document: [documentation home](../README.md) · Previous: [rpc-api.md](rpc-api.md)
+Top of this document: [documentation home](../README.md) · Previous: [frpc-add-a-method.md](frpc-add-a-method.md)
 
 Recipes for the changes people make most often. Each one lists the files to touch and the checks to run. The checks are described in [testing](../testing.md).
 
@@ -29,6 +29,8 @@ You need the .NET 8 SDK ([prepare the environment](../getting-started/prepare-en
 | CI | `.github/workflows/ci.yml` |
 
 ## Add or change an RPC
+
+[Add an fRPC method](frpc-add-a-method.md) walks through these steps with a working example.
 
 1. Add or edit the message in `MyGame.Backend/MyGame.Backend/Models/*.cs`. Mark the class `[Network]` and `[Codec("rpc")]`, and each property with `[Network("<type>")]` and `[Codec("rpc")]`.
 2. Declare the method in `Services.cs` on the right service. Use `Requires = Roles.Player` for lobby calls.

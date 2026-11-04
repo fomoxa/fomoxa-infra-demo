@@ -43,6 +43,8 @@
 * [Game server (pod)](architecture/game-server.md)
 * [Mã client Unity](architecture/client-code.md)
 * [Giao diện RPC](architecture/rpc-api.md)
+* [Dùng fRPC](architecture/using-frpc.md)
+* [Thêm một phương thức fRPC](architecture/frpc-add-a-method.md)
 * [Hướng dẫn phát triển](architecture/development.md)
 
 ## Kiểm thử và sự cố

@@ -1,8 +1,8 @@
 # RPC interface
 
-Top of this document: [documentation home](../README.md) · Previous: [client-code.md](client-code.md) · Next: [development.md](development.md)
+Top of this document: [documentation home](../README.md) · Previous: [client-code.md](client-code.md) · Next: [using-frpc.md](using-frpc.md)
 
-Clients, the backend and the game servers talk over fRPC. The services are declared in `MyGame.Backend/MyGame.Backend/Services.cs` and the messages in `MyGame.Backend/MyGame.Backend/Models/*.cs`. `fomoxac` generates the codecs and the typed clients from them, and the Unity project has its own copy of the same declarations under `MyGame/Assets/Network/`.
+Clients, the backend and the game servers talk over fRPC. The services are declared in `MyGame.Backend/MyGame.Backend/Services.cs` and the messages in `MyGame.Backend/MyGame.Backend/Models/*.cs`. `fomoxac` generates the codecs and the typed clients from them, and the Unity project has its own copy of the same declarations under `MyGame/Assets/Network/`. To call them or add your own, see [Using fRPC](using-frpc.md).
 
 ## Services
 

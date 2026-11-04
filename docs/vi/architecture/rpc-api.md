@@ -1,8 +1,8 @@
 # Giao diện RPC
 
-Lên đầu tài liệu: [trang chủ tài liệu](../README.md) · Trước: [client-code.md](client-code.md) · Tiếp: [development.md](development.md)
+Lên đầu tài liệu: [trang chủ tài liệu](../README.md) · Trước: [client-code.md](client-code.md) · Tiếp: [using-frpc.md](using-frpc.md)
 
-Client, backend và game server nói chuyện với nhau qua fRPC. Các dịch vụ được khai báo trong `MyGame.Backend/MyGame.Backend/Services.cs` và các message trong `MyGame.Backend/MyGame.Backend/Models/*.cs`. `fomoxac` sinh codec và client có kiểu từ chúng, và project Unity có bản khai báo riêng giống hệt dưới `MyGame/Assets/Network/`.
+Client, backend và game server nói chuyện với nhau qua fRPC. Các dịch vụ được khai báo trong `MyGame.Backend/MyGame.Backend/Services.cs` và các message trong `MyGame.Backend/MyGame.Backend/Models/*.cs`. `fomoxac` sinh codec và client có kiểu từ chúng, và project Unity có bản khai báo riêng giống hệt dưới `MyGame/Assets/Network/`. Để gọi chúng hoặc thêm dịch vụ của riêng bạn, xem [Dùng fRPC](using-frpc.md).
 
 ## Dịch vụ
 

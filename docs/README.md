@@ -67,6 +67,7 @@ k3d runs k3s, a compact Kubernetes distribution, inside Docker containers. The w
 | Fix an error | [07 Troubleshooting](troubleshooting.md) |
 | Look up ports, secrets, settings, or what a script runs | [08 Reference](reference.md) |
 | Understand how the components and the code fit together, or change them | [Architecture](architecture/overview.md) |
+| Call an existing RPC or add a new one | [Using fRPC](architecture/using-frpc.md), [Add an fRPC method](architecture/frpc-add-a-method.md) |
 
 New readers should go 01, 02 (see the game run), 03 (the real cluster), 04, 05.
 

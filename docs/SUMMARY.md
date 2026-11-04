@@ -43,6 +43,8 @@
 * [Game server (pod)](architecture/game-server.md)
 * [Unity client code](architecture/client-code.md)
 * [RPC interface](architecture/rpc-api.md)
+* [Using fRPC](architecture/using-frpc.md)
+* [Add an fRPC method](architecture/frpc-add-a-method.md)
 * [Development guide](architecture/development.md)
 
 ## Testing and problems

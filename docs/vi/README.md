@@ -71,6 +71,7 @@ Cổng của máy bạn được đưa vào cluster qua một container "load ba
 | Gặp lỗi | [07: Xử lý sự cố](troubleshooting.md) |
 | Tra cứu cổng, secrets, biến môi trường, script làm gì | [08: Tham khảo](reference.md) |
 | Hiểu các thành phần và mã nguồn khớp nhau thế nào, hoặc sửa chúng | [Kiến trúc](architecture/overview.md) |
+| Gọi một RPC có sẵn hoặc thêm RPC mới | [Dùng fRPC](architecture/using-frpc.md), [Thêm một phương thức fRPC](architecture/frpc-add-a-method.md) |
 
 Thứ tự đề xuất cho người mới: 01 → 02 (thấy game chạy) → 03 (dựng cụm thật) → 04 → 05.
 

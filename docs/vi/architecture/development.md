@@ -1,6 +1,6 @@
 # Hướng dẫn phát triển
 
-Lên đầu tài liệu: [trang chủ tài liệu](../README.md) · Trước: [rpc-api.md](rpc-api.md)
+Lên đầu tài liệu: [trang chủ tài liệu](../README.md) · Trước: [frpc-add-a-method.md](frpc-add-a-method.md)
 
 Công thức cho những thay đổi hay gặp nhất. Mỗi mục nêu các file cần sửa và các kiểm tra cần chạy. Các kiểm tra được mô tả ở [kiểm thử](../testing.md).
 
@@ -29,6 +29,8 @@ Bạn cần .NET SDK 8 ([chuẩn bị môi trường](../getting-started/prepare
 | CI | `.github/workflows/ci.yml` |
 
 ## Thêm hoặc đổi một RPC
+
+[Thêm một phương thức fRPC](frpc-add-a-method.md) đi qua các bước này với một ví dụ chạy được.
 
 1. Thêm hoặc sửa message trong `MyGame.Backend/MyGame.Backend/Models/*.cs`. Đánh dấu lớp bằng `[Network]` và `[Codec("rpc")]`, mỗi thuộc tính bằng `[Network("<kiểu>")]` và `[Codec("rpc")]`.
 2. Khai báo phương thức trong `Services.cs` ở dịch vụ phù hợp. Dùng `Requires = Roles.Player` cho lệnh của sảnh.
