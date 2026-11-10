@@ -35,7 +35,7 @@
                          "com.unity.modules.video":  "1.0.0",
                          "com.unity.modules.wind":  "1.0.0",
                          "com.unity.modules.xr":  "1.0.0",
-                         "com.fomoxa.networking":  "https://github.com/fomoxa/com.fomoxa.networking.git#0.3.0",
-                         "com.fomoxa.rpc":  "https://github.com/fomoxa/com.fomoxa.rpc.git#0.1.1"
+                         "com.fomoxa.networking":  "https://github.com/fomoxa/com.fomoxa.networking.git#0.3.1",
+                         "com.fomoxa.rpc":  "https://github.com/fomoxa/com.fomoxa.rpc.git#0.1.2"
                      }
 }

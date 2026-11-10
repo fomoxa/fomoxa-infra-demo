@@ -72,22 +72,24 @@ $count += Copy-Source (Join-Path $rpc "Runtime/Generators") (Join-Path $rpcOut "
 
 $netVersion = (Get-Content (Join-Path $networking "package.json") -Raw | ConvertFrom-Json).version
 $rpcVersion = (Get-Content (Join-Path $rpc "package.json") -Raw | ConvertFrom-Json).version
+$netSource = $networking.Substring($repoRoot.Length).TrimStart('\', '/').Replace('\', '/')
+$rpcSource = $rpc.Substring($repoRoot.Length).TrimStart('\', '/').Replace('\', '/')
 
 $manifest = Join-Path $target "README.md"
 @"
 # server-deps
 
-Bản vendor của phần source 2 package Fomoxa mà `MyGame\Server~` biên dịch.
-**Sinh tự động** bằng `scripts\sync-server-deps.ps1` - đừng sửa tay.
+Bản vendor của phần source 2 package Fomoxa mà ``MyGame\Server~`` biên dịch.
+**Sinh tự động** bằng ``scripts\sync-server-deps.ps1`` - đừng sửa tay.
 
 | Package | Version | Nguồn |
 |---|---|---|
-| `com.fomoxa.networking` | $netVersion | `$networking` |
-| `com.fomoxa.rpc` | $rpcVersion | `$rpc` |
+| ``com.fomoxa.networking`` | $netVersion | ``$netSource`` |
+| ``com.fomoxa.rpc`` | $rpcVersion | ``$rpcSource`` |
 
-Đã sao chép: `Runtime/Core`, `Standalone~`, `Runtime/Plugins/*.dll` (networking);
-`Runtime/Fomoxa.Rpc`, `Runtime/Directory`, `Runtime/Generators/*.dll` (rpc). Bỏ
-`Runtime/Unity`, `Editor`, `Tests` vì console server không dùng UnityEngine.
+Đã sao chép: ``Runtime/Core``, ``Standalone~``, ``Runtime/Plugins/*.dll`` (networking);
+``Runtime/Fomoxa.Rpc``, ``Runtime/Directory``, ``Runtime/Generators/*.dll`` (rpc). Bỏ
+``Runtime/Unity``, ``Editor``, ``Tests`` vì console server không dùng UnityEngine.
 "@ | Set-Content -Path $manifest -Encoding utf8
 
 Write-Host "server-deps: $count file"
