@@ -2,6 +2,10 @@
 
 Hạ tầng game server nhiều người chơi phân tán (Distributed Multiplayer Game Server Infrastructure) kết hợp Fomoxa Networking, Nakama Matchmaking và Agones GameServer Orchestration trên Kubernetes.
 
+## Tài liệu
+
+Hướng dẫn đầy đủ, từ chuẩn bị máy tới vận hành cụm, nằm trong tài liệu Fomoxa for Unity: [tiếng Anh](https://github.com/fomoxa/unity-docs/blob/main/examples/infra-demo/README.md), [tiếng Việt](https://github.com/fomoxa/unity-docs/blob/main/vi/examples/infra-demo/README.md).
+
 ## Bắt đầu nhanh (Quick Start)
 
 ### Trên Ubuntu / WSL2:
