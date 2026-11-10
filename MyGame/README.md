@@ -71,8 +71,8 @@ Sửa giao diện: mở `.uxml` bằng UI Builder hoặc chỉnh `.uss`, không 
 `Packages/manifest.json` lấy package trực tiếp từ GitHub, không dùng đường dẫn local:
 
 ```json
-"com.fomoxa.networking": "https://github.com/fomoxa/com.fomoxa.networking.git#0.2.0",
-"com.fomoxa.rpc": "https://github.com/fomoxa/com.fomoxa.rpc.git#0.1.0"
+"com.fomoxa.networking": "https://github.com/fomoxa/com.fomoxa.networking.git#0.3.0",
+"com.fomoxa.rpc": "https://github.com/fomoxa/com.fomoxa.rpc.git#0.1.1"
 ```
 
 Unity clone về `Library/PackageCache/` và ghim đúng commit trong

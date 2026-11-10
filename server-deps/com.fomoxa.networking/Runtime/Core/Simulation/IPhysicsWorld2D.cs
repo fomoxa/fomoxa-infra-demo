@@ -1,3 +1,4 @@
+using System.Collections.Generic;
 using System.Numerics;
 
 namespace Fomoxa.Networking.Simulation
@@ -24,8 +25,20 @@ namespace Fomoxa.Networking.Simulation
 
         void AddImpulse(BodyHandle body, Vector2 impulse);
 
-        bool Raycast(Vector2 origin, Vector2 direction, float maxDistance, out RayHit2D hit);
+        void AddTorque(BodyHandle body, float torque);
 
-        int Overlap(Vector2 center, float radius, BodyHandle[] results);
+        void AddTorqueImpulse(BodyHandle body, float torqueImpulse);
+
+        void AddForceAtPoint(BodyHandle body, Vector2 force, Vector2 point);
+
+        void AddImpulseAtPoint(BodyHandle body, Vector2 impulse, Vector2 point);
+
+        bool Raycast(Vector2 origin, Vector2 direction, float maxDistance, in QueryFilter filter, out RayHit2D hit);
+
+        bool ShapeCast(in BodyShape2D shape, Vector2 position, float rotation, Vector2 direction, float maxDistance, in QueryFilter filter, out RayHit2D hit);
+
+        int Overlap(in BodyShape2D shape, Vector2 position, float rotation, in QueryFilter filter, BodyHandle[] results);
+
+        int GetContactPoints(BodyHandle body, BodyHandle other, in QueryFilter filter, List<ContactPointInfo2D> into);
     }
 }

@@ -1,7 +1,7 @@
 {
   "dependencies": {
     "com.fomoxa.networking": {
-      "version": "https://github.com/fomoxa/com.fomoxa.networking.git#0.2.0",
+      "version": "https://github.com/fomoxa/com.fomoxa.networking.git#0.3.0",
       "depth": 0,
       "source": "git",
       "dependencies": {
@@ -9,14 +9,14 @@
         "com.unity.modules.physics": "1.0.0",
         "com.unity.modules.physics2d": "1.0.0"
       },
-      "hash": "003a5a4ec14f4f54f83cd40aa7754d06f7767a9d"
+      "hash": "09658b803a874b6e9dcf139f27fa06388dc6cb62"
     },
     "com.fomoxa.rpc": {
-      "version": "https://github.com/fomoxa/com.fomoxa.rpc.git#0.1.0",
+      "version": "https://github.com/fomoxa/com.fomoxa.rpc.git#0.1.1",
       "depth": 0,
       "source": "git",
       "dependencies": {},
-      "hash": "cce3ebac984503c70bf65f6f0285c54234e87ef8"
+      "hash": "b34510d38621e34761603b58a9daf564769679df"
     },
     "com.unity.multiplayer.center": {
       "version": "1.0.1",

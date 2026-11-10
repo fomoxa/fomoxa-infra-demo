@@ -20,8 +20,8 @@ Goal: Unity opens `MyGame/` and downloads all packages.
 `Packages/manifest.json` takes two packages straight from GitHub:
 
 ```json
-"com.fomoxa.networking": "https://github.com/fomoxa/com.fomoxa.networking.git#0.2.0",
-"com.fomoxa.rpc":        "https://github.com/fomoxa/com.fomoxa.rpc.git#0.1.0"
+"com.fomoxa.networking": "https://github.com/fomoxa/com.fomoxa.networking.git#0.3.0",
+"com.fomoxa.rpc":        "https://github.com/fomoxa/com.fomoxa.rpc.git#0.1.1"
 ```
 
 Unity calls `git` to clone them into `Library/PackageCache/`, and `packages-lock.json` pins the exact commits.

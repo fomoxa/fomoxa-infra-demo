@@ -1,7 +1,7 @@
 {
   "schema_version": 1,
   "generator": "fomoxac 0.2.3",
-  "schema_fingerprint": "sha256:b4542cc90a9808018f280a650c47c5c882b3ef8667458d98a838c2cc5f401703",
+  "schema_fingerprint": "sha256:509766ed73def5969eff018fac830cae40710d16bfbd7ff900aa47499758383f",
   "sha256_of": "each file with its `// generated-at:` line emptied, so an unchanged schema keeps an unchanged digest",
   "sources": {
     "Assets/Network/Models/Backend/Players.cs": {
@@ -731,8 +731,11 @@
         "SceneFile",
         "SceneFileBody",
         "SceneFileBody2D",
+        "SceneFileChildBody",
+        "SceneFileChildBody2D",
         "SceneFileCollider",
         "SceneFileCollider2D",
+        "SceneFileEffector2D",
         "SceneFileMaterial",
         "SceneFileObject",
         "SceneFilePose"
@@ -742,22 +745,36 @@
           "path": "Assets/Network/Generated/SceneFileNetCodec.cs",
           "model": "SceneFile",
           "codec": "net",
-          "fingerprint": "sha256:294725bdf6a3064559d54047ed9f5ec2d1ae2ed89ad1a5316259484026600e7d",
-          "sha256": "de1613fb7a4f3f9697b7ae2db8b180f7978c384d3a195eb6287f9932e9489cf3"
+          "fingerprint": "sha256:8deb75043bc97ec277e3521d073aa5c90be1cfd4754e17b3d78e79e3616fb671",
+          "sha256": "54e6806ad387d36304b0a8f5a779377fccad11fa49956452d4510f8ab3f9b2c4"
         },
         {
           "path": "Assets/Network/Generated/SceneFileBodyNetCodec.cs",
           "model": "SceneFileBody",
           "codec": "net",
-          "fingerprint": "sha256:eb56fb3e68044912e842d329753062fa8cda610dcdb5f02f16ef8dbfdab81023",
-          "sha256": "11ea57b7772e43870ba12a570587a4aac3b07ae02ba94e9b0f7c419e15fbf033"
+          "fingerprint": "sha256:0cbd5189c9f84622e8d64e780c82067754d97599d2427d6cf8c51eb95360dda1",
+          "sha256": "356bd1b48a8a7bd282622cb3a59eb5dc33f7fe51cbe936354d5c05686609b1da"
         },
         {
           "path": "Assets/Network/Generated/SceneFileBody2DNetCodec.cs",
           "model": "SceneFileBody2D",
           "codec": "net",
-          "fingerprint": "sha256:eb00129256754e56c8e74b71e3b5e68a485cd961f7337e131b313efd8da8e15a",
-          "sha256": "0a6d27d31f38018303b406e22699fbedba23cb39bbd7da966642c19fe2d662c8"
+          "fingerprint": "sha256:417651cb5ee051084858c8107598594368c72af1fadee5f2b7ee7d997a6f4ef9",
+          "sha256": "0884f2552494fd7a81f71c49d86b30ec6a0e832bf4f35bfce815dd455bdbf5ed"
+        },
+        {
+          "path": "Assets/Network/Generated/SceneFileChildBodyNetCodec.cs",
+          "model": "SceneFileChildBody",
+          "codec": "net",
+          "fingerprint": "sha256:85f8f108a1a50d11eddb20783bef4e7e40de7e3455de3a673b309eaf33343888",
+          "sha256": "cff73ffe7907850a62f9d0a4fdc8b0d9df6b1c4abdbd7bcceaa5eb356e03762b"
+        },
+        {
+          "path": "Assets/Network/Generated/SceneFileChildBody2DNetCodec.cs",
+          "model": "SceneFileChildBody2D",
+          "codec": "net",
+          "fingerprint": "sha256:9ec638646981c745c6e9423e799c0caa55a9d7733a9987daeb5465834b4ba37f",
+          "sha256": "5cb6bd802078dcf67f666c13411357ba3fa7f80fb48ff400735cbd20ebfa4fbe"
         },
         {
           "path": "Assets/Network/Generated/SceneFileColliderNetCodec.cs",
@@ -770,8 +787,15 @@
           "path": "Assets/Network/Generated/SceneFileCollider2DNetCodec.cs",
           "model": "SceneFileCollider2D",
           "codec": "net",
-          "fingerprint": "sha256:95e8d55e703fd8b46363c7719ac85efdfca870ccafe8276ef1072962327d28ec",
-          "sha256": "16c245adbb201f0c2f4733b95d9f7e8329dd4d6db8be7482ca4043e03532a511"
+          "fingerprint": "sha256:516e36597924113719c0134fa569c54a07ed5a67a49c79a777ae4af473025648",
+          "sha256": "908197f432097adbb236456b58c6c3fcaf7e456813fc95c4a24ea66fe2a20ea1"
+        },
+        {
+          "path": "Assets/Network/Generated/SceneFileEffector2DNetCodec.cs",
+          "model": "SceneFileEffector2D",
+          "codec": "net",
+          "fingerprint": "sha256:8e65ef010387a36758c24fc6251fc858b8ab399d1ea7c7cd359e72511f67da12",
+          "sha256": "0fbafcc414f7bf3f4a568fbd79406b08695059fff9ec59f80448c078ed20d708"
         },
         {
           "path": "Assets/Network/Generated/SceneFileMaterialNetCodec.cs",
@@ -784,8 +808,8 @@
           "path": "Assets/Network/Generated/SceneFileObjectNetCodec.cs",
           "model": "SceneFileObject",
           "codec": "net",
-          "fingerprint": "sha256:e85ab6aa6bb6414b5b97089efacceb8013f7ca5db5f2075efb6694c32642aca1",
-          "sha256": "abba7cd73f51ebf95334013fd90920df7a887e717be65be083fb1011bb399920"
+          "fingerprint": "sha256:8bd7a5e83890af02b1bf1cc0498b1b5c7a1c37de413a6cbe8f136bfeab8e4457",
+          "sha256": "2cd3a93f7c641e629a849a75a0725b25753fcb51c1f3372cbd6e9be957364571"
         },
         {
           "path": "Assets/Network/Generated/SceneFilePoseNetCodec.cs",
@@ -960,12 +984,12 @@
     {
       "path": "Assets/Network/Generated/Handshake.cs",
       "kind": "handshake",
-      "sha256": "1768d7800b09ccd0555216cacc0a03594210c547a38395e5c306667e58ede8ea"
+      "sha256": "4b09d2b51fb9cf3df820203bf92c45e048328d2c3e8b4b9d61779085aaca8462"
     },
     {
       "path": "Assets/Network/Generated/NetSchema.cs",
       "kind": "net_schema",
-      "sha256": "5f432274d6cd34fce2abb5543268ea1127fe8570527f3bca625414cf3d8df16a"
+      "sha256": "8a2b5817b12ed7fddca419113219a241db58462630e12d6d6929e0d6c38c4f09"
     }
   ]
 }
