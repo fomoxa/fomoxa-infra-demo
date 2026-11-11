@@ -13,7 +13,7 @@ namespace Fomoxa.Networking
 {
     public sealed class NetworkRuntime
     {
-        public const string Version = "0.3.1";
+        public const string Version = "0.3.4";
 
         private readonly FomoxaRegistry registry;
         private readonly NetworkLog log;
@@ -71,6 +71,7 @@ namespace Fomoxa.Networking
                 ReliableWindow = settings.ReliableWindow,
                 CloseTimeout = settings.CloseTimeout,
                 AuthenticationTimeout = settings.AuthenticationTimeout,
+                CollectStatistics = settings.CollectStatistics,
             };
             TimeManager = new TimeManager(settings.TickRate, settings.MaxTicksPerFrame, settings.TimingMode);
             var protocol = new SessionProtocol(

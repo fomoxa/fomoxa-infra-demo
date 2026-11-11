@@ -100,7 +100,11 @@ namespace Fomoxa.Networking
 
         public int DroppedInputsOf(ulong peerId) => Inputs.DroppedOf(peerId);
 
+        public long DroppedInputs => Inputs.TotalDropped;
+
         public int PeerCount => session.PeerCount;
+
+        public ServerTrafficStatistics Statistics => session.Statistics;
 
         public int FrameBudgetOf(ulong peerId) => session.FrameBudgetOf(peerId);
 

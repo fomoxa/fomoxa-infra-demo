@@ -5,6 +5,10 @@ namespace Generated
         public static void RegisterAll(global::Fomoxa.Networking.FomoxaRegistry registry)
         {
             registry.SetSchema(NetSchema.Build());
+            foreach (FomoxaMessage message in Handshake.FomoxaMessages)
+            {
+                registry.SetName(message.Id, message.Name);
+            }
             registry.SetCodec(MessageBundleNetAdapter.Instance);
             registry.SetCodec(ReliableAckNetAdapter.Instance);
             registry.SetCodec(LocalPeerNetAdapter.Instance);
