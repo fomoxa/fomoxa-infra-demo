@@ -6,27 +6,27 @@ cd "$REPO_ROOT"
 
 CLUSTER_NAME="fomoxa"
 
-echo "=== Khoi dong cum Kubernetes (k3d + Agones) cho Fomoxa tren WSL ==="
+echo "=== Starting Kubernetes cluster (k3d + Agones) for Fomoxa on WSL ==="
 
 # 1. Kiem tra docker
 if ! docker info >/dev/null 2>&1; then
-    echo "Loi: Docker daemon chua chay hoac chua cap quyen trong WSL." >&2
+    echo "Error: Docker daemon is not running or not permitted in WSL." >&2
     exit 1
 fi
 
 # 2. Kiem tra k3d & helm
 if ! command -v k3d >/dev/null 2>&1; then
-    echo "k3d chua duoc cai dat. Dang cai dat k3d vao /usr/local/bin..."
+    echo "k3d is not installed. Installing k3d to /usr/local/bin..."
     curl -s https://raw.githubusercontent.com/k3d-io/k3d/main/install.sh | TAG=v5.7.4 bash || {
-        echo "Loi: Khong the tu dong cai k3d. Hay chay 'sudo apt install' hoac cai k3d thu cong." >&2
+        echo "Error: Could not install k3d automatically. Run 'sudo apt install' or install k3d manually." >&2
         exit 1
     }
 fi
 
 if ! command -v helm >/dev/null 2>&1; then
-    echo "helm chua duoc cai dat. Dang cai dat helm..."
+    echo "helm is not installed. Installing helm..."
     curl -fsSL https://raw.githubusercontent.com/helm/helm/main/scripts/get-helm-3 | bash || {
-        echo "Loi: Khong the tu dong cai helm." >&2
+        echo "Error: Could not install helm automatically." >&2
         exit 1
     }
 fi
@@ -40,13 +40,13 @@ if ! k3d cluster list "$CLUSTER_NAME" >/dev/null 2>&1; then
     for p in 7777 9600 9643 7350; do
         busy="$(port_busy "$p")"
         if [[ -n "$busy" ]]; then
-            echo "Loi: cong $p dang bi container khac giu:" >&2
+            echo "Error: port $p is already held by another container:" >&2
             echo "$busy" >&2
-            echo "Hay tat docker compose truoc: docker compose -f deploy/compose.yaml down" >&2
+            echo "Stop docker compose first: docker compose -f deploy/compose.yaml down" >&2
             exit 1
         fi
     done
-    echo -e "\n1/6 Tao cum k3d '$CLUSTER_NAME' voi port mappings..."
+    echo -e "\n1/6 Creating k3d cluster '$CLUSTER_NAME' with port mappings..."
     k3d cluster create "$CLUSTER_NAME" \
         --port "7777:7777/udp@loadbalancer" \
         --port "9600:9600@loadbalancer" \
@@ -54,14 +54,14 @@ if ! k3d cluster list "$CLUSTER_NAME" >/dev/null 2>&1; then
         --port "7350:7350@loadbalancer" \
         --wait
 else
-    echo -e "\n1/6 Cum k3d '$CLUSTER_NAME' da ton tai."
+    echo -e "\n1/6 k3d cluster '$CLUSTER_NAME' already exists."
 fi
 
 kubectl config use-context "k3d-$CLUSTER_NAME" >/dev/null
-echo "Context hien tai: $(kubectl config current-context)"
+echo "Current context: $(kubectl config current-context)"
 
-# 4. Cai dat Agones qua Helm
-echo -e "\n2/6 Cai dat Agones via Helm..."
+# 4. Install Agones via Helm
+echo -e "\n2/6 Installing Agones via Helm..."
 # Dat AGONES_VERSION (vi du 1.47.0) de ghim version chart; de trong = ban moi nhat.
 AGONES_VERSION="${AGONES_VERSION:-}"
 helm repo add agones https://agones.dev/chart/stable --force-update
@@ -78,17 +78,17 @@ if ! helm list -n agones-system -q | grep -q "agones"; then
         --set "agones.ping.install=false" \
         --wait --timeout 5m
 else
-    echo "Agones da duoc cai dat trong agones-system."
+    echo "Agones is already installed in agones-system."
 fi
 
 # 5. Build va Import Docker images vao k3d
 BUILD="${1:-}"
 if [[ "$BUILD" == "--build" || "$BUILD" == "-b" ]]; then
-    echo -e "\n3/6 Build Docker images..."
+    echo -e "\n3/6 Building Docker images..."
     bash "$REPO_ROOT/scripts/build-images.sh"
 fi
 
-echo -e "\n4/6 Import images vao k3d cluster..."
+echo -e "\n4/6 Importing images into k3d cluster..."
 k3d image import \
     fomoxa-server:latest \
     fomoxa-directory:latest \
@@ -97,12 +97,12 @@ k3d image import \
     -c "$CLUSTER_NAME"
 
 # 6. Tao namespace va Secrets
-echo -e "\n5/6 Tao namespace va secrets..."
+echo -e "\n5/6 Creating namespace and secrets..."
 kubectl apply -f "$REPO_ROOT/deploy/k8s/namespace.yaml"
 bash "$REPO_ROOT/scripts/gen-k8s-secrets.sh" "fomoxa"
 
 # 7. Apply K8s manifests
-echo -e "\n6/6 Apply K8s manifests..."
+echo -e "\n6/6 Applying K8s manifests..."
 kubectl apply -f "$REPO_ROOT/deploy/k8s/postgres.yaml"
 kubectl apply -f "$REPO_ROOT/deploy/k8s/nakama.yaml"
 kubectl apply -f "$REPO_ROOT/deploy/k8s/directory.yaml"
@@ -120,7 +120,7 @@ if [[ "${APPLY_NETPOL:-}" == "1" ]]; then
     kubectl apply -f "$REPO_ROOT/deploy/k8s/networkpolicy.yaml"
 fi
 
-echo -e "\nCho cac dich vu khoi dong..."
+echo -e "\nWaiting for services to start..."
 kubectl rollout status deployment/postgres -n fomoxa --timeout=90s
 kubectl rollout status deployment/nakama -n fomoxa --timeout=120s
 kubectl rollout status deployment/directory -n fomoxa --timeout=60s
@@ -139,18 +139,18 @@ if [[ "${INSTALL_MONITORING:-}" == "1" ]]; then
         kubectl create secret generic grafana-admin -n monitoring --from-literal=password="$(openssl rand -hex 12)"
     fi
     kubectl apply -f "$REPO_ROOT/deploy/monitoring/"
-    echo "Giam sat: kubectl port-forward -n monitoring svc/grafana 3000:3000  (user admin, mat khau: kubectl get secret grafana-admin -n monitoring -o jsonpath={.data.password} | base64 -d)"
+    echo "Monitoring: kubectl port-forward -n monitoring svc/grafana 3000:3000  (user admin, password: kubectl get secret grafana-admin -n monitoring -o jsonpath={.data.password} | base64 -d)"
 fi
 
 # TLS_ONLY=1: dong cong 9600 khong ma hoa ra ngoai (chi trong cum), client bat buoc di qua TLS 9643
 if [[ "${TLS_ONLY:-}" == "1" ]]; then
     kubectl patch svc backend -n fomoxa -p '{"spec":{"type":"ClusterIP"}}' >/dev/null
-    echo "Da dong cong 9600 (backend ClusterIP). Client phai dung TLS cong 9643."
+    echo "Port 9600 is now closed (backend ClusterIP). Clients must use TLS port 9643."
 fi
-echo "TLS: client dung -backend:127.0.0.1:9643 -tlspin:<pin>; xem pin bang ./scripts/gen-tls-cert.sh"
+echo "TLS: clients use -backend:127.0.0.1:9643 -tlspin:<pin>; view the pin with ./scripts/gen-tls-cert.sh"
 
-echo -e "\nKiem tra GameServers:"
+echo -e "\nChecking GameServers:"
 kubectl get gs -n fomoxa
 
-echo -e "\n=== Cum K8s Fomoxa da san sang tren WSL! ==="
+echo -e "\n=== Fomoxa K8s cluster is ready on WSL! ==="
 

@@ -22,7 +22,7 @@ namespace MyGame.Server
         {
             string name = context.ConnectionData.IsEmpty ? "" : Encoding.UTF8.GetString(context.ConnectionData.Span);
             players[context.PeerId] = name;
-            Console.WriteLine($"[Pod] peer {context.PeerId} la '{(name.Length == 0 ? "(khach)" : name)}'");
+            Console.WriteLine($"[Pod] peer {context.PeerId} is '{(name.Length == 0 ? "(guest)" : name)}'");
             context.Accept();
         }
 

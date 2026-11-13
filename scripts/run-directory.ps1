@@ -4,7 +4,7 @@ $repoRoot = Split-Path -Parent $PSScriptRoot
 $binary = Join-Path $repoRoot "gateway/target/release/fomoxa-directory.exe"
 
 if (-not (Test-Path $binary)) {
-    throw "chua build directory: $binary (chay cargo build --release -p fomoxa-directory trong gateway/)"
+    throw "directory not built: $binary (run cargo build --release -p fomoxa-directory in gateway/)"
 }
 
 Push-Location (Join-Path $repoRoot "deploy")

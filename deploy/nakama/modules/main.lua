@@ -31,7 +31,7 @@ local function decode(payload)
     end
     local ok, value = pcall(nk.json_decode, payload)
     if not ok then
-        error({ "payload phai la JSON", 3 })
+        error({ "payload must be JSON", 3 })
     end
     return value
 end
@@ -43,7 +43,7 @@ end
 local function backend_only(ctx)
     -- Gọi bằng http_key thì ctx.user_id rỗng; người chơi (Bearer) bị từ chối.
     if ctx.user_id ~= nil and ctx.user_id ~= "" then
-        error({ "chi backend duoc goi RPC nay", 7 })
+        error({ "only the backend may call this RPC", 7 })
     end
 end
 
@@ -173,18 +173,18 @@ local function find_match(ctx, payload)
                 return respond(result)
             end
 
-            nk.logger_info("find_match: xoa queue loi: " .. tostring(clearError))
+            nk.logger_info("find_match: failed to clear queue: " .. tostring(clearError))
         else
             local queued, queueError = pcall(write_one, QUEUE, queue_key, { user_id = user, since = stamp }, version)
             if queued then
                 return respond({ status = "waiting", room = is_auto and "auto" or requested_room })
             end
 
-            nk.logger_info("find_match: ghi queue loi: " .. tostring(queueError))
+            nk.logger_info("find_match: failed to write queue: " .. tostring(queueError))
         end
     end
 
-    error({ "match_queue ban, thu lai", 14 })
+    error({ "match_queue is busy, try again", 14 })
 end
 
 local function poll_match(ctx, payload)
@@ -218,22 +218,22 @@ local function verify_ticket(ctx, payload)
     local data = decode(payload)
 
     if data.ticket == nil or data.user_id == nil then
-        return respond({ ok = false, message = "can ticket va user_id" })
+        return respond({ ok = false, message = "ticket and user_id are required" })
     end
 
     local record = read_one(TICKET, data.ticket)
     if record == nil then
-        return respond({ ok = false, message = "ticket khong ton tai" })
+        return respond({ ok = false, message = "ticket does not exist" })
     end
 
     local value = record.value
     if value.exp == nil or value.exp < os.time() then
-        return respond({ ok = false, message = "ticket het han" })
+        return respond({ ok = false, message = "ticket has expired" })
     end
 
     -- Nếu data.room là auto hoặc rỗng thì bỏ qua check room
     if data.room and not is_auto_room(data.room) and value.room ~= data.room then
-        return respond({ ok = false, message = "ticket cua room khac" })
+        return respond({ ok = false, message = "ticket belongs to another room" })
     end
 
     local member = false
@@ -246,7 +246,7 @@ local function verify_ticket(ctx, payload)
     end
 
     if not member then
-        return respond({ ok = false, message = "ticket khong thuoc user nay" })
+        return respond({ ok = false, message = "ticket does not belong to this user" })
     end
 
     return respond({ ok = true, room = value.room, exp = value.exp })
@@ -303,7 +303,7 @@ local function kv_get(ctx, payload)
     backend_only(ctx)
     local data = decode(payload)
     if data.collection == nil or data.key == nil then
-        error({ "can collection va key", 3 })
+        error({ "collection and key are required", 3 })
     end
     local record = read_one(data.collection, data.key)
     if record == nil then
@@ -317,7 +317,7 @@ local function kv_put(ctx, payload)
     backend_only(ctx)
     local data = decode(payload)
     if data.collection == nil or data.key == nil then
-        error({ "can collection va key", 3 })
+        error({ "collection and key are required", 3 })
     end
     local ok = pcall(write_one, data.collection, data.key, { v = data.value or "" }, data.version or "")
     return respond({ ok = ok })
@@ -336,4 +336,4 @@ nk.register_rpc(kv_get, "kv_get")
 nk.register_rpc(kv_put, "kv_put")
 nk.register_rpc(health, "health")
 
-nk.logger_info("fomoxa match module da nap (auto pool ho tro)")
+nk.logger_info("fomoxa match module loaded (auto pool supported)")

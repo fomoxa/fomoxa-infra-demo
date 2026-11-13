@@ -97,7 +97,7 @@ namespace MyGame.Backend
             }
             catch (Exception problem)
             {
-                Console.Error.WriteLine($"[Metrics] không mở được {listen}: {problem.Message}");
+                Console.Error.WriteLine($"[Metrics] could not open {listen}: {problem.Message}");
                 listener = null;
             }
         }

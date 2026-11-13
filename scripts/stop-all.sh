@@ -1,13 +1,13 @@
 #!/usr/bin/env bash
 set -uo pipefail
 
-echo "=== Dung cac tien trinh cum Fomoxa ==="
+echo "=== Stopping Fomoxa cluster processes ==="
 
 NAMES=("fomoxa-directory" "fomoxa-gateway" "MyGame.Server" "MyGame.Backend" "MyGame")
 
 for name in "${NAMES[@]}"; do
     if pgrep -f "$name" >/dev/null 2>&1; then
-        echo "Dung $name..."
+        echo "Stopping $name..."
         pkill -9 -f "$name" 2>/dev/null || true
     fi
 done
@@ -19,5 +19,5 @@ if command -v taskkill.exe >/dev/null 2>&1; then
     done
 fi
 
-echo "Da dung cac tien trinh."
+echo "All processes stopped."
 

@@ -20,7 +20,7 @@ gen_key() {
     echo "  + $(basename "$(dirname "$path")")/$(basename "$path")"
 }
 
-echo "=== Sinh keys cho Fomoxa ==="
+echo "=== Generating keys for Fomoxa ==="
 gen_key "$DIR_SECRETS/root" 32
 gen_key "$DIR_SECRETS/admin" 24
 gen_key "$DIR_SECRETS/backend" 24
@@ -37,5 +37,5 @@ gen_key "$NAKAMA_SECRETS/session-key" 24
 gen_key "$NAKAMA_SECRETS/refresh-key" 24
 gen_key "$NAKAMA_SECRETS/db-password" 16
 
-echo "Hoan tat sinh keys tai $SECRETS_DIR"
+echo "Finished generating keys at $SECRETS_DIR"
 

@@ -5,12 +5,12 @@ CLUSTER_NAME="fomoxa"
 ACTION="${1:-delete}"
 
 if [[ "$ACTION" == "--keep-cluster" || "$ACTION" == "clean" ]]; then
-    echo "Xoa namespace 'fomoxa' tren cum '$CLUSTER_NAME'..."
+    echo "Deleting namespace 'fomoxa' from cluster '$CLUSTER_NAME'..."
     kubectl delete namespace fomoxa --ignore-not-found=true
-    echo "Da don dep namespace fomoxa."
+    echo "Namespace fomoxa cleaned up."
 else
-    echo "Xoa hoan toan cum k3d '$CLUSTER_NAME'..."
+    echo "Deleting k3d cluster '$CLUSTER_NAME' entirely..."
     k3d cluster delete "$CLUSTER_NAME"
-    echo "Da xoa cum k3d $CLUSTER_NAME."
+    echo "Deleted k3d cluster $CLUSTER_NAME."
 fi
 

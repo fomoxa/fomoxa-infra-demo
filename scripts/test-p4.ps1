@@ -18,7 +18,7 @@ $logs = Join-Path $repoRoot "logs"
 $stamp = Get-Date -Format "HHmmss"
 
 if (-not (Test-Path $player)) {
-    throw "chua build player: $player"
+    throw "player not built: $player"
 }
 
 New-Item -ItemType Directory -Force -Path $logs | Out-Null
@@ -49,10 +49,10 @@ function Wait-Log {
         Start-Sleep -Milliseconds 300
     }
 
-    throw "khong thay '$Pattern' trong $Log sau $Seconds giay"
+    throw "pattern '$Pattern' not found in $Log after $Seconds seconds"
 }
 
-Write-Host "1/2 hai client cung room $Room"
+Write-Host "1/2 two clients in the same room $Room"
 
 $anaLog = Join-Path $logs "p4-test-ana.log"
 $boLog = Join-Path $logs "p4-test-bo.log"
@@ -77,7 +77,7 @@ finally {
     Stop-Process -Id $ana.Id, $bo.Id -Force -ErrorAction SilentlyContinue
 }
 
-Write-Host "2/2 room $FakeRoom phai bi tu choi"
+Write-Host "2/2 room $FakeRoom must be rejected"
 
 $fakeLog = Join-Path $logs "p4-test-fake.log"
 Remove-Item $fakeLog -ErrorAction SilentlyContinue
@@ -93,4 +93,4 @@ finally {
 }
 
 Write-Host ""
-Write-Host "OK: 2 client cung room thay nhau, room gia bi FAILED_PRECONDITION"
+Write-Host "OK: 2 clients in the same room see each other, the fake room is rejected with FAILED_PRECONDITION"

@@ -81,7 +81,7 @@ function Rpc-Key {
 
 $roomBody = @{ room = $Room } | ConvertTo-Json -Compress
 
-Write-Host "1) dang nhap device A/B"
+Write-Host "1) logging in device A/B"
 $ana = Auth-Device $UserA
 $bo = Auth-Device $UserB
 "   ana = $($ana.UserId)"
@@ -94,36 +94,36 @@ Write-Host "3) ana find_match"
 $a = Rpc-User "find_match" $ana.Token $roomBody
 "   -> $($a | ConvertTo-Json -Compress)"
 
-if ($a.status -ne "waiting") { throw "ana phai o trang thai waiting" }
+if ($a.status -ne "waiting") { throw "ana must be in waiting state" }
 
 Write-Host "4) bo find_match"
 $b = Rpc-User "find_match" $bo.Token $roomBody
 "   -> $($b | ConvertTo-Json -Compress)"
 
-if ($b.status -ne "matched") { throw "bo phai duoc matched" }
+if ($b.status -ne "matched") { throw "bo must be matched" }
 
 Write-Host "5) ana poll_match"
 $poll = Rpc-User "poll_match" $ana.Token $roomBody
 "   -> $($poll | ConvertTo-Json -Compress)"
 
-if ($poll.status -ne "matched") { throw "ana phai thay ket qua matched" }
-if ($poll.ticket -ne $b.ticket) { throw "hai client phai nhan cung ticket" }
+if ($poll.status -ne "matched") { throw "ana must see the matched result" }
+if ($poll.ticket -ne $b.ticket) { throw "both clients must receive the same ticket" }
 
 Write-Host "6) backend verify_ticket"
 $verify = Rpc-Key "verify_ticket" (@{ ticket = $poll.ticket; room = $Room; user_id = $ana.UserId } | ConvertTo-Json -Compress)
 "   -> ok=$($verify.ok) $($verify.body | ConvertTo-Json -Compress)"
-if (-not $verify.ok) { throw "verify_ticket phai thanh cong" }
+if (-not $verify.ok) { throw "verify_ticket must succeed" }
 
-Write-Host "7) verify voi user khac (phai bi tu choi)"
+Write-Host "7) verify with a different user (must be rejected)"
 $stranger = Auth-Device "fomoxa-test-stranger"
 $bad = Rpc-Key "verify_ticket" (@{ ticket = $poll.ticket; room = $Room; user_id = $stranger.UserId } | ConvertTo-Json -Compress)
 "   -> ok=$($bad.ok) $($bad.body)"
-if ($bad.ok) { throw "user ngoai phai bi tu choi" }
+if ($bad.ok) { throw "an outside user must be rejected" }
 
-Write-Host "8) verify ticket bia (phai bi tu choi)"
+Write-Host "8) verify a forged ticket (must be rejected)"
 $fake = Rpc-Key "verify_ticket" (@{ ticket = "00000000-0000-0000-0000-000000000000"; room = $Room; user_id = $ana.UserId } | ConvertTo-Json -Compress)
 "   -> ok=$($fake.ok)"
-if ($fake.ok) { throw "ticket bia phai bi tu choi" }
+if ($fake.ok) { throw "a forged ticket must be rejected" }
 
 Write-Host ""
-Write-Host "OK: 2 client ghep dung room, ticket dung, user ngoai va ticket bia bi chan"
+Write-Host "OK: 2 clients matched into the correct room, tickets are valid, outside users and forged tickets are blocked"

@@ -80,7 +80,7 @@ namespace MyGame.Network
             if (target == null && Time.unscaledTime - idleSince > 8f && FindOwnPlayer() == null)
             {
                 idleSince = float.PositiveInfinity;
-                Debug.Log("[Camera] chưa thấy nhân vật của mình sau 8 giây (chưa kết nối pod hoặc chưa spawn).");
+                Debug.Log("[Camera] have not seen my character after 8 seconds (not connected to a pod or not spawned yet).");
             }
         }
 

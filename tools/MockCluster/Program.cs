@@ -77,19 +77,19 @@ namespace MockCluster
             var podsRegistry = new PodGateServer(new MockPodGate(core)).Registry().Authenticate(new MockPodKeys()).Build();
             using RpcServer podsServer = RpcServer.Bind(podsAddress, NetSchema.Build(), podsRegistry).Serve();
 
-            Console.WriteLine($"[Mock] directory giả  : {directoryServer.LocalEndPoint}");
-            Console.WriteLine($"[Mock] backend giả    : {playersServer.LocalEndPoint}  (client Unity: 127.0.0.1:{playersServer.LocalEndPoint.Port})");
-            Console.WriteLine($"[Mock] cổng pod giả   : {podsServer.LocalEndPoint}");
+            Console.WriteLine($"[Mock] mock directory : {directoryServer.LocalEndPoint}");
+            Console.WriteLine($"[Mock] mock backend   : {playersServer.LocalEndPoint}  (Unity client: 127.0.0.1:{playersServer.LocalEndPoint.Port})");
+            Console.WriteLine($"[Mock] mock pod port  : {podsServer.LocalEndPoint}");
 
             // TLS: giống proxy TLS đặt trước backend thật. Tắt bằng --no-tls.
             TlsTerminator tls = null;
             if (!args.Has("no-tls"))
             {
                 tls = new TlsTerminator(args.Get("tls-listen", "0.0.0.0:9643"), "127.0.0.1", playersServer.LocalEndPoint.Port, args.Get("tls-cert", ".mock/mock-tls.pfx"));
-                Console.WriteLine($"[Mock] backend TLS    : cổng {tls.Port}  pin SHA-256 = {tls.PinSha256}");
+                Console.WriteLine($"[Mock] backend TLS    : port {tls.Port}  pin SHA-256 = {tls.PinSha256}");
                 Console.WriteLine($"[Mock]   Unity: -backend:127.0.0.1:{tls.Port} -tlspin:{tls.PinSha256}");
             }
-            Console.WriteLine(dataFile.Length == 0 ? "[Mock] tài khoản: trong bộ nhớ (mất khi tắt; dùng --data=file.json để giữ lại)" : $"[Mock] tài khoản lưu ở {dataFile}");
+            Console.WriteLine(dataFile.Length == 0 ? "[Mock] accounts: in memory (lost on exit; use --data=file.json to persist)" : $"[Mock] accounts stored at {dataFile}");
 
             using var stopping = new ManualResetEventSlim();
             using var terminate = PosixSignalRegistration.Create(PosixSignal.SIGTERM, c => { c.Cancel = true; stopping.Set(); });
@@ -103,7 +103,7 @@ namespace MockCluster
                     string server = args.Get("server", "");
                     if (server.Length == 0 || !File.Exists(server))
                     {
-                        Console.Error.WriteLine($"[Mock] khong thay MyGame.Server.dll ('{server}'). Truyen --server=<duong dan> hoac dung --no-spawn.");
+                        Console.Error.WriteLine($"[Mock] MyGame.Server.dll not found ('{server}'). Pass --server=<path> or use --no-spawn.");
                         return 1;
                     }
 
@@ -119,7 +119,7 @@ namespace MockCluster
 
                 if (!await WaitForPods(directory, spawn ? podCount : 0, stopping))
                 {
-                    Console.Error.WriteLine("[Mock] pod chua dang ky du sau 30 giay");
+                    Console.Error.WriteLine("[Mock] pods did not register in time after 30 seconds");
                     if (args.Has("selftest"))
                     {
                         return 2;
@@ -127,7 +127,7 @@ namespace MockCluster
                 }
                 else if (spawn)
                 {
-                    Console.WriteLine($"[Mock] {podCount} pod da dang ky. Cum gia san sang. Ctrl+C de tat.");
+                    Console.WriteLine($"[Mock] {podCount} pods registered. Mock cluster ready. Ctrl+C to stop.");
                 }
 
                 if (args.Has("bot-test"))
@@ -238,7 +238,7 @@ namespace MockCluster
             RoomList list = await new LobbyClient(connection).ListRoomsAsync(new ListRoomsRequest(), CallOptions.Within(TimeSpan.FromSeconds(5)));
             Console.WriteLine("[probe] " + string.Join(", ", list.Rooms.Select(r => $"{r.RoomKey}[{r.Players}/{r.Capacity}] {r.State}")));
             OnlineList online = await new LobbyClient(connection).PresenceAsync(new PresenceRequest { Room = "" }, CallOptions.Within(TimeSpan.FromSeconds(5)));
-            Console.WriteLine("[probe] online: " + string.Join(", ", online.Players.Select(p => $"{p.Name}@{(p.Room.Length == 0 ? "sanh" : p.Room)}")));
+            Console.WriteLine("[probe] online: " + string.Join(", ", online.Players.Select(p => $"{p.Name}@{(p.Room.Length == 0 ? "lobby" : p.Room)}")));
             return 0;
         }
 
@@ -291,26 +291,26 @@ namespace MockCluster
                 // Mã khôi phục nằm trong PlayerWelcome; thử qua đường khôi phục thật bên dưới.
             }
 
-            Check("Dang ky trung ten bi tu choi", Rejected(() => Open(me.ToUpperInvariant()[..1] + me[1..], "password123", "register")));
-            Check("Dang ky mat khau yeu bi tu choi", Rejected(() => Open("weakpw", "123", "register")));
-            Check("Sai mat khau bi tu choi", Rejected(() => Open(me, "wrongpassword", "login")));
-            Check("Tai khoan khong ton tai bi tu choi", Rejected(() => Open("nobodyhere", "password123", "login")));
+            Check("Duplicate name registration is rejected", Rejected(() => Open(me.ToUpperInvariant()[..1] + me[1..], "password123", "register")));
+            Check("Weak password registration is rejected", Rejected(() => Open("weakpw", "123", "register")));
+            Check("Wrong password is rejected", Rejected(() => Open(me, "wrongpassword", "login")));
+            Check("Non-existent account is rejected", Rejected(() => Open("nobodyhere", "password123", "login")));
             using (RpcConnection again = Open(me.ToUpperInvariant(), "password123", "login"))
             {
-                Check("Dang nhap dung (khong phan biet hoa thuong)", true);
+                Check("Correct login (case-insensitive)", true);
             }
 
-            // Khôi phục cần mã thật: đăng ký tài khoản thứ hai và lấy mã từ PlayerWelcome qua kết nối trực tiếp.
+            // Recovery needs a real code: register a second account and read the code from PlayerWelcome over a direct connection.
             recoveryCode = RegisterAndGetCode(friend, "password123", port);
-            Check("Dang ky tra ve ma khoi phuc", recoveryCode.Length == 19, $"({recoveryCode})");
-            Check("Khoi phuc voi ma sai bi tu choi", Rejected(() => Open(friend, "newpassword1", "recover", "AAAA-AAAA-AAAA-AAAA")));
+            Check("Registration returns a recovery code", recoveryCode.Length == 19, $"({recoveryCode})");
+            Check("Recovery with a wrong code is rejected", Rejected(() => Open(friend, "newpassword1", "recover", "AAAA-AAAA-AAAA-AAAA")));
             using (RpcConnection recovered = Open(friend, "newpassword1", "recover", recoveryCode))
             {
-                Check("Khoi phuc bang ma dung", true);
+                Check("Recovery with the correct code", true);
             }
 
-            Check("Ma khoi phuc cu het hieu luc", Rejected(() => Open(friend, "another12345", "recover", recoveryCode)));
-            Check("Mat khau cu khong con dung sau khoi phuc", Rejected(() => Open(friend, "password123", "login")));
+            Check("Old recovery code is no longer valid", Rejected(() => Open(friend, "another12345", "recover", recoveryCode)));
+            Check("Old password no longer works after recovery", Rejected(() => Open(friend, "password123", "login")));
 
             // --- sảnh + phòng + online
             using (RpcConnection connection = Open(me, "password123", "login"))
@@ -325,11 +325,11 @@ namespace MockCluster
                 Task<RoomTicket> second = new LobbyClient(partner).JoinRoomAsync(new JoinRoomRequest { RoomKey = "auto", Version = "1.0" }, CallOptions.Within(TimeSpan.FromSeconds(25)));
                 RoomTicket auto = await first;
                 RoomTicket pair = await second;
-                Check("JoinRoom auto (2 nguoi)", auto.Port != 0 && auto.Connection.Length > 0 && pair.Port != 0,
-                    $"-> {auto.Address}:{auto.Port} / {pair.Address}:{pair.Port}{(real ? " (qua Nakama that)" : "")}");
+                Check("JoinRoom auto (2 players)", auto.Port != 0 && auto.Connection.Length > 0 && pair.Port != 0,
+                    $"-> {auto.Address}:{auto.Port} / {pair.Address}:{pair.Port}{(real ? " (via real Nakama)" : "")}");
                 if (real)
                 {
-                    Check("Cap ghep vao cung mot pod", auto.Port == pair.Port);
+                    Check("Both matched to the same pod", auto.Port == pair.Port);
                 }
                 else
                 {
@@ -339,21 +339,21 @@ namespace MockCluster
 
                 OnlineList online = await lobby.PresenceAsync(new PresenceRequest { Room = "arena:1" }, Within);
                 Check("Presence", online.Players.Any(p => p.Name == me && p.Room == "arena:1"),
-                    $"({string.Join(", ", online.Players.Select(p => $"{p.Name}@{(p.Room.Length == 0 ? "sanh" : p.Room)}"))})");
+                    $"({string.Join(", ", online.Players.Select(p => $"{p.Name}@{(p.Room.Length == 0 ? "lobby" : p.Room)}"))})");
 
                 try
                 {
                     await lobby.JoinRoomAsync(new JoinRoomRequest { RoomKey = "arena:99", Version = "1.0" }, Within);
-                    Check("JoinRoom phong khong ton tai bi tu choi", false);
+                    Check("JoinRoom non-existent room is rejected", false);
                 }
                 catch (RpcException)
                 {
-                    Check("JoinRoom phong khong ton tai bi tu choi", true);
+                    Check("JoinRoom non-existent room is rejected", true);
                 }
 
                 // --- đổi mật khẩu
                 ActionResult changed = await lobby.ChangePasswordAsync(new ChangePasswordRequest { OldPassword = "password123", NewPassword = "password456" }, Within);
-                Check("Doi mat khau", changed.Ok);
+                Check("Change password", changed.Ok);
                 bool wrongOld = false;
                 try
                 {
@@ -364,10 +364,10 @@ namespace MockCluster
                     wrongOld = true;
                 }
 
-                Check("Doi mat khau voi mat khau cu sai bi tu choi", wrongOld);
+                Check("Change password with a wrong old password is rejected", wrongOld);
             }
 
-            Check("Dang nhap bang mat khau cu sau khi doi bi tu choi", Rejected(() => Open(me, "password123", "login")));
+            Check("Login with the old password after change is rejected", Rejected(() => Open(me, "password123", "login")));
 
             // --- bảng điểm + kỷ lục do pod báo
             using (RpcConnection pod = await RpcConnection.Connect(
@@ -392,7 +392,7 @@ namespace MockCluster
                     board = await lobby.ScoreboardAsync(new ScoreboardRequest { Room = "arena:1" }, Within);
                 }
 
-                Check("Bang diem xep hang", board.Entries.Count == 2 && board.Entries[0].Name == me && board.Entries[0].Steps == 3,
+                Check("Scoreboard ranking", board.Entries.Count == 2 && board.Entries[0].Name == me && board.Entries[0].Steps == 3,
                     $"({string.Join(", ", board.Entries.Select(e => $"{e.Name}:{e.Steps}/{e.Best}"))})");
 
                 await Report(2);
@@ -404,24 +404,24 @@ namespace MockCluster
                     profile = await lobby.GetProfileAsync(new ProfileRequest(), Within);
                 }
 
-                Check("Ky luc luu lai la bac cao nhat", profile.BestSteps == 5 && profile.Matches >= 1, $"(best={profile.BestSteps}, matches={profile.Matches})");
+                Check("Best record stores the highest step count", profile.BestSteps == 5 && profile.Matches >= 1, $"(best={profile.BestSteps}, matches={profile.Matches})");
 
                 // --- bạn bè + lời mời
                 using RpcConnection other = Open(friend, "newpassword1", "login");
                 var otherLobby = new LobbyClient(other);
                 await lobby.FriendActionAsync(new FriendActionRequest { Action = "request", Target = friend }, Within);
                 SocialState incoming = await otherLobby.SocialAsync(new SocialRequest(), Within);
-                Check("Loi moi ket ban den nguoi nhan", incoming.Incoming.Contains(me));
+                Check("Friend request reaches the recipient", incoming.Incoming.Contains(me));
                 await otherLobby.FriendActionAsync(new FriendActionRequest { Action = "accept", Target = me }, Within);
                 SocialState mine = await lobby.SocialAsync(new SocialRequest(), Within);
-                Check("Thanh ban be hai chieu", mine.Friends.Any(f => f.Name == friend));
+                Check("Friendship is mutual", mine.Friends.Any(f => f.Name == friend));
 
                 await lobby.PresenceAsync(new PresenceRequest { Room = "arena:1" }, Within);
                 await otherLobby.PresenceAsync(new PresenceRequest { Room = "" }, Within);
                 ActionResult invited = await lobby.InviteAsync(new InviteRequest { To = friend, Room = "arena:1" }, Within);
                 SocialState withInvite = await otherLobby.SocialAsync(new SocialRequest(), Within);
-                Check("Moi ban vao phong", invited.Ok && withInvite.Invites.Any(i => i.From == me && i.Room == "arena:1"));
-                Check("Ban be hien online va dang o dau", withInvite.Friends.Any(f => f.Name == me && f.Online && f.Room == "arena:1"));
+                Check("Invite a friend to a room", invited.Ok && withInvite.Invites.Any(i => i.From == me && i.Room == "arena:1"));
+                Check("Friend shows as online and where they are", withInvite.Friends.Any(f => f.Name == me && f.Online && f.Room == "arena:1"));
 
                 bool inviteStranger = false;
                 try
@@ -433,10 +433,10 @@ namespace MockCluster
                     inviteStranger = true;
                 }
 
-                Check("Khong moi duoc nguoi chua la ban", inviteStranger);
+                Check("Cannot invite a non-friend", inviteStranger);
             }
 
-            Console.WriteLine(ok ? "[selftest] TAT CA DAT" : "[selftest] CO LOI");
+            Console.WriteLine(ok ? "[selftest] ALL PASSED" : "[selftest] FAILURES");
             return ok;
         }
 
@@ -486,7 +486,7 @@ namespace MockCluster
                     await Task.Delay(10);
                 }
 
-                throw new TimeoutException("TLS handshake quá hạn");
+                throw new TimeoutException("TLS handshake timed out");
             }
 
             try
@@ -496,28 +496,28 @@ namespace MockCluster
                 var options = new ConnectOptions { Credential = Credential.Of(PlayersMethods.Login, login) };
                 using RpcConnection connection = await RpcConnection.Open(transport, NetSchema.Build(), LobbyClient.Declare(PlayersClient.Registry()).Build(), options);
                 RoomList rooms = await new LobbyClient(connection).ListRoomsAsync(new ListRoomsRequest(), CallOptions.Within(TimeSpan.FromSeconds(8)));
-                Check("Ket noi qua TLS (dung pin) va goi RPC", rooms.Rooms.Count > 0, $"({rooms.Rooms.Count} phong)");
+                Check("Connect over TLS (correct pin) and call RPC", rooms.Rooms.Count > 0, $"({rooms.Rooms.Count} rooms)");
             }
             catch (Exception problem)
             {
-                Check("Ket noi qua TLS (dung pin) va goi RPC", false, problem.Message);
+                Check("Connect over TLS (correct pin) and call RPC", false, problem.Message);
             }
 
             try
             {
                 await ConnectTls(new string('0', 64));
-                Check("Sai pin bi tu choi", false);
+                Check("Wrong pin is rejected", false);
             }
             catch (InvalidOperationException problem)
             {
-                Check("Sai pin bi tu choi", problem.Message == "TlsRejected", $"({problem.Message})");
+                Check("Wrong pin is rejected", problem.Message == "TlsRejected", $"({problem.Message})");
             }
             catch (Exception problem)
             {
-                Check("Sai pin bi tu choi", false, problem.Message);
+                Check("Wrong pin is rejected", false, problem.Message);
             }
 
-            Console.WriteLine(ok ? "[selftest] TLS DAT" : "[selftest] TLS CO LOI");
+            Console.WriteLine(ok ? "[selftest] TLS PASSED" : "[selftest] TLS FAILURES");
             return ok;
         }
 

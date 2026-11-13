@@ -140,7 +140,7 @@ namespace MockCluster
                     pod.Rooms.Add(room);
                 }
 
-                Console.WriteLine($"[Directory] pod #{pod.Id} '{pod.Target}' {pod.Address}:{pod.Port} v{pod.Version} dang ky");
+                Console.WriteLine($"[Directory] pod #{pod.Id} '{pod.Target}' {pod.Address}:{pod.Port} v{pod.Version} registered");
                 return new PodRegistered { PodId = pod.Id, ReportIntervalMs = 2000, TicketKey = pod.TicketKey };
             }
         }
@@ -171,7 +171,7 @@ namespace MockCluster
 
                 pod.Rooms.Add(request.RoomKey);
                 pod.LastSeen = DateTime.UtcNow;
-                Console.WriteLine($"[Directory] pod #{pod.Id} giu room {request.RoomKey}");
+                Console.WriteLine($"[Directory] pod #{pod.Id} holds room {request.RoomKey}");
             }
         }
 
@@ -212,7 +212,7 @@ namespace MockCluster
                 pod.Draining = true;
                 long deadline = DateTimeOffset.UtcNow.Add(DrainWindow).ToUnixTimeMilliseconds();
                 pod.DrainStream?.Send(new DrainOrder { Deadline = deadline });
-                Console.WriteLine($"[Directory] pod #{pod.Id} xin drain (han {DrainWindow.TotalSeconds:0}s)");
+                Console.WriteLine($"[Directory] pod #{pod.Id} requested drain (window {DrainWindow.TotalSeconds:0}s)");
             }
         }
 
@@ -229,7 +229,7 @@ namespace MockCluster
             foreach (MockPod gone in pods.Where(p => now - p.LastSeen > PodTimeout).ToList())
             {
                 pods.Remove(gone);
-                Console.WriteLine($"[Directory] pod #{gone.Id} '{gone.Target}' mat tin hieu, go khoi cum");
+                Console.WriteLine($"[Directory] pod #{gone.Id} '{gone.Target}' lost heartbeat, removed from cluster");
             }
         }
     }

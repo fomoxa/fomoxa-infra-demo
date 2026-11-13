@@ -6,27 +6,27 @@ param(
 $ErrorActionPreference = "Stop"
 $repoRoot = Split-Path -Parent $PSScriptRoot
 
-Write-Host "=== Khoi dong cum Kubernetes (k3d + Agones) cho Fomoxa ===" -ForegroundColor Cyan
+Write-Host "=== Starting Kubernetes cluster (k3d + Agones) for Fomoxa ===" -ForegroundColor Cyan
 
 # 1. Kiem tra cac cong cu can thiet
 function Test-Command {
     param([string]$Name, [string]$InstallHint)
     if (-not (Get-Command $Name -ErrorAction SilentlyContinue)) {
-        throw "Khong tim thay lenh '$Name'. Hay cai dat truoc: $InstallHint"
+        throw "Command '$Name' not found. Install it first: $InstallHint"
     }
 }
 
-Test-Command "docker" "Cai Docker Desktop tren Windows"
+Test-Command "docker" "Install Docker Desktop on Windows"
 Test-Command "kubectl" "winget install Kubernetes.kubectl"
-Test-Command "k3d" "winget install k3d-io.k3d  (hoac: choco install k3d / scoop install k3d)"
-Test-Command "helm" "winget install Helm.Helm  (hoac: choco install kubernetes-helm / scoop install helm)"
+Test-Command "k3d" "winget install k3d-io.k3d  (or: choco install k3d / scoop install k3d)"
+Test-Command "helm" "winget install Helm.Helm  (or: choco install kubernetes-helm / scoop install helm)"
 
 # Kiem tra Docker engine
 try {
     $null = docker info 2>&1
 }
 catch {
-    throw "Docker daemon chua chay. Hay khoi dong Docker Desktop."
+    throw "Docker daemon is not running. Start Docker Desktop."
 }
 
 # 2. Tao cum k3d fomoxa
@@ -43,8 +43,8 @@ if ($existingClusters) {
 }
 
 if (-not $clusterExists -and -not $SkipClusterCreate) {
-    Write-Host "`n1/6 Tao cum k3d '$clusterName' voi port mappings..." -ForegroundColor Yellow
-    # Map UDP 7777 (Gateway), TCP 9600 (Backend), TCP 7350 (Nakama - tuy chon)
+    Write-Host "`n1/6 Creating k3d cluster '$clusterName' with port mappings..." -ForegroundColor Yellow
+    # Map UDP 7777 (Gateway), TCP 9600 (Backend), TCP 7350 (Nakama - optional)
     k3d cluster create $clusterName `
         --port "7777:7777/udp@loadbalancer" `
         --port "9600:9600@loadbalancer" `
@@ -53,20 +53,20 @@ if (-not $clusterExists -and -not $SkipClusterCreate) {
         --wait
 }
 else {
-    Write-Host "`n1/6 Cum k3d '$clusterName' da ton tai." -ForegroundColor Green
+    Write-Host "`n1/6 k3d cluster '$clusterName' already exists." -ForegroundColor Green
 }
 
 # Dam bao dung context
 kubectl config use-context "k3d-$clusterName" | Out-Null
-Write-Host "Context hien tai: $((kubectl config current-context).Trim())" -ForegroundColor Green
+Write-Host "Current context: $((kubectl config current-context).Trim())" -ForegroundColor Green
 
 # 3. Cai dat / Cap nhat Agones qua Helm
-Write-Host "`n2/6 Cai dat Agones via Helm..." -ForegroundColor Yellow
+Write-Host "`n2/6 Installing Agones via Helm..." -ForegroundColor Yellow
 # Dat $env:AGONES_VERSION (vi du 1.47.0) de ghim version chart; de trong = ban moi nhat.
 helm repo add agones https://agones.dev/chart/stable --force-update
-if ($LASTEXITCODE -ne 0) { throw "helm repo add agones that bai" }
+if ($LASTEXITCODE -ne 0) { throw "helm repo add agones failed" }
 helm repo update agones
-if ($LASTEXITCODE -ne 0) { throw "helm repo update agones that bai" }
+if ($LASTEXITCODE -ne 0) { throw "helm repo update agones failed" }
 
 $agonesInstalled = helm list -n agones-system -q 2>$null
 if (-not $agonesInstalled) {
@@ -82,16 +82,16 @@ if (-not $agonesInstalled) {
         --wait --timeout 5m
 }
 else {
-    Write-Host "Agones da duoc cai dat trong agones-system." -ForegroundColor Green
+    Write-Host "Agones is already installed in agones-system." -ForegroundColor Green
 }
 
 # 4. Build va Import Docker images vao k3d
 if ($Build) {
-    Write-Host "`n3/6 Build Docker images..." -ForegroundColor Yellow
+    Write-Host "`n3/6 Building Docker images..." -ForegroundColor Yellow
     & "$PSScriptRoot\build-images.ps1"
 }
 
-Write-Host "`n4/6 Import images vao k3d cluster..." -ForegroundColor Yellow
+Write-Host "`n4/6 Importing images into k3d cluster..." -ForegroundColor Yellow
 k3d image import `
     fomoxa-server:latest `
     fomoxa-directory:latest `
@@ -100,7 +100,7 @@ k3d image import `
     -c $clusterName
 
 # 5. Tao namespace va Secrets
-Write-Host "`n5/6 Tao namespace va secrets..." -ForegroundColor Yellow
+Write-Host "`n5/6 Creating namespace and secrets..." -ForegroundColor Yellow
 kubectl apply -f "$repoRoot\deploy\k8s\namespace.yaml"
 & "$PSScriptRoot\gen-k8s-secrets.ps1" -Namespace "fomoxa"
 
@@ -114,15 +114,15 @@ kubectl apply -f "$repoRoot\deploy\k8s\backend.yaml"
 kubectl apply -f "$repoRoot\deploy\k8s\tls-proxy.yaml"
 kubectl apply -f "$repoRoot\deploy\k8s\fleet.yaml"
 
-Write-Host "`nCho cac dich vu khoi dong..." -ForegroundColor Cyan
+Write-Host "`nWaiting for services to start..." -ForegroundColor Cyan
 kubectl rollout status deployment/postgres -n fomoxa --timeout=90s
 kubectl rollout status deployment/nakama -n fomoxa --timeout=120s
 kubectl rollout status deployment/directory -n fomoxa --timeout=60s
 kubectl rollout status deployment/gateway -n fomoxa --timeout=60s
 kubectl rollout status deployment/backend -n fomoxa --timeout=60s
 
-Write-Host "`nKiem tra GameServers:" -ForegroundColor Cyan
+Write-Host "`nChecking GameServers:" -ForegroundColor Cyan
 kubectl get gs -n fomoxa
 
-Write-Host "`n=== Cum K8s Fomoxa da san sang! ===" -ForegroundColor Green
+Write-Host "`n=== Fomoxa K8s cluster is ready! ===" -ForegroundColor Green
 

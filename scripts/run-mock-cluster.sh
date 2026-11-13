@@ -8,13 +8,13 @@ REPO_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 cd "$REPO_ROOT"
 
 if ! command -v dotnet >/dev/null 2>&1; then
-    echo "Loi: can .NET 8 SDK (https://dotnet.microsoft.com/download)." >&2
+    echo "Error: .NET 8 SDK is required (https://dotnet.microsoft.com/download)." >&2
     exit 1
 fi
 
-echo "=== Build server pod va MockCluster ==="
+echo "=== Building server pod and MockCluster ==="
 dotnet publish MyGame/Server~/MyGame.Server.csproj -c Release -o .mock/server -v q -nologo
 dotnet publish tools/MockCluster/MockCluster.csproj -c Release -o .mock/cluster -v q -nologo
 
-echo "=== Chay cum gia (Ctrl+C de tat) ==="
+echo "=== Running mock cluster (Ctrl+C to stop) ==="
 exec dotnet .mock/cluster/MockCluster.dll --server=.mock/server/MyGame.Server.dll "$@"

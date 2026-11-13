@@ -13,7 +13,7 @@ try {
     $env:Fomoxa__Nakama__Url = $nakama
 }
 catch {
-    Write-Warning "Nakama chưa chạy, backend bỏ qua matchmaking (bật: docker compose -f deploy/compose.yaml up -d)"
+    Write-Warning "Nakama is not running, backend will skip matchmaking (enable: docker compose -f deploy/compose.yaml up -d)"
 }
 
 Write-Host "backend: directory 127.0.0.1:9500, key $env:Fomoxa__Directory__Key__File"

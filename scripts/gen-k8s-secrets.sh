@@ -6,11 +6,11 @@ REPO_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 SECRETS_DIR="$REPO_ROOT/deploy/secrets"
 
 if [[ ! -f "$SECRETS_DIR/directory/root" ]]; then
-    echo "[gen-k8s-secrets] Chua co keys, goi gen-keys.sh..."
+    echo "[gen-k8s-secrets] No keys found, calling gen-keys.sh..."
     bash "$REPO_ROOT/scripts/gen-keys.sh"
 fi
 
-echo "[gen-k8s-secrets] Tao Kubernetes Secrets trong namespace '$NAMESPACE'..."
+echo "[gen-k8s-secrets] Creating Kubernetes Secrets in namespace '$NAMESPACE'..."
 
 kubectl create secret generic fomoxa-directory-keys \
     --namespace="$NAMESPACE" \
@@ -59,5 +59,5 @@ kubectl create secret tls fomoxa-tls \
     --key="$SECRETS_DIR/tls/tls.key" \
     --dry-run=client -o yaml | kubectl apply -f -
 
-echo "[gen-k8s-secrets] Hoan tat tao K8s secrets!"
+echo "[gen-k8s-secrets] Finished creating K8s secrets!"
 

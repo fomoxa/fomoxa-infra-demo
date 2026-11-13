@@ -17,7 +17,7 @@ if [[ "${NAKAMA_USE_DEFAULT_KEYS:-}" != "1" ]] && command -v kubectl >/dev/null 
         if [[ -n "$server_key" && -n "$http_key" ]]; then
             DEFAULT_SERVER_KEY="$server_key"
             DEFAULT_HTTP_KEY="$http_key"
-            echo "Dung key Nakama rieng cua cum K8s (secret fomoxa-nakama)."
+            echo "Using the K8s cluster's dedicated Nakama key (secret fomoxa-nakama)."
         fi
     fi
 fi

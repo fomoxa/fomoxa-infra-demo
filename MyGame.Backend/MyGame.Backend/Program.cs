@@ -36,7 +36,7 @@ namespace MyGame.Backend
             }
             catch (Exception problem)
             {
-                Console.Error.WriteLine($"backend: khoi dong that bai ({problem.GetType().Name}): {problem.Message}");
+                Console.Error.WriteLine($"backend: startup failed ({problem.GetType().Name}): {problem.Message}");
                 return 1;
             }
 

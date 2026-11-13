@@ -12,10 +12,10 @@ USER_B="${6:-fomoxa-test-bo}"
 if [[ "$BASE" == *"127.0.0.1:7350"* ]] && command -v docker >/dev/null 2>&1; then
     owner="$(docker ps --format '{{.Names}} {{.Ports}}' | grep -E '[:]7350->' | awk '{print $1}' || true)"
     if [[ -n "$owner" ]]; then
-        echo "Luu y: cong 7350 dang tro toi container '$owner'."
+        echo "Note: port 7350 points to container '$owner'."
         if [[ "$owner" != k3d-* ]]; then
-            echo "  Do khong phai cum k3d => script se test Nakama cua compose, khong phai cum K8s." >&2
-            [[ "${ALLOW_COMPOSE:-}" == "1" ]] || { echo "  Dat ALLOW_COMPOSE=1 neu chu y muon test compose." >&2; exit 1; }
+            echo "  This is not a k3d cluster => the script will test Nakama from compose, not the K8s cluster." >&2
+            [[ "${ALLOW_COMPOSE:-}" == "1" ]] || { echo "  Set ALLOW_COMPOSE=1 if you intentionally want to test compose." >&2; exit 1; }
         fi
     fi
 fi
@@ -37,7 +37,7 @@ auth_device() {
     local token
     token=$(echo "$resp" | grep -o '"token":"[^"]*' | cut -d'"' -f4)
     if [[ -z "$token" ]]; then
-        echo "Loi authenticate cho $device_id: $resp" >&2
+        echo "Authentication error for $device_id: $resp" >&2
         return 1
     fi
     
@@ -78,9 +78,9 @@ rpc_key() {
         -d "$data"
 }
 
-echo "=== Kiem tra Nakama Matchmaking (bash) ==="
+echo "=== Nakama Matchmaking check (bash) ==="
 
-echo "1) Dang nhap device A va B..."
+echo "1) Logging in devices A and B..."
 read -r TOKEN_A UID_A < <(auth_device "$USER_A")
 read -r TOKEN_B UID_B < <(auth_device "$USER_B")
 echo "   ana = $UID_A"
@@ -95,7 +95,7 @@ echo "3) ana find_match..."
 RESP_A=$(rpc_user "find_match" "$TOKEN_A" "$ROOM_JSON")
 echo "   -> $RESP_A"
 if ! echo "$RESP_A" | grep -q '"status":"waiting"'; then
-    echo "Loi: ana phai o trang thai waiting" >&2
+    echo "Error: ana must be in waiting state" >&2
     exit 1
 fi
 
@@ -103,7 +103,7 @@ echo "4) bo find_match..."
 RESP_B=$(rpc_user "find_match" "$TOKEN_B" "$ROOM_JSON")
 echo "   -> $RESP_B"
 if ! echo "$RESP_B" | grep -q '"status":"matched"'; then
-    echo "Loi: bo phai duoc matched" >&2
+    echo "Error: bo must be matched" >&2
     exit 1
 fi
 
@@ -113,13 +113,13 @@ echo "5) ana poll_match..."
 POLL_A=$(rpc_user "poll_match" "$TOKEN_A" "$ROOM_JSON")
 echo "   -> $POLL_A"
 if ! echo "$POLL_A" | grep -q '"status":"matched"'; then
-    echo "Loi: ana phai thay ket qua matched" >&2
+    echo "Error: ana must see the matched result" >&2
     exit 1
 fi
 
 TICKET_A=$(echo "$POLL_A" | grep -o '"ticket":"[^"]*' | cut -d'"' -f4)
 if [[ "$TICKET_A" != "$TICKET_B" ]]; then
-    echo "Loi: hai client phai nhan cung ticket ($TICKET_A != $TICKET_B)" >&2
+    echo "Error: both clients must receive the same ticket ($TICKET_A != $TICKET_B)" >&2
     exit 1
 fi
 
@@ -127,18 +127,18 @@ echo "6) Backend verify_ticket..."
 VERIFY=$(rpc_key "verify_ticket" "{\"ticket\":\"$TICKET_A\",\"room\":\"$ROOM\",\"user_id\":\"$UID_A\"}")
 echo "   -> $VERIFY"
 if ! echo "$VERIFY" | grep -q '"ok":true'; then
-    echo "Loi: verify_ticket phai thanh cong" >&2
+    echo "Error: verify_ticket must succeed" >&2
     exit 1
 fi
 
-echo "7) Verify voi user khac (phai bi tu choi)..."
+echo "7) Verify with a different user (must be rejected)..."
 read -r _ STRANGER_UID < <(auth_device "fomoxa-test-stranger")
 BAD=$(rpc_key "verify_ticket" "{\"ticket\":\"$TICKET_A\",\"room\":\"$ROOM\",\"user_id\":\"$STRANGER_UID\"}")
 echo "   -> $BAD"
 if echo "$BAD" | grep -q '"ok":true'; then
-    echo "Loi: stranger phai bi tu choi" >&2
+    echo "Error: stranger must be rejected" >&2
     exit 1
 fi
 
-echo -e "\nOK: 2 client ghep dung room, ticket dung, user ngoai bi chan!"
+echo -e "\nOK: 2 clients matched into the correct room, tickets are valid, outside users are blocked!"
 

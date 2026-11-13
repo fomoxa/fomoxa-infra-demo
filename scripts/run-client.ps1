@@ -10,7 +10,7 @@ $repoRoot = Split-Path -Parent $PSScriptRoot
 $player = Join-Path $repoRoot "MyGame/Builds/MyGame.exe"
 
 if (-not (Test-Path $player)) {
-    throw "chua build player: $player (Unity: Tools/Demo/Build Windows Player)"
+    throw "player not built: $player (Unity: Tools/Demo/Build Windows Player)"
 }
 
 $logs = Join-Path $repoRoot "logs"

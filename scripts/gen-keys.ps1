@@ -57,6 +57,6 @@ foreach ($relative in $keys.Keys) {
     $created++
 }
 
-"secrets: $created tao moi, $skipped giu nguyen"
-"root key: 64 hex (bat buoc), role key: 48 hex (>= 16 byte)"
-"thu muc: $secretRoot"
+"secrets: $created created, $skipped kept"
+"root key: 64 hex (required), role key: 48 hex (>= 16 bytes)"
+"directory: $secretRoot"

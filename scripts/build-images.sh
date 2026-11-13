@@ -9,7 +9,7 @@ echo "=== Building fomoxa images (tag=$TAG) ==="
 
 # Kiem tra thu muc gateway (do nam trong .gitignore), tu dong clone neu chua co
 if [[ ! -d "$REPO_ROOT/gateway" ]]; then
-    echo "Thu muc 'gateway/' chua ton tai. Dang clone tu upstream fomoxa/gateway (tag 0.2.0)..."
+    echo "Directory 'gateway/' does not exist. Cloning from upstream fomoxa/gateway (tag 0.2.0)..."
     git clone --depth 1 -b 0.2.0 https://github.com/fomoxa/gateway.git "$REPO_ROOT/gateway"
 fi
 

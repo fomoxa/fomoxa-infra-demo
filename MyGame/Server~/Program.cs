@@ -170,7 +170,7 @@ namespace MyGame.Server
 
                 if (registration.ChangedPodId && runtime.ServerManager.State != ServerState.Stopped)
                 {
-                    Console.WriteLine("[Pod] ticket key doi, dung listener de mo lai");
+                    Console.WriteLine("[Pod] ticket key changed, rebuilding listener");
                     runtime.ServerManager.StopConnection();
                 }
 
@@ -313,7 +313,7 @@ namespace MyGame.Server
 
                 if (drainRequested && runtime.ServerManager.PeerCount == 0)
                 {
-                    Console.WriteLine("[Pod] drain: het nguoi choi, thoat");
+                    Console.WriteLine("[Pod] drain: no players left, exiting");
                     stopping.Set();
                 }
 
@@ -337,12 +337,12 @@ namespace MyGame.Server
 
                 drainRequested = true;
                 draining = true;
-                Console.WriteLine($"[Pod] {context.Signal}: xin drain, cho het nguoi choi (gui tin hieu lan nua de thoat ngay)");
+                Console.WriteLine($"[Pod] {context.Signal}: requesting drain, waiting for players to leave (send the signal again to exit immediately)");
                 pod.RequestDrain().ContinueWith(task =>
                 {
                     if (task.IsFaulted || task.IsCanceled)
                     {
-                        Console.Error.WriteLine($"[Pod] RequestDrain loi: {task.Exception?.GetBaseException().Message}; thoat ngay");
+                        Console.Error.WriteLine($"[Pod] RequestDrain error: {task.Exception?.GetBaseException().Message}; exiting immediately");
                         stopping.Set();
                     }
                 });

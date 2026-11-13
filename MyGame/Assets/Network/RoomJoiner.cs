@@ -434,7 +434,7 @@ namespace MyGame.Network
                 rooms.Clear();
                 rooms.AddRange(list.Rooms);
                 RoomsVersion++;
-                Debug.Log($"[Lobby] {rooms.Count} phòng");
+                Debug.Log($"[Lobby] {rooms.Count} rooms");
             }
         }
 
@@ -574,7 +574,7 @@ namespace MyGame.Network
             }
             catch (Exception error)
             {
-                Debug.LogWarning($"[Lobby] poll loi: {error.Message}");
+                Debug.LogWarning($"[Lobby] poll error: {error.Message}");
                 if (connection == null || !connection.IsOpen)
                 {
                     loggedInAs = null;
@@ -659,7 +659,7 @@ namespace MyGame.Network
                 }
                 catch (RpcException failed) when (failed.Status.Code == StatusCode.Unavailable && attempt < 3)
                 {
-                    Debug.Log($"[Join] {failed.Status.Message} (thử lại lần {attempt})");
+                    Debug.Log($"[Join] {failed.Status.Message} (retry {attempt})");
                 }
             }
         }

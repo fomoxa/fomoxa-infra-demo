@@ -40,3 +40,9 @@ powershell -ExecutionPolicy Bypass -File scripts\k8s-up.ps1
 powershell -ExecutionPolicy Bypass -File scripts\test-p5.ps1
 ```
 
+## Giấy phép
+
+Dự án này được phát hành theo [Apache License 2.0](LICENSE). Copyright 2026 Fomoxa.
+
+Bạn được phép sử dụng, sửa đổi và phân phối lại mã nguồn, kèm theo các điều kiện ghi công và giữ nguyên thông báo bản quyền. Phần mềm được cung cấp "nguyên trạng" (AS IS), không kèm bất kỳ bảo đảm nào. Xem toàn văn tại [LICENSE](LICENSE) hoặc <https://www.apache.org/licenses/LICENSE-2.0>.
+

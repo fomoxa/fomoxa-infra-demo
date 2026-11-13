@@ -9,11 +9,11 @@ $genKeysScript = Join-Path $PSScriptRoot "gen-keys.ps1"
 
 # 1. Đảm bảo keys đã tồn tại
 if (-not (Test-Path (Join-Path $secretRoot "directory/root"))) {
-    Write-Host "[gen-k8s-secrets] Chưa có keys, gọi gen-keys.ps1..." -ForegroundColor Yellow
+    Write-Host "[gen-k8s-secrets] No keys found, calling gen-keys.ps1..." -ForegroundColor Yellow
     & $genKeysScript
 }
 
-Write-Host "[gen-k8s-secrets] Đang tạo Kubernetes Secrets trong namespace '$Namespace'..." -ForegroundColor Cyan
+Write-Host "[gen-k8s-secrets] Creating Kubernetes Secrets in namespace '$Namespace'..." -ForegroundColor Cyan
 
 # 2. Tạo secret fomoxa-directory-keys
 kubectl create secret generic fomoxa-directory-keys `
@@ -67,5 +67,5 @@ kubectl create secret tls fomoxa-tls `
     --key=(Join-Path $tls "tls.key") `
     --dry-run=client -o yaml | kubectl apply -f -
 
-Write-Host "[gen-k8s-secrets] Hoàn tất tạo K8s secrets!" -ForegroundColor Green
+Write-Host "[gen-k8s-secrets] Finished creating K8s secrets!" -ForegroundColor Green
 

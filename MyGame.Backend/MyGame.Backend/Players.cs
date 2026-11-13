@@ -94,7 +94,7 @@ namespace MyGame.Backend
                 }
 
                 sessions.SetName(outcome.Principal, outcome.DisplayName);
-                Console.WriteLine($"[Account] {outcome.DisplayName} dang nhap ({(request.Mode.Length == 0 ? "login" : request.Mode)})");
+                Console.WriteLine($"[Account] {outcome.DisplayName} login ({(request.Mode.Length == 0 ? "login" : request.Mode)})");
                 return (new Identity(outcome.Principal, new[] { Roles.Player }),
                     new PlayerWelcome { Player = outcome.DisplayName, RecoveryCode = outcome.RecoveryCode });
             }
@@ -149,7 +149,7 @@ namespace MyGame.Backend
             Task<NakamaSession> auth = Task.Run(() => nakama.AuthenticateDevice(request.DeviceId));
             if (!auth.Wait(TimeSpan.FromSeconds(8)))
             {
-                Console.WriteLine("[Nakama] auth timeout sau 8 giây");
+                Console.WriteLine("[Nakama] auth timeout after 8 seconds");
                 throw new RpcException(new Status(StatusCode.Unavailable, "Nakama không trả lời"));
             }
 
@@ -165,7 +165,7 @@ namespace MyGame.Backend
             }
             catch (Exception problem)
             {
-                Console.WriteLine($"[Nakama] auth lỗi: {problem.GetType().Name} {problem.Message}");
+                Console.WriteLine($"[Nakama] auth error: {problem.GetType().Name} {problem.Message}");
                 throw new RpcException(new Status(StatusCode.Unavailable, "Nakama: " + problem.Message));
             }
 
@@ -356,7 +356,7 @@ namespace MyGame.Backend
             }
             catch (NakamaException problem)
             {
-                Console.WriteLine($"[Lobby] ghép trận lỗi: {problem.Message}");
+                Console.WriteLine($"[Lobby] matchmaking error: {problem.Message}");
                 throw new RpcException(new Status(StatusCode.Unavailable, problem.Message));
             }
 
@@ -380,7 +380,7 @@ namespace MyGame.Backend
 
             if (!granted.Ok)
             {
-                Console.WriteLine($"[Lobby] ticket bị từ chối: {granted.Message}");
+                Console.WriteLine($"[Lobby] ticket rejected: {granted.Message}");
                 throw new RpcException(Status.FailedPrecondition(granted.Message));
             }
 

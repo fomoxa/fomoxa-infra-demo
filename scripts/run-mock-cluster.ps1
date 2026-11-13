@@ -10,14 +10,14 @@ $repoRoot = Split-Path -Parent $PSScriptRoot
 Set-Location $repoRoot
 
 if (-not (Get-Command dotnet -ErrorAction SilentlyContinue)) {
-    throw "Can .NET 8 SDK (https://dotnet.microsoft.com/download)."
+    throw ".NET 8 SDK is required (https://dotnet.microsoft.com/download)."
 }
 
-Write-Host "=== Build server pod va MockCluster ===" -ForegroundColor Cyan
+Write-Host "=== Building server pod and MockCluster ===" -ForegroundColor Cyan
 dotnet publish "MyGame/Server~/MyGame.Server.csproj" -c Release -o .mock/server -v q -nologo
-if ($LASTEXITCODE -ne 0) { throw "build MyGame.Server that bai" }
+if ($LASTEXITCODE -ne 0) { throw "build MyGame.Server failed" }
 dotnet publish "tools/MockCluster/MockCluster.csproj" -c Release -o .mock/cluster -v q -nologo
-if ($LASTEXITCODE -ne 0) { throw "build MockCluster that bai" }
+if ($LASTEXITCODE -ne 0) { throw "build MockCluster failed" }
 
-Write-Host "=== Chay cum gia (Ctrl+C de tat) ===" -ForegroundColor Green
+Write-Host "=== Running mock cluster (Ctrl+C to stop) ===" -ForegroundColor Green
 dotnet .mock/cluster/MockCluster.dll "--server=.mock/server/MyGame.Server.dll" @ExtraArgs

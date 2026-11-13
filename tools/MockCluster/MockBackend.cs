@@ -31,7 +31,7 @@ namespace MockCluster
             if (AccountAuth.UsesAccounts(request))
             {
                 AuthOutcome outcome = accounts.Authenticate(request);
-                Console.WriteLine($"[Backend] {outcome.DisplayName} dang nhap ({(request.Mode.Length == 0 ? "login" : request.Mode)})");
+                Console.WriteLine($"[Backend] {outcome.DisplayName} login ({(request.Mode.Length == 0 ? "login" : request.Mode)})");
                 return (new Identity(outcome.Principal, new[] { Roles.Player }),
                     new PlayerWelcome { Player = outcome.DisplayName, RecoveryCode = outcome.RecoveryCode });
             }
@@ -42,7 +42,7 @@ namespace MockCluster
                 throw new RpcException(Status.InvalidArgument("ten chi gom chu, so, '_' hoac '-', dai 3-24 ky tu"));
             }
 
-            Console.WriteLine($"[Backend] {name} dang nhap (khach)");
+            Console.WriteLine($"[Backend] {name} login (guest)");
             return (new Identity(name, new[] { Roles.Player }), new PlayerWelcome { Player = name });
         }
     }

@@ -20,7 +20,7 @@ $keyFile = Join-Path $repoRoot "deploy/secrets/directory/pod"
 
 if ($Server -eq "unity") {
     if (-not (Test-Path $player)) {
-        throw "chua build player: $player (Unity: Tools/Demo/Build Windows Player)"
+        throw "player not built: $player (Unity: Tools/Demo/Build Windows Player)"
     }
 
     $env:POD_KEY_FILE = $keyFile
@@ -30,10 +30,10 @@ if ($Server -eq "unity") {
 }
 
 if (-not (Test-Path $console)) {
-    Write-Host "chua build console server, dang build..."
+    Write-Host "console server not built, building..."
     & dotnet build (Join-Path $repoRoot "MyGame/Server~/MyGame.Server.csproj") | Select-Object -Last 3
     if (-not (Test-Path $console)) {
-        throw "build console server that bai: $console"
+        throw "build console server failed: $console"
     }
 }
 

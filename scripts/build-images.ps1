@@ -26,5 +26,5 @@ Write-Host "4/4 building fomoxa-backend:$Tag"
 docker build -f MyGame.Backend/Dockerfile -t "fomoxa-backend:$Tag" @cacheFlag MyGame.Backend
 if ($LASTEXITCODE -ne 0) { throw "build fomoxa-backend failed" }
 
-Write-Host "OK: ca 4 images da duoc build thanh cong voi tag '$Tag'"
+Write-Host "OK: all 4 images built successfully with tag '$Tag'"
 

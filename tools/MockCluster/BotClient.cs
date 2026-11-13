@@ -42,7 +42,7 @@ namespace MockCluster
             using RpcConnection rpc = await RpcConnection.Connect($"127.0.0.1:{backendPort}", NetSchema.Build(), LobbyClient.Declare(PlayersClient.Registry()).Build(), options);
             var lobby = new LobbyClient(rpc);
             RoomTicket ticket = await lobby.JoinRoomAsync(new JoinRoomRequest { RoomKey = "arena:1", Version = "1.0" }, CallOptions.Within(TimeSpan.FromSeconds(8)));
-            Check("Co ticket vao arena:1", ticket.Connection.Length > 0, $"-> {ticket.Address}:{ticket.Port}");
+            Check("Got a ticket for arena:1", ticket.Connection.Length > 0, $"-> {ticket.Address}:{ticket.Port}");
 
             var registry = new FomoxaRegistry();
             FomoxaAdapters.RegisterAll(registry);
@@ -63,7 +63,7 @@ namespace MockCluster
             int connectedAt = -1;
             runtime.ClientManager.OnClientConnectionState += args =>
             {
-                Console.WriteLine($"[bot] ket noi: {args.State} {args.Reason}");
+                Console.WriteLine($"[bot] connection: {args.State} {args.Reason}");
                 if (args.State == ConnectionState.Started)
                 {
                     connectedAt = Environment.TickCount;
@@ -84,18 +84,18 @@ namespace MockCluster
                 await Task.Delay(1);
             }
 
-            Check("Da vao pod (client Started)", connectedAt >= 0);
+            Check("Joined the pod (client Started)", connectedAt >= 0);
             runtime.ClientManager.StopConnection();
 
             ScoreboardState board = await lobby.ScoreboardAsync(new ScoreboardRequest { Room = "arena:1" }, CallOptions.Within(TimeSpan.FromSeconds(8)));
             ScoreEntry mine = board.Entries.FirstOrDefault(e => e.Name == name);
-            Check("Bang diem co ten bot", mine != null, $"({string.Join(", ", board.Entries.Select(e => $"{e.Name}:{e.Steps}/{e.Best}"))})");
-            Check("Bot leo duoc it nhat 3 bac", mine != null && mine.Steps >= 3, $"(steps={mine?.Steps})");
+            Check("Scoreboard contains the bot's name", mine != null, $"({string.Join(", ", board.Entries.Select(e => $"{e.Name}:{e.Steps}/{e.Best}"))})");
+            Check("Bot climbed at least 3 steps", mine != null && mine.Steps >= 3, $"(steps={mine?.Steps})");
             PlayerProfile profile = await lobby.GetProfileAsync(new ProfileRequest(), CallOptions.Within(TimeSpan.FromSeconds(8)));
-            Check("Ky luc ca nhan duoc luu", mine != null && profile.BestSteps >= mine.Steps && profile.BestSteps >= 3, $"(best={profile.BestSteps}, matches={profile.Matches})");
+            Check("Personal best is stored", mine != null && profile.BestSteps >= mine.Steps && profile.BestSteps >= 3, $"(best={profile.BestSteps}, matches={profile.Matches})");
 
             Player.BotGather = null;
-            Console.WriteLine(ok ? "[bot] TAT CA DAT" : "[bot] CO LOI");
+            Console.WriteLine(ok ? "[bot] ALL PASSED" : "[bot] FAILURES");
             return ok;
         }
 

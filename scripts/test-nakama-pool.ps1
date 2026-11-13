@@ -20,7 +20,7 @@ function Get-NakamaKey {
 if (-not $HttpKey) { $HttpKey = Get-NakamaKey "http-key" "defaulthttpkey" }
 if (-not $ServerKey) { $ServerKey = Get-NakamaKey "server-key" "defaultkey" }
 
-Write-Host "=== Kiem tra P5.5: Matchmaking tu dong cap room tu pool (>= 4 client) ===" -ForegroundColor Cyan
+Write-Host "=== P5.5 check: matchmaking auto-assigns rooms from a pool (>= 4 clients) ===" -ForegroundColor Cyan
 
 function Auth-Device {
     param([string]$Id)
@@ -74,63 +74,63 @@ function Rpc-Key {
 }
 
 # 1. Reset auto pool
-Write-Host "`n1/4 Reset auto pool..." -ForegroundColor Yellow
+Write-Host "`n1/4 Resetting auto pool..." -ForegroundColor Yellow
 $null = Rpc-Key "reset_match" (@{ room = "auto" } | ConvertTo-Json -Compress)
 
 # 2. Dang nhap 4 client
-Write-Host "`n2/4 Dang nhap 4 clients (ana, bo, chi, dung)..." -ForegroundColor Yellow
+Write-Host "`n2/4 Logging in 4 clients (ana, bo, chi, dung)..." -ForegroundColor Yellow
 $ana  = Auth-Device "fomoxa-p55-ana"
 $bo   = Auth-Device "fomoxa-p55-bo"
 $chi  = Auth-Device "fomoxa-p55-chi"
 $dung = Auth-Device "fomoxa-p55-dung"
 
 # 3. Cap 1 (ana + bo) yeu cau find_match voi room "auto"
-Write-Host "`n3/4 Cap 1 (ana + bo) vao auto pool..." -ForegroundColor Yellow
+Write-Host "`n3/4 Pair 1 (ana + bo) joins the auto pool..." -ForegroundColor Yellow
 $autoBody = @{ room = "auto" } | ConvertTo-Json -Compress
 
 $resAna = Rpc-User "find_match" $ana.Token $autoBody
-if ($resAna.status -ne "waiting") { throw "ana phai o trang thai waiting" }
-Write-Host "   ana dang cho..." -ForegroundColor Gray
+if ($resAna.status -ne "waiting") { throw "ana must be in waiting state" }
+Write-Host "   ana is waiting..." -ForegroundColor Gray
 
 $resBo = Rpc-User "find_match" $bo.Token $autoBody
-if ($resBo.status -ne "matched") { throw "bo phai duoc matched" }
+if ($resBo.status -ne "matched") { throw "bo must be matched" }
 $room1 = $resBo.room
 $ticket1 = $resBo.ticket
-Write-Host "   -> Cap 1 matched vao room: $room1 (ticket: $ticket1)" -ForegroundColor Green
+Write-Host "   -> Pair 1 matched into room: $room1 (ticket: $ticket1)" -ForegroundColor Green
 
 $pollAna = Rpc-User "poll_match" $ana.Token $autoBody
-if ($pollAna.ticket -ne $ticket1) { throw "ana phai nhan cung ticket voi bo" }
-Write-Host "   -> ana poll ket qua: OK (room=$($pollAna.room))" -ForegroundColor Green
+if ($pollAna.ticket -ne $ticket1) { throw "ana must receive the same ticket as bo" }
+Write-Host "   -> ana poll result: OK (room=$($pollAna.room))" -ForegroundColor Green
 
-# 4. Cap 2 (chi + dung) yeu cau find_match voi room "auto"
-Write-Host "`n4/4 Cap 2 (chi + dung) vao auto pool..." -ForegroundColor Yellow
+# 4. Pair 2 (chi + dung) requests find_match with room "auto"
+Write-Host "`n4/4 Pair 2 (chi + dung) joins the auto pool..." -ForegroundColor Yellow
 $resChi = Rpc-User "find_match" $chi.Token $autoBody
-if ($resChi.status -ne "waiting") { throw "chi phai o trang thai waiting" }
-Write-Host "   chi dang cho..." -ForegroundColor Gray
+if ($resChi.status -ne "waiting") { throw "chi must be in waiting state" }
+Write-Host "   chi is waiting..." -ForegroundColor Gray
 
 $resDung = Rpc-User "find_match" $dung.Token $autoBody
-if ($resDung.status -ne "matched") { throw "dung phai duoc matched" }
+if ($resDung.status -ne "matched") { throw "dung must be matched" }
 $room2 = $resDung.room
 $ticket2 = $resDung.ticket
-Write-Host "   -> Cap 2 matched vao room: $room2 (ticket: $ticket2)" -ForegroundColor Green
+Write-Host "   -> Pair 2 matched into room: $room2 (ticket: $ticket2)" -ForegroundColor Green
 
 $pollChi = Rpc-User "poll_match" $chi.Token $autoBody
-if ($pollChi.ticket -ne $ticket2) { throw "chi phai nhan cung ticket voi dung" }
-Write-Host "   -> chi poll ket qua: OK (room=$($pollChi.room))" -ForegroundColor Green
+if ($pollChi.ticket -ne $ticket2) { throw "chi must receive the same ticket as dung" }
+Write-Host "   -> chi poll result: OK (room=$($pollChi.room))" -ForegroundColor Green
 
-# Kiem tra ca hai cap nhan 2 room khac nhau tu pool
+# Check that both pairs received different rooms from the pool
 if ($room1 -eq $room2) {
-    Write-Warning "Luu y: Ca 2 cap deu vao $room1 (pool co the can xoay vong). Danh sach phong: $room1, $room2"
+    Write-Warning "Note: both pairs went to $room1 (the pool may need to rotate). Room list: $room1, $room2"
 }
 else {
-    Write-Host "`nChung minh thanh cong: Cap 1 ($room1) va Cap 2 ($room2) duoc cap 2 room khac nhau tu pool!" -ForegroundColor Green
+    Write-Host "`nProof of success: Pair 1 ($room1) and Pair 2 ($room2) received two different rooms from the pool!" -ForegroundColor Green
 }
 
 # Verify ca 2 ticket
 $v1 = Rpc-Key "verify_ticket" (@{ ticket = $ticket1; room = $room1; user_id = $ana.UserId } | ConvertTo-Json -Compress)
 $v2 = Rpc-Key "verify_ticket" (@{ ticket = $ticket2; room = $room2; user_id = $chi.UserId } | ConvertTo-Json -Compress)
-if (-not $v1.ok -or -not $v2.ok) { throw "Verify ticket that bai" }
+if (-not $v1.ok -or -not $v2.ok) { throw "verify_ticket failed" }
 
-Write-Host "Verify ca 2 ticket thanh cong!" -ForegroundColor Green
-Write-Host "`n=== DoD P5.5 HOAN TAT THANH CONG! ===" -ForegroundColor Green
+Write-Host "Both tickets verified successfully!" -ForegroundColor Green
+Write-Host "`n=== P5.5 DoD COMPLETED SUCCESSFULLY! ===" -ForegroundColor Green
 

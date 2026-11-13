@@ -20,27 +20,27 @@ $serverExe = Join-Path $repoRoot "MyGame/Server~/bin/Debug/net8.0/MyGame.Server.
 
 foreach ($exe in @($directoryExe, $gatewayExe)) {
     if (-not (Test-Path $exe)) {
-        throw "thieu $exe"
+        throw "missing $exe"
     }
 }
 
 if ($Server -eq "unity" -and -not (Test-Path $playerExe)) {
-    throw "thieu $playerExe"
+    throw "missing $playerExe"
 }
 
 if ($Server -eq "console" -and -not (Test-Path $serverExe)) {
-    Write-Host "chua build console server, dang build..."
+    Write-Host "console server not built, building..."
     & dotnet build (Join-Path $repoRoot "MyGame/Server~/MyGame.Server.csproj") | Select-Object -Last 3
     if (-not (Test-Path $serverExe)) {
-        throw "build console server that bai: $serverExe"
+        throw "build console server failed: $serverExe"
     }
 }
 
 if (-not (Test-Path $backendExe)) {
-    Write-Host "chua build backend, dang build..."
+    Write-Host "backend not built, building..."
     & dotnet build (Join-Path $repoRoot "MyGame.Backend/MyGame.Backend.sln") | Select-Object -Last 3
     if (-not (Test-Path $backendExe)) {
-        throw "build backend that bai: $backendExe"
+        throw "build backend failed: $backendExe"
     }
 }
 
@@ -78,7 +78,7 @@ try {
     Write-Host "    nakama: $nakama"
 }
 catch {
-    Write-Warning "Nakama chưa chạy, backend bỏ qua matchmaking (bật: docker compose -f deploy/compose.yaml up -d)"
+    Write-Warning "Nakama is not running, backend will skip matchmaking (enable: docker compose -f deploy/compose.yaml up -d)"
 }
 Start-Process -FilePath $backendExe `
     -WorkingDirectory (Split-Path -Parent $backendExe) `
@@ -117,7 +117,7 @@ for ($i = 0; $i -lt $Pods; $i++) {
 }
 
 Write-Host ""
-Write-Host "log tai $logs"
+Write-Host "logs at $logs"
 Get-Content (Join-Path $logs "backend.log") -ErrorAction SilentlyContinue | Select-Object -Last 3
 Get-Content (Join-Path $logs "gateway.log") -ErrorAction SilentlyContinue | Select-Object -Last 3
 Get-Content (Join-Path $logs "pod-1.log") -ErrorAction SilentlyContinue | Select-String -Pattern "\[Pod\]" | Select-Object -Last 5 | ForEach-Object { $_.Line.Trim() }

@@ -11,7 +11,7 @@ HOST="${TLS_HOST:-fomoxa.local}"
 mkdir -p "$DIR"
 
 if [[ -f "$DIR/tls.crt" && "${1:-}" != "-f" ]]; then
-    echo "Da co chung chi o $DIR (them -f de tao lai)."
+    echo "Certificate already exists at $DIR (add -f to regenerate)."
 else
     openssl req -x509 -newkey rsa:2048 -nodes -days 730 \
         -keyout "$DIR/tls.key" -out "$DIR/tls.crt" \
@@ -19,9 +19,9 @@ else
         -addext "subjectAltName=DNS:$HOST,DNS:localhost,IP:127.0.0.1" \
         -addext "extendedKeyUsage=serverAuth" 2>/dev/null
     chmod 600 "$DIR/tls.key"
-    echo "Da tao $DIR/tls.crt va tls.key (CN=$HOST)"
+    echo "Created $DIR/tls.crt and tls.key (CN=$HOST)"
 fi
 
 PIN="$(openssl x509 -in "$DIR/tls.crt" -outform DER | openssl dgst -sha256 -hex | awk '{print toupper($NF)}')"
-echo "Van tay SHA-256 (pin): $PIN"
-echo "Client Unity: -backend:127.0.0.1:9643 -tlspin:$PIN"
+echo "SHA-256 fingerprint (pin): $PIN"
+echo "Unity client: -backend:127.0.0.1:9643 -tlspin:$PIN"

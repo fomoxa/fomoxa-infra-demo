@@ -24,7 +24,7 @@ public static class LobbyUiSetup
         var launcher = Object.FindFirstObjectByType<Launcher>();
         if (joiner == null && launcher == null)
         {
-            Debug.LogError("[Lobby] scene khong co RoomJoiner (scene Lobby) hay Launcher (scene Game). Chay Tools/Demo/Rebuild Scene.");
+            Debug.LogError("[Lobby] scene has no RoomJoiner (Lobby scene) or Launcher (Game scene). Run Tools/Demo/Rebuild Scene.");
             return;
         }
 
@@ -39,7 +39,7 @@ public static class LobbyUiSetup
         }
 
         EditorSceneManager.SaveOpenScenes();
-        Debug.Log("[Lobby] da gan giao dien vao scene dang mo");
+        Debug.Log("[Lobby] UI attached to the open scene");
     }
 
     public static void AddLobby(RoomJoiner joiner)
@@ -69,7 +69,7 @@ public static class LobbyUiSetup
         document.visualTreeAsset = AssetDatabase.LoadAssetAtPath<VisualTreeAsset>(uxmlPath);
         if (document.visualTreeAsset == null)
         {
-            Debug.LogError("[Lobby] khong thay " + uxmlPath);
+            Debug.LogError("[Lobby] not found: " + uxmlPath);
         }
 
         if (go.GetComponent<T>() == null)

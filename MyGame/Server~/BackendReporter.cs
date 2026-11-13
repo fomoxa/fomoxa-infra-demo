@@ -46,7 +46,7 @@ namespace MyGame.Server
                 return null;
             }
 
-            Console.WriteLine($"[Backend] bao so nguoi choi ve {config.BackendAddress}");
+            Console.WriteLine($"[Backend] reporting player counts to {config.BackendAddress}");
             return new BackendReporter(config.BackendAddress, File.ReadAllBytes(config.BackendKeyFile), config.MaxPlayers, rooms, players, scores);
         }
 
@@ -62,7 +62,7 @@ namespace MyGame.Server
                     {
                         connection?.Dispose();
                         connection = await Connect();
-                        Console.WriteLine("[Backend] da ket noi");
+                        Console.WriteLine("[Backend] connected");
                         warned = false;
                     }
 
@@ -94,7 +94,7 @@ namespace MyGame.Server
                     if (!warned)
                     {
                         warned = true;
-                        Console.Error.WriteLine($"[Backend] bao cao loi: {error.Message} (se thu lai)");
+                        Console.Error.WriteLine($"[Backend] report error: {error.Message} (will retry)");
                     }
                 }
 

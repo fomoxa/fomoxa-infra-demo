@@ -38,7 +38,7 @@ namespace MyGame.Backend
             var backend = new Backend(new DirectoryLink(settings.DirectoryAddress, settings.DirectoryKey), nakama);
             if (nakama != null)
             {
-                Console.WriteLine($"[Nakama] cấu hình {settings.NakamaUrl}");
+                Console.WriteLine($"[Nakama] config {settings.NakamaUrl}");
                 _ = Task.Run(async () =>
                 {
                     try
@@ -48,7 +48,7 @@ namespace MyGame.Backend
                     }
                     catch (Exception problem)
                     {
-                        Console.WriteLine($"[Nakama] self test lỗi: {problem.GetType().Name} {problem.Message}");
+                        Console.WriteLine($"[Nakama] self test failed: {problem.GetType().Name} {problem.Message}");
                     }
                 });
             }

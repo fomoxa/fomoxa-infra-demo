@@ -22,7 +22,7 @@ function Find-Package([string]$name) {
 
     $cache = Join-Path $myGame "Library/PackageCache"
     if (-not (Test-Path $cache)) {
-        throw "khong co $cache - mo project Unity mot lan de package duoc resolve"
+        throw "missing $cache - open the Unity project once so packages are resolved"
     }
 
     $found = Get-ChildItem $cache -Directory |
@@ -30,7 +30,7 @@ function Find-Package([string]$name) {
         Sort-Object Name -Descending |
         Select-Object -First 1
     if (-not $found) {
-        throw "khong tim thay package $name trong Packages\ hoac Library\PackageCache"
+        throw "package $name not found in Packages\ or Library\PackageCache"
     }
 
     return $found.FullName
@@ -38,7 +38,7 @@ function Find-Package([string]$name) {
 
 function Copy-Source([string]$from, [string]$to, [string]$filter) {
     if (-not (Test-Path $from)) {
-        throw "thieu thu muc nguon: $from"
+        throw "missing source directory: $from"
     }
 
     $files = Get-ChildItem $from -Recurse -File -Filter $filter

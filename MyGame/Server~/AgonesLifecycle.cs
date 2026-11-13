@@ -67,7 +67,7 @@ namespace MyGame.Server
 
             if (!ready)
             {
-                Console.Error.WriteLine("[Agones] warning: khong the Ready voi Agones sidecar sau 30s. Chuyen sang che do no-op.");
+                Console.Error.WriteLine("[Agones] warning: could not become Ready with the Agones sidecar after 30s. Switching to no-op mode.");
                 return new AgonesLifecycle(null);
             }
 
