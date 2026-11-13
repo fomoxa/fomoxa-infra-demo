@@ -25,6 +25,8 @@ namespace MyGame.Backend.Accounts
         public Metrics? Metrics { get; set; }
         private readonly System.Collections.Concurrent.ConcurrentDictionary<string, (string Code, DateTime Expires)> pendingCodes =
             new System.Collections.Concurrent.ConcurrentDictionary<string, (string, DateTime)>();
+        private readonly object sweepGate = new object();
+        private DateTime nextSweep;
 
         public AccountAuth(AccountService accounts)
         {
@@ -69,6 +71,7 @@ namespace MyGame.Backend.Accounts
                 AuthOutcome outcome = work.GetAwaiter().GetResult();
                 if (outcome.RecoveryCode.Length > 0)
                 {
+                    SweepCodes();
                     pendingCodes[outcome.Principal] = (outcome.RecoveryCode, DateTime.UtcNow + CodeLifetime);
                 }
 
@@ -82,7 +85,34 @@ namespace MyGame.Backend.Accounts
             }
         }
 
-        private static string ModeName(PlayerLogin request) => string.IsNullOrEmpty(request.Mode) ? "login" : request.Mode.ToLowerInvariant();
+        private static string ModeName(PlayerLogin request) => (request.Mode ?? "").ToLowerInvariant() switch
+        {
+            "register" => "register",
+            "recover" => "recover",
+            _ => "login",
+        };
+
+        private void SweepCodes()
+        {
+            DateTime now = DateTime.UtcNow;
+            lock (sweepGate)
+            {
+                if (now < nextSweep)
+                {
+                    return;
+                }
+
+                nextSweep = now + TimeSpan.FromMinutes(1);
+            }
+
+            foreach (var pair in pendingCodes)
+            {
+                if (pair.Value.Expires <= now)
+                {
+                    pendingCodes.TryRemove(pair);
+                }
+            }
+        }
 
         private async Task<AuthOutcome> AuthenticateAsync(PlayerLogin request)
         {

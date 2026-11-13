@@ -312,6 +312,21 @@ namespace MockCluster
             Check("Old recovery code is no longer valid", Rejected(() => Open(friend, "another12345", "recover", recoveryCode)));
             Check("Old password no longer works after recovery", Rejected(() => Open(friend, "password123", "login")));
 
+            string locked = "lk" + suffix;
+            string lockedCode = RegisterAndGetCode(locked, "password123", port);
+            for (int attempt = 0; attempt < 5; attempt++)
+            {
+                Rejected(() => Open(locked, "wrongpassword", "login"));
+            }
+
+            Check("Five wrong passwords lock the login", Rejected(() => Open(locked, "password123", "login")));
+            using (RpcConnection recoveredWhileLocked = Open(locked, "newpassword1", "recover", lockedCode))
+            {
+                Check("Recovery works while the login is locked", true);
+            }
+
+            Check("Recovery lifts the login lock", !Rejected(() => Open(locked, "newpassword1", "login")));
+
             // --- sảnh + phòng + online
             using (RpcConnection connection = Open(me, "password123", "login"))
             {

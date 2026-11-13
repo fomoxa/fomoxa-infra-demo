@@ -24,6 +24,9 @@ namespace MyGame.Backend
             new ConcurrentDictionary<string, List<(string, string, DateTime)>>();
         private readonly object boardGate = new object();
         private readonly Dictionary<string, Board> boards = new Dictionary<string, Board>();
+        private readonly object reportGate = new object();
+        private readonly Dictionary<string, ScoreReport> pendingReports = new Dictionary<string, ScoreReport>();
+        private readonly HashSet<string> roomsInProcess = new HashSet<string>();
 
         private sealed class Board
         {
@@ -199,7 +202,35 @@ namespace MyGame.Backend
         public void ReportScores(ScoreReport report)
         {
             Metrics?.Count("score_reports_total");
-            _ = ProcessReport(report);
+            string room = report.Room ?? "";
+            lock (reportGate)
+            {
+                pendingReports[room] = report;
+                if (!roomsInProcess.Add(room))
+                {
+                    return;
+                }
+            }
+
+            _ = ProcessRoom(room);
+        }
+
+        private async Task ProcessRoom(string room)
+        {
+            while (true)
+            {
+                ScoreReport? report;
+                lock (reportGate)
+                {
+                    if (!pendingReports.Remove(room, out report))
+                    {
+                        roomsInProcess.Remove(room);
+                        return;
+                    }
+                }
+
+                await ProcessReport(report);
+            }
         }
 
         private async Task ProcessReport(ScoreReport report)

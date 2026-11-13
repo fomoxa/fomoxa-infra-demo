@@ -86,6 +86,8 @@ namespace MyGame.Backend.Accounts
         public const int MinPassword = 8;
         public const int MaxPassword = 128;
         private const int Iterations = 120_000;
+        private const int MaxFailures = 5;
+        private static readonly TimeSpan FailureWindow = TimeSpan.FromSeconds(60);
         private const string Accounts = "account";
         private const string Profiles = "profile";
         private const string Socials = "social";
@@ -96,6 +98,7 @@ namespace MyGame.Backend.Accounts
         private readonly IKeyValueStore store;
         private readonly object failureGate = new object();
         private readonly Dictionary<string, (int Count, DateTime Until)> failures = new Dictionary<string, (int, DateTime)>();
+        private DateTime nextSweep;
 
         public AccountService(IKeyValueStore store)
         {
@@ -134,24 +137,30 @@ namespace MyGame.Backend.Accounts
         public async Task<string> LoginAsync(string name, string password)
         {
             string key = Canonical(name);
-            ThrowIfLocked(key);
+            if (!IsValidName(key))
+            {
+                throw new AccountException(AccountError.BadCredentials, "sai tên hoặc mật khẩu");
+            }
+
+            string failureKey = LoginFailures(key);
+            ThrowIfLocked(failureKey);
             KvRecord? row = await store.GetAsync(Accounts, key);
             AccountRecord? account = row == null ? null : JsonSerializer.Deserialize<AccountRecord>(row.Json, Json);
             if (account == null)
             {
                 // Vẫn tốn thời gian băm để không lộ tên nào tồn tại qua thời gian phản hồi.
                 Hash(password ?? "", new byte[16]);
-                RegisterFailure(key);
+                RegisterFailure(failureKey);
                 throw new AccountException(AccountError.BadCredentials, "sai tên hoặc mật khẩu");
             }
 
             if (!Matches(password ?? "", account.Salt, account.Hash))
             {
-                RegisterFailure(key);
+                RegisterFailure(failureKey);
                 throw new AccountException(AccountError.BadCredentials, "sai tên hoặc mật khẩu");
             }
 
-            ClearFailures(key);
+            ClearFailures(failureKey);
             return account.Name;
         }
 
@@ -183,15 +192,26 @@ namespace MyGame.Backend.Accounts
         {
             CheckPassword(newPassword);
             string key = Canonical(name);
-            ThrowIfLocked(key);
+            if (!IsValidName(key))
+            {
+                throw new AccountException(AccountError.BadRecoveryCode, "tên hoặc mã khôi phục không đúng");
+            }
+
+            string failureKey = RecoveryFailures(key);
+            ThrowIfLocked(failureKey);
             for (int attempt = 0; attempt < 4; attempt++)
             {
                 KvRecord? row = await store.GetAsync(Accounts, key);
                 AccountRecord? account = row == null ? null : JsonSerializer.Deserialize<AccountRecord>(row.Json, Json);
                 string normalized = NormalizeCode(recoveryCode);
+                if (account == null)
+                {
+                    Hash(normalized, new byte[16]);
+                }
+
                 if (account == null || !Matches(normalized, account.RecoverySalt, account.RecoveryHash))
                 {
-                    RegisterFailure(key);
+                    RegisterFailure(failureKey);
                     throw new AccountException(AccountError.BadRecoveryCode, "tên hoặc mã khôi phục không đúng");
                 }
 
@@ -200,7 +220,8 @@ namespace MyGame.Backend.Accounts
                 replaced.CreatedUnix = account.CreatedUnix;
                 if (await store.PutAsync(Accounts, key, JsonSerializer.Serialize(replaced, Json), row!.Version))
                 {
-                    ClearFailures(key);
+                    ClearFailures(failureKey);
+                    ClearFailures(LoginFailures(key));
                     return fresh;
                 }
             }
@@ -439,12 +460,15 @@ namespace MyGame.Backend.Accounts
             return builder.ToString();
         }
 
-        // Chống dò mật khẩu: 5 lần sai liên tiếp thì khoá tên đó 60 giây.
+        private static string LoginFailures(string key) => "login:" + key;
+
+        private static string RecoveryFailures(string key) => "recover:" + key;
+
         private void ThrowIfLocked(string key)
         {
             lock (failureGate)
             {
-                if (failures.TryGetValue(key, out var entry) && entry.Count >= 5 && DateTime.UtcNow < entry.Until)
+                if (failures.TryGetValue(key, out var entry) && entry.Count >= MaxFailures && DateTime.UtcNow < entry.Until)
                 {
                     throw new AccountException(AccountError.Locked, "thử sai quá nhiều lần, đợi một phút rồi thử lại");
                 }
@@ -455,9 +479,30 @@ namespace MyGame.Backend.Accounts
         {
             lock (failureGate)
             {
-                failures.TryGetValue(key, out var entry);
-                int count = DateTime.UtcNow >= entry.Until && entry.Count >= 5 ? 1 : entry.Count + 1;
-                failures[key] = (count, DateTime.UtcNow.AddSeconds(60));
+                DateTime now = DateTime.UtcNow;
+                SweepFailures(now);
+                if (!failures.TryGetValue(key, out var entry) || now >= entry.Until)
+                {
+                    failures[key] = (1, now + FailureWindow);
+                    return;
+                }
+
+                int count = entry.Count + 1;
+                failures[key] = (count, count == MaxFailures ? now + FailureWindow : entry.Until);
+            }
+        }
+
+        private void SweepFailures(DateTime now)
+        {
+            if (now < nextSweep)
+            {
+                return;
+            }
+
+            nextSweep = now + FailureWindow;
+            foreach (string expired in failures.Where(pair => now >= pair.Value.Until).Select(pair => pair.Key).ToList())
+            {
+                failures.Remove(expired);
             }
         }
 
