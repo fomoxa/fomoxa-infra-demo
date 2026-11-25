@@ -27,6 +27,8 @@ namespace Fomoxa.Networking.Sessions
         private Func<bool> accepted;
         private uint failedMessageId;
         private Exception failure;
+        private bool failureReported;
+        private Func<ulong, uint, Exception, bool> keepsPeerAfter;
 
         public SessionInbox(SessionProtocol protocol, MessageDispatcher dispatcher, Action<ulong, int> entryDropped)
         {
@@ -51,6 +53,11 @@ namespace Fomoxa.Networking.Sessions
             accepted = onAccepted ?? throw new ArgumentNullException(nameof(onAccepted));
             acceptanceId = messageId;
             accepts = true;
+        }
+
+        internal void KeepPeerWhen(Func<ulong, uint, Exception, bool> decide)
+        {
+            keepsPeerAfter = decide ?? throw new ArgumentNullException(nameof(decide));
         }
 
         public void AcceptTransfer()
@@ -142,11 +149,15 @@ namespace Fomoxa.Networking.Sessions
             return true;
         }
 
-        public bool TakeFailure(out uint messageId, out Exception exception)
+        public bool TakeFailure(out uint messageId, out Exception exception) => TakeFailure(out messageId, out exception, out _);
+
+        internal bool TakeFailure(out uint messageId, out Exception exception, out bool reported)
         {
             messageId = failedMessageId;
             exception = failure;
+            reported = failureReported;
             failure = null;
+            failureReported = false;
             return exception != null;
         }
 
@@ -327,8 +338,15 @@ namespace Fomoxa.Networking.Sessions
             }
             catch (Exception exception)
             {
+                bool decides = !authenticating && keepsPeerAfter != null;
+                if (decides && keepsPeerAfter(peerId, messageId, exception))
+                {
+                    return;
+                }
+
                 failedMessageId = messageId;
                 failure = exception;
+                failureReported = decides;
             }
         }
 

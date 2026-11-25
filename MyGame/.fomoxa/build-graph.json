@@ -4,6 +4,20 @@
   "schema_fingerprint": "sha256:509766ed73def5969eff018fac830cae40710d16bfbd7ff900aa47499758383f",
   "sha256_of": "each file with its `// generated-at:` line emptied, so an unchanged schema keeps an unchanged digest",
   "sources": {
+    "Assets/Network/Generated/StateModels/MoveInput.cs": {
+      "models": [
+        "MoveInput"
+      ],
+      "outputs": [
+        {
+          "path": "Assets/Network/Generated/MoveInputNetCodec.cs",
+          "model": "MoveInput",
+          "codec": "net",
+          "fingerprint": "sha256:2ea51d665a14a664f6e376dd3bc911522bb9d8e3415a9879d5dd35bb8976bd55",
+          "sha256": "7128259785edc841833cde08b673a71691b4031a68b4cada7ec94ac788196089"
+        }
+      ]
+    },
     "Assets/Network/Models/Backend/Players.cs": {
       "models": [
         "JoinRoomRequest",
@@ -265,20 +279,6 @@
           "codec": "rpc",
           "fingerprint": "sha256:b141d03acf71241a86e9075c97f5dc615ca9bbd04c8c15b065bc4f01ee6149dc",
           "sha256": "57f715ce0efc43086f7dac827198fa6d1f2ea2459ad5d98903ca219ba5f38a2f"
-        }
-      ]
-    },
-    "Assets/Network/Models/MoveInput.cs": {
-      "models": [
-        "MoveInput"
-      ],
-      "outputs": [
-        {
-          "path": "Assets/Network/Generated/MoveInputNetCodec.cs",
-          "model": "MoveInput",
-          "codec": "net",
-          "fingerprint": "sha256:2ea51d665a14a664f6e376dd3bc911522bb9d8e3415a9879d5dd35bb8976bd55",
-          "sha256": "8b4e791b76374426ad4fa56a7dd0262251888619da52e6f15a817a4ce61c452d"
         }
       ]
     },

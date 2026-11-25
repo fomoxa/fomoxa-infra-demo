@@ -42,6 +42,8 @@ namespace Fomoxa.Networking
 
         public bool CollectStatistics { get; set; }
 
+        public TimeSpan StateMarkWarning { get; set; } = TimeSpan.Zero;
+
         public int MaxReconnectRetries { get; set; } = -1;
 
         public TimeSpan ReconnectInterval { get; set; } = TimeSpan.FromSeconds(0.5);

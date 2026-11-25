@@ -324,6 +324,8 @@ namespace Fomoxa.Networking
 
         internal void SyncStates() => Entities.SyncStates();
 
+        internal void CheckStateMarks(TimeSpan now) => Entities.CheckStateMarks(now);
+
         internal void SyncTransforms(uint tick) => Entities.SyncTransforms(tick);
 
         private void RaiseHandlerException(HandlerExceptionArgs args)

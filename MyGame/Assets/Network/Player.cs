@@ -1,16 +1,25 @@
 using System;
 using Fomoxa.Networking;
 using Fomoxa.Unity;
-using Generated;
 using MyGame.Network.Models;
 using UnityEngine;
 
 namespace MyGame.Network
 {
-    public sealed class Player : NetworkBehaviour
+    [NetworkInputModel("MoveInput")]
+    public sealed partial class Player : NetworkBehaviour
     {
         private NetworkManager manager;
         private float verticalSpeed;
+
+        [NetworkInput]
+        private float x;
+
+        [NetworkInput]
+        private float z;
+
+        [NetworkInput]
+        private bool jump;
 
         /// <summary>Số bậc cao nhất đã đứng lên (0 = chưa lên bục nào).</summary>
         public int Steps { get; private set; }
@@ -47,52 +56,47 @@ namespace MyGame.Network
             Debug.Log($"[Pos] id={NetworkObject.ObjectId} owner={NetworkObject.OwnerId} pos={transform.position}");
         }
 
-        protected override void OnRegisterInput(NetworkInput input)
-        {
-            input.Use(MoveInputNetAdapter.Instance, Gather, Apply);
-        }
-
-        private void Gather(MoveInput input)
+        protected override void OnGatherInput()
         {
             if (bot)
             {
                 float time = Time.time;
-                input.X = Mathf.Cos(time);
-                input.Z = Mathf.Sin(time);
-                input.Jump = Mathf.Repeat(time, 1.5f) < 0.1f;
+                x = Mathf.Cos(time);
+                z = Mathf.Sin(time);
+                jump = Mathf.Repeat(time, 1.5f) < 0.1f;
                 return;
             }
 
             // Di chuyển theo hướng camera: W = tiến về phía camera đang nhìn. Server vẫn nhận hướng theo trục thế giới.
             Vector3 move = Quaternion.Euler(0f, PlayerCamera.Yaw, 0f) * new Vector3(Input.GetAxisRaw("Horizontal"), 0f, Input.GetAxisRaw("Vertical"));
-            input.X = move.x;
-            input.Z = move.z;
-            input.Jump = Input.GetKey(KeyCode.Space);
+            x = move.x;
+            z = move.z;
+            jump = Input.GetKey(KeyCode.Space);
         }
 
-        private void Apply(MoveInput input, InputContext context)
+        protected override void OnApplyInput(InputContext context)
         {
             if (manager == null)
             {
                 return;
             }
 
-            Vector3 direction = Vector3.ClampMagnitude(new Vector3(input.X, 0f, input.Z), 1f);
+            Vector3 direction = Vector3.ClampMagnitude(new Vector3(x, 0f, z), 1f);
             if (direction.sqrMagnitude > 0.0001f)
             {
                 transform.rotation = Quaternion.LookRotation(direction, Vector3.up);
             }
 
             Vector3 position = transform.position;
-            float x = position.x;
-            float z = position.z;
+            float positionX = position.x;
+            float positionZ = position.z;
             float feet = position.y - Course.HalfHeight;
-            Course.Simulate(ref x, ref feet, ref z, ref verticalSpeed, direction.x, direction.z, input.Jump, (float)manager.TimeManager.TickDelta);
-            transform.position = new Vector3(x, feet + Course.HalfHeight, z);
+            Course.Simulate(ref positionX, ref feet, ref positionZ, ref verticalSpeed, direction.x, direction.z, jump, (float)manager.TimeManager.TickDelta);
+            transform.position = new Vector3(positionX, feet + Course.HalfHeight, positionZ);
 
             if (verticalSpeed == 0f)
             {
-                int step = Course.StepAt(x, z, feet);
+                int step = Course.StepAt(positionX, positionZ, feet);
                 if (step > Steps)
                 {
                     Steps = step;

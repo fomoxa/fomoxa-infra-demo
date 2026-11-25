@@ -13,6 +13,7 @@ namespace Fomoxa.Networking
 
         private readonly Dictionary<uint, ServerRpc> serverRpcs = new Dictionary<uint, ServerRpc>();
         private readonly Dictionary<uint, ClientRpc> clientRpcs = new Dictionary<uint, ClientRpc>();
+        private readonly Dictionary<string, RpcPacker> packers = new Dictionary<string, RpcPacker>(StringComparer.Ordinal);
         private readonly List<CollectionSlot> collections = new List<CollectionSlot>();
         private IBehaviourLink link;
         private bool registered;
@@ -158,6 +159,27 @@ namespace Fomoxa.Networking
         {
             IBehaviourLink target = SpawnedOn(rpc, isServer: true);
             return target.SendToObserver(peerId, RpcMessageId(target, isServer: true, rpc), BehaviourIndex, ReadOnlySpan<byte>.Empty);
+        }
+
+        internal SendResult ServerRpcFrom<TValues>(string rpc, TValues values)
+        {
+            IBehaviourLink target = SpawnedOn(rpc, isServer: false);
+            RpcPacker<TValues> packer = PackerOf<TValues>(rpc);
+            return target.SendToServer(packer.MessageId, BehaviourIndex, packer.Encode(values).Span);
+        }
+
+        internal int ObserversRpcFrom<TValues>(string rpc, TValues values)
+        {
+            IBehaviourLink target = SpawnedOn(rpc, isServer: true);
+            RpcPacker<TValues> packer = PackerOf<TValues>(rpc);
+            return target.SendToObservers(packer.MessageId, BehaviourIndex, packer.Encode(values).Span);
+        }
+
+        internal SendResult TargetRpcFrom<TValues>(ulong peerId, string rpc, TValues values)
+        {
+            IBehaviourLink target = SpawnedOn(rpc, isServer: true);
+            RpcPacker<TValues> packer = PackerOf<TValues>(rpc);
+            return target.SendToObserver(peerId, packer.MessageId, BehaviourIndex, packer.Encode(values).Span);
         }
 
         public static void Attach(INetworkEntity entity)
@@ -306,6 +328,14 @@ namespace Fomoxa.Networking
             }
         }
 
+        internal void AddPacker(string rpc, RpcPacker packer)
+        {
+            if (!packers.TryAdd(rpc, packer))
+            {
+                throw new HandlerRegistrationException($"{DeclaringType.FullName} registers the parameters of RPC {rpc} twice");
+            }
+        }
+
         internal bool TryGetServerRpc(uint messageId, out ServerRpc rpc) => serverRpcs.TryGetValue(messageId, out rpc);
 
         internal bool TryGetClientRpc(uint messageId, out ClientRpc rpc) => clientRpcs.TryGetValue(messageId, out rpc);
@@ -344,6 +374,17 @@ namespace Fomoxa.Networking
             }
 
             return link;
+        }
+
+        private RpcPacker<TValues> PackerOf<TValues>(string rpc)
+        {
+            if (!packers.TryGetValue(rpc, out RpcPacker packer))
+            {
+                throw new InvalidOperationException(NetworkRpcs.NotGeneratedValues(DeclaringType, rpc));
+            }
+
+            return packer as RpcPacker<TValues>
+                ?? throw new ArgumentException($"{DeclaringType.FullName}.{rpc} takes {packer.ValuesType}, not {typeof(TValues)}", "values");
         }
 
         private uint RpcMessageId(IBehaviourLink target, bool isServer, string rpc)

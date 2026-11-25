@@ -65,6 +65,8 @@ namespace Fomoxa.Networking
 
         internal bool HasMarkedState { get; set; }
 
+        internal LinkedListNode<EntityRecord> MarkedOrderNode { get; set; }
+
         internal LinkedListNode<EntityRecord> TransformOrderNode { get; set; }
 
         internal bool TransformQueued { get; set; }

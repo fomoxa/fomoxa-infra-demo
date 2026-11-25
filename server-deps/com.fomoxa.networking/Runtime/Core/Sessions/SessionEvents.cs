@@ -140,7 +140,7 @@ namespace Fomoxa.Networking.Sessions
         public ushort Port { get; }
     }
 
-    public readonly struct HandlerExceptionArgs
+    public sealed class HandlerExceptionArgs
     {
         public HandlerExceptionArgs(ulong peerId, uint messageId, Exception exception)
         {
@@ -154,6 +154,8 @@ namespace Fomoxa.Networking.Sessions
         public uint MessageId { get; }
 
         public Exception Exception { get; }
+
+        public bool Disconnect { get; set; } = true;
     }
 
     public sealed class SessionLimits

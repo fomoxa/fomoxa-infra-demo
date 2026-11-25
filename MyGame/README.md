@@ -4,7 +4,7 @@ Demo nhỏ nhất chứng minh tầng mạng Fomoxa chạy được: một sàn,
 người chơi là một capsule, di chuyển bằng WASD/mũi tên và thấy nhau di chuyển.
 
 - Server authoritative: client chỉ gửi input, server mới là bên di chuyển.
-- Input đi qua hệ thống input của Fomoxa (`NetworkInput.Use`), không dự đoán
+- Input đi qua hệ thống input của Fomoxa (trường `[NetworkInput]` của `Player`), không dự đoán
   (không reconcile) nên client thấy vị trí của chính mình sau một vòng mạng -
   chấp nhận được cho demo, và chính vì thế log chứng minh rõ dữ liệu là từ server.
 - Vị trí đồng bộ bằng `NetworkTransform` (position + rotation).
@@ -16,11 +16,11 @@ người chơi là một capsule, di chuyển bằng WASD/mũi tên và thấy n
 MyGame/
   Assets/
     Network/
-      Models/MoveInput.cs        model input (X, Z) - fomoxac sinh codec
       Models/Backend/            bản copy model của backend (rpc) để sinh client
       Rpc/Services.cs            bản copy Services.cs của backend (interface fRPC)
       Generated/                 do fomoxac + fRPC sinh, ĐỪNG sửa tay
-      Player.cs                  NetworkBehaviour: Gather input + Apply di chuyển
+      Generated/StateModels/MoveInput.cs  model input (X, Z, Jump), Editor sinh từ trường của Player
+      Player.cs                  NetworkBehaviour: trường [NetworkInput], OnGatherInput + OnApplyInput
       Launcher.cs                Host / pod / spawn player khi có peer
       RoomJoiner.cs              login backend → JoinRoom → nối pod bằng grant
       PlayerCamera.cs            camera bám theo player của mình
@@ -71,8 +71,8 @@ Sửa giao diện: mở `.uxml` bằng UI Builder hoặc chỉnh `.uss`, không 
 `Packages/manifest.json` lấy package trực tiếp từ GitHub, không dùng đường dẫn local:
 
 ```json
-"com.fomoxa.networking": "https://github.com/fomoxa/com.fomoxa.networking.git#0.3.4",
-"com.fomoxa.rpc": "https://github.com/fomoxa/com.fomoxa.rpc.git#0.1.5"
+"com.fomoxa.networking": "https://github.com/fomoxa/com.fomoxa.networking.git#0.4.0",
+"com.fomoxa.rpc": "https://github.com/fomoxa/com.fomoxa.rpc.git#0.1.7"
 ```
 
 Unity clone về `Library/PackageCache/` và ghim đúng commit trong

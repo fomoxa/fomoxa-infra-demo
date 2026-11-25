@@ -11,6 +11,7 @@ using Fomoxa.Networking.Standalone;
 using Fomoxa.Networking.Transports;
 using Fomoxa.Rpc;
 using Fomoxa.Rpc.Net;
+using FomoxaStateModels;
 using Generated;
 using MyGame.Backend;
 using MyGame.Backend.Models;

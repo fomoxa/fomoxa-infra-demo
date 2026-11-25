@@ -2,6 +2,7 @@ using System;
 using System.Numerics;
 using Fomoxa.Networking;
 using Fomoxa.Networking.Standalone;
+using FomoxaStateModels;
 using Generated;
 using MyGame.Network.Models;
 

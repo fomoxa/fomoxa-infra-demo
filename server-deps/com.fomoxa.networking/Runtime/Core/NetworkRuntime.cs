@@ -13,7 +13,7 @@ namespace Fomoxa.Networking
 {
     public sealed class NetworkRuntime
     {
-        public const string Version = "0.3.4";
+        public const string Version = "0.4.0";
 
         private readonly FomoxaRegistry registry;
         private readonly NetworkLog log;
@@ -95,6 +95,7 @@ namespace Fomoxa.Networking
                 InputRules = inputRules,
             };
             ServerManager.Inputs.MaxInputLead = settings.MaxInputLead;
+            ServerManager.Entities.StateMarkWarning = settings.StateMarkWarning;
             var reconnectPolicy = new ReconnectPolicy
             {
                 MaxRetries = settings.MaxReconnectRetries,
@@ -246,6 +247,7 @@ namespace Fomoxa.Networking
                 TimeManager.RaisePostTick();
                 ServerManager.RebuildObserversRound();
                 ServerManager.SyncStates();
+                ServerManager.CheckStateMarks(now);
                 if (worlds is IPhysicsMotion motion)
                 {
                     ServerManager.Entities.CollectMotion(motion);

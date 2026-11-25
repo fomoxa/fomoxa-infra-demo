@@ -1,4 +1,5 @@
 using System;
+using System.ComponentModel;
 using Fomoxa.Networking.Messaging;
 
 namespace Fomoxa.Networking
@@ -76,8 +77,33 @@ namespace Fomoxa.Networking
             behaviour.AddClientRpc(MessageIdOf(rpc), new EmptyClientRpc(handler));
         }
 
+        [EditorBrowsable(EditorBrowsableState.Never)]
+        public void Pack<TValues, TModel>(string rpc, IMessageCodec<TModel> codec, Action<TValues, TModel> pack)
+            where TModel : class, new()
+        {
+            if (rpc == null)
+            {
+                throw new ArgumentNullException(nameof(rpc));
+            }
+
+            if (codec == null)
+            {
+                throw new ArgumentNullException(nameof(codec));
+            }
+
+            if (pack == null)
+            {
+                throw new ArgumentNullException(nameof(pack));
+            }
+
+            behaviour.AddPacker(rpc, new RpcPacker<TValues, TModel>(codec, pack));
+        }
+
+        internal static string NotGeneratedValues(Type type, string rpc) =>
+            $"{type.FullName}.{rpc} has no generated RPC model for its parameters; run Tools > Fomoxa > Generate";
+
         internal static string NotGenerated(Type type, string rpc) =>
-            $"{type.FullName}.{rpc} has no generated parameterless RPC model; mark the method with [NetworkRpc] and run Tools > Fomoxa > Generate";
+            $"{type.FullName}.{rpc} has no generated parameterless RPC model; mark the method with [ServerRpc] or [ClientRpc] and run Tools > Fomoxa > Generate";
 
         private uint MessageIdOf(string rpc)
         {
@@ -87,6 +113,42 @@ namespace Fomoxa.Networking
             }
 
             return messageId;
+        }
+    }
+
+    internal abstract class RpcPacker
+    {
+        public abstract Type ValuesType { get; }
+    }
+
+    internal abstract class RpcPacker<TValues> : RpcPacker
+    {
+        public override Type ValuesType => typeof(TValues);
+
+        public abstract uint MessageId { get; }
+
+        public abstract ReadOnlyMemory<byte> Encode(TValues values);
+    }
+
+    internal sealed class RpcPacker<TValues, TModel> : RpcPacker<TValues>
+        where TModel : class, new()
+    {
+        private readonly IMessageCodec<TModel> codec;
+        private readonly Action<TValues, TModel> pack;
+        private readonly TModel model = new TModel();
+
+        public RpcPacker(IMessageCodec<TModel> codec, Action<TValues, TModel> pack)
+        {
+            this.codec = codec;
+            this.pack = pack;
+        }
+
+        public override uint MessageId => codec.MessageId;
+
+        public override ReadOnlyMemory<byte> Encode(TValues values)
+        {
+            pack(values, model);
+            return codec.Encode(model);
         }
     }
 

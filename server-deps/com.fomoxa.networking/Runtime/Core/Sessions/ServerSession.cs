@@ -39,6 +39,7 @@ namespace Fomoxa.Networking.Sessions
             this.dispatcher = dispatcher ?? throw new ArgumentNullException(nameof(dispatcher));
             this.protocol = protocol ?? throw new ArgumentNullException(nameof(protocol));
             inbox = new SessionInbox(protocol, dispatcher, (peerId, length) => OnReceiveDropped?.Invoke(new ReceiveDroppedArgs(peerId, length)));
+            inbox.KeepPeerWhen(KeepsPeerAfter);
             Statistics = this.limits.CollectStatistics ? new ServerTrafficStatistics() : null;
         }
 
@@ -547,9 +548,9 @@ namespace Fomoxa.Networking.Sessions
 
             delivering = null;
             inbox.Release();
-            if (inbox.TakeFailure(out uint failedMessageId, out Exception exception))
+            if (inbox.TakeFailure(out uint failedMessageId, out Exception exception, out bool reported))
             {
-                EndByHandler(peer, failedMessageId, exception);
+                EndByHandler(peer, failedMessageId, exception, reported);
             }
             else if (inbox.TakeViolation())
             {
@@ -576,9 +577,20 @@ namespace Fomoxa.Networking.Sessions
         private bool IsServing(Peer peer) =>
             State == ServerState.Started && peers.TryGetValue(peer.Id, out Peer current) && current == peer;
 
-        private void EndByHandler(Peer peer, uint messageId, Exception exception)
+        private bool KeepsPeerAfter(ulong peerId, uint messageId, Exception exception)
         {
-            OnHandlerException?.Invoke(new HandlerExceptionArgs(peer.Id, messageId, exception));
+            var args = new HandlerExceptionArgs(peerId, messageId, exception);
+            OnHandlerException?.Invoke(args);
+            return !args.Disconnect;
+        }
+
+        private void EndByHandler(Peer peer, uint messageId, Exception exception, bool reported = false)
+        {
+            if (!reported)
+            {
+                OnHandlerException?.Invoke(new HandlerExceptionArgs(peer.Id, messageId, exception));
+            }
+
             if (IsServing(peer) && !peer.Closing)
             {
                 BeginClose(peer, SessionCloseReason.HandlerException, StopReason.HandlerException);

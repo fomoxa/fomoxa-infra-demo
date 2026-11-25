@@ -25,6 +25,7 @@ namespace Fomoxa.Networking.Objects
         private readonly LinkedList<EntityRecord> spawnOrder = new LinkedList<EntityRecord>();
         private readonly LinkedList<EntityRecord> inputOrder = new LinkedList<EntityRecord>();
         private readonly LinkedList<EntityRecord> stateOrder = new LinkedList<EntityRecord>();
+        private readonly LinkedList<EntityRecord> markedOrder = new LinkedList<EntityRecord>();
         private List<EntityRecord> queuedStates = new List<EntityRecord>();
         private List<EntityRecord> syncingStates = new List<EntityRecord>();
         private readonly LinkedList<EntityRecord> transformOrder = new LinkedList<EntityRecord>();
@@ -191,6 +192,8 @@ namespace Fomoxa.Networking.Objects
                 if (behaviour.StateSlot != null)
                 {
                     behaviour.StateSlot.Record = record;
+                    behaviour.StateSlot.UnmarkedSince = null;
+                    behaviour.StateSlot.MarkWarned = false;
                     comparesState |= !behaviour.StateSlot.OnlyWhenDirty;
                     record.HasMarkedState |= behaviour.StateSlot.OnlyWhenDirty;
                 }
@@ -237,6 +240,11 @@ namespace Fomoxa.Networking.Objects
             if (comparesState)
             {
                 record.StateOrderNode = stateOrder.AddLast(record);
+            }
+
+            if (record.HasMarkedState)
+            {
+                record.MarkedOrderNode = markedOrder.AddLast(record);
             }
 
             QueueSpawnedTransforms(record);
@@ -657,6 +665,62 @@ namespace Fomoxa.Networking.Objects
             syncingStates.Clear();
         }
 
+        internal TimeSpan StateMarkWarning { get; set; }
+
+        internal void CheckStateMarks(TimeSpan now)
+        {
+            if (StateMarkWarning <= TimeSpan.Zero)
+            {
+                return;
+            }
+
+            for (LinkedListNode<EntityRecord> node = markedOrder.First; node != null; node = node.Next)
+            {
+                EntityRecord record = node.Value;
+                foreach (EntityBehaviour behaviour in record.Representation.EntityBehaviours)
+                {
+                    StateSlot slot = behaviour.StateSlot;
+                    if (slot == null || !slot.OnlyWhenDirty || slot.MarkWarned)
+                    {
+                        continue;
+                    }
+
+                    CheckStateMark(record, behaviour, slot, now);
+                }
+            }
+        }
+
+        private void CheckStateMark(EntityRecord record, EntityBehaviour behaviour, StateSlot slot, TimeSpan now)
+        {
+            if (slot.Dirty)
+            {
+                slot.UnmarkedSince = null;
+                return;
+            }
+
+            behaviour.PrepareState();
+            if (slot.MatchesSent())
+            {
+                slot.UnmarkedSince = null;
+                return;
+            }
+
+            if (slot.UnmarkedSince == null)
+            {
+                slot.UnmarkedSince = now;
+                return;
+            }
+
+            TimeSpan unmarked = now - slot.UnmarkedSince.Value;
+            if (unmarked < StateMarkWarning)
+            {
+                return;
+            }
+
+            slot.MarkWarned = true;
+            log.Warning($"{behaviour.DeclaringType.Name} on object {record.ObjectId} ({backend.NameOf(record.Representation)}) changed its state {unmarked.TotalSeconds:0.##} s ago without SetStateDirty(); the change is not sent");
+        }
+
         internal void QueueState(EntityRecord record)
         {
             if (record.StateQueued || record.StateOrderNode != null)
@@ -853,6 +917,12 @@ namespace Fomoxa.Networking.Objects
             {
                 stateOrder.Remove(record.StateOrderNode);
                 record.StateOrderNode = null;
+            }
+
+            if (record.MarkedOrderNode != null)
+            {
+                markedOrder.Remove(record.MarkedOrderNode);
+                record.MarkedOrderNode = null;
             }
             if (record.TransformOrderNode != null)
             {

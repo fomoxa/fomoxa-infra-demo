@@ -1759,7 +1759,7 @@
       }
     },
     "MoveInput": {
-      "source": "Assets/Network/Models/MoveInput.cs",
+      "source": "Assets/Network/Generated/StateModels/MoveInput.cs",
       "fingerprint": "sha256:e55ef0b9bb084a1a7de12378399fa905b523ac96b7243ecd3c420b95fe2ad193",
       "codecs": [
         "net"

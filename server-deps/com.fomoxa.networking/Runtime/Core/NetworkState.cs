@@ -1,4 +1,5 @@
 using System;
+using System.ComponentModel;
 using Fomoxa.Networking.Messaging;
 using Fomoxa.Networking.Objects;
 
@@ -21,6 +22,29 @@ namespace Fomoxa.Networking
         public void Use<T>(IMessageCodec<T> codec, T instance, Action<T> onChanged = null, bool onlyWhenDirty = false)
             where T : class, new()
         {
+            Bind(codec, instance, null, null, onChanged == null ? null : new Action<T, T>((previous, current) => onChanged(previous)), onlyWhenDirty);
+        }
+
+        [EditorBrowsable(EditorBrowsableState.Never)]
+        public void UseFields<T>(IMessageCodec<T> codec, T model, Action<T> copyIn, Action<T> copyOut, Action<T, T> onChanged, bool onlyWhenDirty)
+            where T : class, new()
+        {
+            if (copyIn == null)
+            {
+                throw new ArgumentNullException(nameof(copyIn));
+            }
+
+            if (copyOut == null)
+            {
+                throw new ArgumentNullException(nameof(copyOut));
+            }
+
+            Bind(codec, model, copyIn, copyOut, onChanged, onlyWhenDirty);
+        }
+
+        private void Bind<T>(IMessageCodec<T> codec, T instance, Action<T> copyIn, Action<T> copyOut, Action<T, T> onChanged, bool onlyWhenDirty)
+            where T : class, new()
+        {
             if (codec == null)
             {
                 throw new ArgumentNullException(nameof(codec));
@@ -37,12 +61,13 @@ namespace Fomoxa.Networking
                 throw new HandlerRegistrationException($"{owner} uses message id 0x{codec.MessageId:X8} as its state, which is not on the reliable-ordered channel; declare the model's codec with [NetworkChannel(..., Channel.ReliableOrdered)]");
             }
 
+            copyIn?.Invoke(instance);
             if (codec.Encode(instance).IsEmpty)
             {
                 throw new HandlerRegistrationException($"{owner} uses message id 0x{codec.MessageId:X8} as its state, whose model encodes to no bytes; a state model needs at least one field");
             }
 
-            behaviour.SetState(new StateSlot<T>(codec, instance, onChanged, onlyWhenDirty));
+            behaviour.SetState(new StateSlot<T>(codec, instance, copyIn, copyOut, onChanged, onlyWhenDirty));
         }
 
         public void Use<T>(byte index, NetworkList<T> list, IMessageCodec<T> codec, NetworkListChanged<T> onChanged = null)
@@ -169,6 +194,10 @@ namespace Fomoxa.Networking
 
         public bool OutOfSync { get; private set; }
 
+        public TimeSpan? UnmarkedSince { get; set; }
+
+        public bool MarkWarned { get; set; }
+
         private ReadOnlyMemory<byte> Received => new ReadOnlyMemory<byte>(received, 0, receivedLength);
 
         public void MarkDirty()
@@ -200,6 +229,8 @@ namespace Fomoxa.Networking
             return true;
         }
 
+        public bool MatchesSent() => Encode().Span.SequenceEqual(Sent.Span);
+
         public void Validate(ReadOnlyMemory<byte> bytes)
         {
             DecodeSpare(bytes);
@@ -210,6 +241,7 @@ namespace Fomoxa.Networking
             if (!shared)
             {
                 DecodeInstance(bytes);
+                CopyOut();
             }
 
             Keep(bytes.Span, ref received, ref receivedLength);
@@ -219,9 +251,14 @@ namespace Fomoxa.Networking
         public void Receive(ReadOnlyMemory<byte> bytes, bool shared)
         {
             DecodeSpare(bytes);
-            if (!shared)
+            if (shared)
+            {
+                CopyIn();
+            }
+            else
             {
                 DecodeInstance(bytes);
+                CopyOut();
             }
 
             DecodeSpare(Received);
@@ -240,9 +277,14 @@ namespace Fomoxa.Networking
 
             var next = new ReadOnlyMemory<byte>(pending, 0, pendingLength);
             DecodeSpare(next);
-            if (!shared)
+            if (shared)
+            {
+                CopyIn();
+            }
+            else
             {
                 DecodeInstance(next);
+                CopyOut();
             }
 
             DecodeSpare(Received);
@@ -261,6 +303,10 @@ namespace Fomoxa.Networking
         protected abstract void DecodeSpare(ReadOnlyMemory<byte> bytes);
 
         protected abstract void DecodeInstance(ReadOnlyMemory<byte> bytes);
+
+        protected abstract void CopyIn();
+
+        protected abstract void CopyOut();
 
         protected abstract void RaiseChanged();
 
@@ -281,18 +327,26 @@ namespace Fomoxa.Networking
     {
         private readonly IMessageCodec<T> codec;
         private readonly T instance;
-        private readonly Action<T> onChanged;
+        private readonly Action<T> copyIn;
+        private readonly Action<T> copyOut;
+        private readonly Action<T, T> onChanged;
         private T spare = new T();
 
-        public StateSlot(IMessageCodec<T> codec, T instance, Action<T> onChanged, bool onlyWhenDirty)
+        public StateSlot(IMessageCodec<T> codec, T instance, Action<T> copyIn, Action<T> copyOut, Action<T, T> onChanged, bool onlyWhenDirty)
             : base(codec.MessageId, onlyWhenDirty)
         {
             this.codec = codec;
             this.instance = instance;
+            this.copyIn = copyIn;
+            this.copyOut = copyOut;
             this.onChanged = onChanged;
         }
 
-        protected override ReadOnlyMemory<byte> Encode() => codec.Encode(instance);
+        protected override ReadOnlyMemory<byte> Encode()
+        {
+            CopyIn();
+            return codec.Encode(instance);
+        }
 
         protected override void DecodeSpare(ReadOnlyMemory<byte> bytes)
         {
@@ -305,9 +359,19 @@ namespace Fomoxa.Networking
             codec.Decode(bytes, ref target);
         }
 
+        protected override void CopyIn()
+        {
+            copyIn?.Invoke(instance);
+        }
+
+        protected override void CopyOut()
+        {
+            copyOut?.Invoke(instance);
+        }
+
         protected override void RaiseChanged()
         {
-            onChanged?.Invoke(spare);
+            onChanged?.Invoke(spare, instance);
         }
     }
 }
