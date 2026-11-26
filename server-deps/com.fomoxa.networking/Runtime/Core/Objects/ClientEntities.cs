@@ -28,6 +28,11 @@ namespace Fomoxa.Networking.Objects
         private readonly CollectionResync collectionResync = new CollectionResync();
         private TransformUpdate transformUpdate = new TransformUpdate();
         private TransformSettle transformSettle = new TransformSettle();
+        private TransformAuthority transformAuthority = new TransformAuthority();
+        private readonly TransformUpdate ownerUpdate = new TransformUpdate();
+        private readonly TransformSettle ownerSettle = new TransformSettle();
+        private readonly List<OwnerSend> ownerSends = new List<OwnerSend>();
+        private uint ownerTicks;
 
         public ClientEntities(
             object owner,
@@ -57,6 +62,7 @@ namespace Fomoxa.Networking.Objects
             dispatcher.RegisterObject(stateProtocol.Collections.ContentCodec.MessageId, (peerId, objectId, behaviourIndex, body) => DeliverContent(objectId, behaviourIndex, body));
             dispatcher.RegisterObject(transformProtocol.UpdateCodec.MessageId, (peerId, objectId, behaviourIndex, body) => DeliverTransform(objectId, behaviourIndex, body, false));
             dispatcher.RegisterObject(transformProtocol.SettleCodec.MessageId, (peerId, objectId, behaviourIndex, body) => DeliverTransform(objectId, behaviourIndex, body, true));
+            dispatcher.RegisterObject(transformProtocol.AuthorityCodec.MessageId, (peerId, objectId, behaviourIndex, body) => DeliverAuthority(objectId, behaviourIndex, body));
         }
 
         public event Action<EntityRecord> OnDespawning;
@@ -136,6 +142,14 @@ namespace Fomoxa.Networking.Objects
 
             record.Client = this;
             spawned.Add(objectId, record);
+            foreach (EntityBehaviour behaviour in entity.EntityBehaviours)
+            {
+                if (behaviour.TransformSlot != null)
+                {
+                    behaviour.TransformSlot.Record = record;
+                }
+            }
+
             bool statesValid;
             try
             {
@@ -273,6 +287,7 @@ namespace Fomoxa.Networking.Objects
 
         private void Detach(EntityRecord record)
         {
+            StopSending(record);
             record.Client = null;
             if (record.Server == null)
             {
@@ -520,7 +535,112 @@ namespace Fomoxa.Networking.Objects
                 throw new MessageDecodeException($"transform mask 0x{mask:X2} does not match its {values.Count} values", null);
             }
 
+            TransformSync sync = slot.Sync;
+            if (sync.OwnerSending && sync.HasDownstream && generation == sync.DownstreamGeneration)
+            {
+                return;
+            }
+
+            sync.HasDownstream = true;
+            sync.DownstreamGeneration = generation;
             slot.Receiver.Receive(new TransformSample(tick, mask, position, rotation, scale, settle, generation));
+            if (sync.OwnerSending)
+            {
+                sync.OwnerGeneration++;
+                sync.OwnerSettlePending = true;
+            }
+        }
+
+        public void SyncOwnerTransforms()
+        {
+            ownerTicks++;
+            for (int index = ownerSends.Count - 1; index >= 0; index--)
+            {
+                OwnerSend send = ownerSends[index];
+                EntityRecord record = send.Record;
+                TransformSlot slot = record.Representation.EntityBehaviours[send.Index].TransformSlot;
+                TransformSync sync = slot.Sync;
+                if (record.Client != this || !sync.OwnerSending || !Objects.IsOwner(record.ObjectId))
+                {
+                    sync.StopSending();
+                    ownerSends.RemoveAt(index);
+                    continue;
+                }
+
+                slot.Source.ReadLocal(out Vector3 position, out Quaternion rotation, out Vector3 scale);
+                if (sync.OwnerSettlePending)
+                {
+                    sync.OwnerSettlePending = false;
+                    sync.MarkSettled(position, rotation, scale);
+                    SendOwnerSettle(record.ObjectId, send.Index, sync, sync.SelectedMask, position, rotation, scale);
+                    continue;
+                }
+
+                TransformSend sample = sync.Sample(position, rotation, scale, out byte mask);
+                if (sample == TransformSend.Update)
+                {
+                    ownerUpdate.Tick = ownerTicks;
+                    ownerUpdate.Mask = mask;
+                    ownerUpdate.Generation = sync.OwnerGeneration;
+                    SpawnTransform.PackSelected(mask, position, rotation, scale, ownerUpdate.Values);
+                    session.SendToObject(transformProtocol.UpdateCodec.MessageId, record.ObjectId, send.Index, transformProtocol.UpdateCodec.Encode(ownerUpdate).Span);
+                }
+                else if (sample == TransformSend.Settle)
+                {
+                    SendOwnerSettle(record.ObjectId, send.Index, sync, mask, position, rotation, scale);
+                }
+            }
+        }
+
+        private void SendOwnerSettle(uint objectId, byte behaviourIndex, TransformSync sync, byte mask, in Vector3 position, in Quaternion rotation, in Vector3 scale)
+        {
+            ownerSettle.Tick = ownerTicks;
+            ownerSettle.Mask = mask;
+            ownerSettle.Generation = sync.OwnerGeneration;
+            SpawnTransform.PackSelected(mask, position, rotation, scale, ownerSettle.Values);
+            session.SendToObject(transformProtocol.SettleCodec.MessageId, objectId, behaviourIndex, transformProtocol.SettleCodec.Encode(ownerSettle).Span);
+        }
+
+        private void DeliverAuthority(uint objectId, byte behaviourIndex, ReadOnlyMemory<byte> body)
+        {
+            if (!spawned.TryGetValue(objectId, out EntityRecord record) || record.Server != null)
+            {
+                return;
+            }
+
+            IReadOnlyList<EntityBehaviour> behaviours = record.Representation.EntityBehaviours;
+            if (behaviourIndex >= behaviours.Count || behaviours[behaviourIndex].TransformSlot == null)
+            {
+                return;
+            }
+
+            transformProtocol.AuthorityCodec.Decode(body, ref transformAuthority);
+            TransformSlot slot = behaviours[behaviourIndex].TransformSlot;
+            TransformSync sync = slot.Sync;
+            if (!transformAuthority.Enabled || !Objects.IsOwner(objectId))
+            {
+                sync.StopSending();
+                return;
+            }
+
+            if (!sync.OwnerSending)
+            {
+                ownerSends.Add(new OwnerSend(record, behaviourIndex));
+            }
+
+            sync.OwnerSending = true;
+            sync.OwnerSettlePending = false;
+            sync.OwnerGeneration = transformAuthority.Generation;
+            slot.Source.ReadLocal(out Vector3 position, out Quaternion rotation, out Vector3 scale);
+            sync.MarkSettled(position, rotation, scale);
+        }
+
+        private static void StopSending(EntityRecord record)
+        {
+            foreach (EntityBehaviour behaviour in record.Representation.EntityBehaviours)
+            {
+                behaviour.TransformSlot?.Sync.StopSending();
+            }
         }
 
         private void DeliverDelta(uint objectId, byte behaviourIndex, ReadOnlyMemory<byte> body)
@@ -637,6 +757,11 @@ namespace Fomoxa.Networking.Objects
                 return;
             }
 
+            if (!Objects.IsOwner(args.ObjectId))
+            {
+                StopSending(record);
+            }
+
             foreach (EntityBehaviour behaviour in record.Representation.EntityBehaviours)
             {
                 behaviour.OnOwnerChangedClient(args.PreviousOwnerId);
@@ -657,6 +782,19 @@ namespace Fomoxa.Networking.Objects
 
             behaviour = null;
             return false;
+        }
+
+        private readonly struct OwnerSend
+        {
+            public OwnerSend(EntityRecord record, byte index)
+            {
+                Record = record;
+                Index = index;
+            }
+
+            public EntityRecord Record { get; }
+
+            public byte Index { get; }
         }
     }
 }

@@ -1,8 +1,8 @@
 {
   "schema_version": 1,
   "generator": "fomoxac 0.2.3",
-  "fingerprint": "sha256:509766ed73def5969eff018fac830cae40710d16bfbd7ff900aa47499758383f",
-  "fingerprint_u64": "0x509766ED73DEF596",
+  "fingerprint": "sha256:ae07362f59c7356b84372043e948eccf04919371687c20f94a101eb2189d5f07",
+  "fingerprint_u64": "0xAE07362F59C7356B",
   "models": {
     "ActionResult": {
       "source": "Assets/Network/Models/Backend/Social.cs",
@@ -5689,6 +5689,54 @@
             {
               "name": "Mac",
               "type": "bytes"
+            }
+          ]
+        }
+      }
+    },
+    "TransformAuthority": {
+      "source": "FomoxaSystemModels/TransformAuthority.cs",
+      "fingerprint": "sha256:bcac574edec26be71d5eb230bd8d50fc7fd6d356df8d1b480123d3ad1c022768",
+      "codecs": [
+        "net"
+      ],
+      "fields": [
+        {
+          "name": "Generation",
+          "type": "u8",
+          "codecs": [
+            "net"
+          ]
+        },
+        {
+          "name": "Enabled",
+          "type": "bool",
+          "codecs": [
+            "net"
+          ]
+        }
+      ],
+      "messages": {
+        "net": {
+          "id": "0x0DC92822",
+          "fingerprint": "sha256:2e6aca390d4c220fd221f2730a9b70f6ef2ebabceda06cfb19cc87cc95227d9e",
+          "fingerprint_u64": "0x2E6ACA390D4C220F",
+          "prefixes": [
+            "sha256:200899f1fe0f262d01a49ae4eec7aa48b2fd420b081349a57418f872ad0eb351",
+            "sha256:2e6aca390d4c220fd221f2730a9b70f6ef2ebabceda06cfb19cc87cc95227d9e"
+          ],
+          "prefixes_u64": [
+            "0x200899F1FE0F262D",
+            "0x2E6ACA390D4C220F"
+          ],
+          "fields": [
+            {
+              "name": "Generation",
+              "type": "u8"
+            },
+            {
+              "name": "Enabled",
+              "type": "bool"
             }
           ]
         }

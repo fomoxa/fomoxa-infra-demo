@@ -34,6 +34,25 @@ namespace Fomoxa.Networking.Objects
         UnknownScene,
     }
 
+    public readonly struct ServerRpcRejectedArgs
+    {
+        public ServerRpcRejectedArgs(ulong peerId, uint objectId, byte behaviourIndex, uint messageId)
+        {
+            PeerId = peerId;
+            ObjectId = objectId;
+            BehaviourIndex = behaviourIndex;
+            MessageId = messageId;
+        }
+
+        public ulong PeerId { get; }
+
+        public uint ObjectId { get; }
+
+        public byte BehaviourIndex { get; }
+
+        public uint MessageId { get; }
+    }
+
     public readonly struct SpawnedObject
     {
         public SpawnedObject(uint objectId, uint prefabId, ulong sceneObjectId, uint prefabFingerprint, ulong ownerId, Vector3 position, Quaternion rotation, Vector3 scale, IReadOnlyList<ReadOnlyMemory<byte>> states)

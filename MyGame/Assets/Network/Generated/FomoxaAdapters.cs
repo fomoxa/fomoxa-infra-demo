@@ -20,6 +20,7 @@ namespace Generated
             registry.SetCodec(StateResyncNetAdapter.Instance);
             registry.SetCodec(TransformUpdateNetAdapter.Instance);
             registry.SetCodec(TransformSettleNetAdapter.Instance);
+            registry.SetCodec(TransformAuthorityNetAdapter.Instance);
             registry.SetCodec(AnimatorStateNetAdapter.Instance);
             registry.SetCodec(SceneLoadNetAdapter.Instance);
             registry.SetCodec(SceneUnloadNetAdapter.Instance);
@@ -72,6 +73,7 @@ namespace Generated
             registry.Channels.Set(SessionCloseNetCodec.MessageId, global::Fomoxa.Networking.Channel.ReliableOrdered);
             registry.Channels.Set(StateDeltaNetCodec.MessageId, global::Fomoxa.Networking.Channel.ReliableOrdered);
             registry.Channels.Set(StateResyncNetCodec.MessageId, global::Fomoxa.Networking.Channel.ReliableOrdered);
+            registry.Channels.Set(TransformAuthorityNetCodec.MessageId, global::Fomoxa.Networking.Channel.ReliableOrdered);
             registry.Channels.Set(TransformSettleNetCodec.MessageId, global::Fomoxa.Networking.Channel.ReliableOrdered);
         }
     }

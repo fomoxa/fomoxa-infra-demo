@@ -51,6 +51,13 @@ namespace Fomoxa.Networking.Objects
         private readonly List<ObserverAddedArgs> enteredObservers = new List<ObserverAddedArgs>();
         private readonly TransformUpdate transformUpdate = new TransformUpdate();
         private readonly TransformSettle transformSettle = new TransformSettle();
+        private readonly TransformAuthority transformAuthority = new TransformAuthority();
+        private TransformUpdate ownerUpdate = new TransformUpdate();
+        private TransformSettle ownerSettle = new TransformSettle();
+        private readonly List<OwnerStream> ownerStreams = new List<OwnerStream>();
+        private readonly List<OwnerStream> pendingAuthority = new List<OwnerStream>();
+        private readonly List<PhysicsBody> collectedBodies = new List<PhysicsBody>();
+        private readonly List<PhysicsBody2D> collectedBodies2D = new List<PhysicsBody2D>();
         private int anchorGeneration = 1;
         private static readonly List<EntityRecord> NoRecords = new List<EntityRecord>();
 
@@ -85,7 +92,8 @@ namespace Fomoxa.Networking.Objects
             Groups = new ObserverGroups(this);
             dispatcher.RegisterObject(stateProtocol.ResyncCodec.MessageId, Resync);
             dispatcher.RegisterObject(stateProtocol.Collections.ResyncCodec.MessageId, ResyncCollection);
-            inputs.OnInputRejected += LogRejectedInput;
+            dispatcher.RegisterObject(transformProtocol.UpdateCodec.MessageId, (peerId, objectId, behaviourIndex, body) => ReceiveOwnerTransform(peerId, objectId, behaviourIndex, body, false));
+            dispatcher.RegisterObject(transformProtocol.SettleCodec.MessageId, (peerId, objectId, behaviourIndex, body) => ReceiveOwnerTransform(peerId, objectId, behaviourIndex, body, true));
             objects.Observes = DecideObserver;
             objects.CollectCandidates = CollectCandidates;
             objects.OnOwnerChanged += RaiseOwnerChanged;
@@ -99,6 +107,8 @@ namespace Fomoxa.Networking.Objects
         public event Action<EntityRecord> OnSpawned;
 
         public event Action<EntityRecord> OnUnspawning;
+
+        public event Action<ServerRpcRejectedArgs> OnServerRpcRejected;
 
         public object Owner { get; }
 
@@ -206,6 +216,7 @@ namespace Fomoxa.Networking.Objects
             }
 
             CaptureTransforms(record, behaviours);
+            CheckOwnerAuthority(record, behaviours);
 
             RouteRpcs(behaviours);
             RouteStates(behaviours);
@@ -248,6 +259,11 @@ namespace Fomoxa.Networking.Objects
             }
 
             QueueSpawnedTransforms(record);
+            if (ownerId != 0)
+            {
+                StartOwnerStreams(record);
+            }
+
             if (record.HasInput)
             {
                 record.InputOrderNode = inputOrder.AddLast(record);
@@ -428,11 +444,18 @@ namespace Fomoxa.Networking.Objects
                 }
 
                 IReadOnlyList<EntityBehaviour> enteredBehaviours = enteredRecord.Representation.EntityBehaviours;
+                bool ownerEntered = Objects.TryGet(entered.ObjectId, out ObjectRow enteredRow) && enteredRow.OwnerId == entered.PeerId;
                 for (int index = 0; index < enteredBehaviours.Count; index++)
                 {
                     TransformSlot slot = enteredBehaviours[index].TransformSlot;
+                    if (slot != null && ownerEntered && slot.Sync.OwnerDriven)
+                    {
+                        QueueAuthority(enteredRecord, slot);
+                    }
+
                     if (slot != null && slot.Sync.SettlePending)
                     {
+                        slot.Sync.SettleToOwner |= ownerEntered;
                         QueueTransform(enteredRecord);
                     }
                     else if (slot != null)
@@ -480,6 +503,7 @@ namespace Fomoxa.Networking.Objects
             }
 
             syncingTransforms.Clear();
+            SendPendingAuthority();
         }
 
         public IPhysicsMotion Motion { get; set; }
@@ -528,6 +552,7 @@ namespace Fomoxa.Networking.Objects
             }
 
             record.TransformsStale = false;
+            ulong ownerId = Objects.TryGet(record.ObjectId, out ObjectRow row) ? row.OwnerId : 0;
             bool polled = false;
             bool moving = false;
             IReadOnlyList<EntityBehaviour> behaviours = record.Representation.EntityBehaviours;
@@ -547,11 +572,14 @@ namespace Fomoxa.Networking.Objects
 
                 slot.Tracked = Follows(record, slot);
                 slot.Source.ReadLocal(out Vector3 position, out Quaternion rotation, out Vector3 scale);
+                ulong forwardExcept = sync.OwnerDriven ? ownerId : 0;
                 if (sync.SettlePending)
                 {
+                    ulong settleExcept = sync.SettleToOwner ? 0 : forwardExcept;
                     sync.SettlePending = false;
+                    sync.SettleToOwner = false;
                     sync.MarkSettled(position, rotation, scale);
-                    Objects.SendToObservers(transformProtocol.SettleCodec.MessageId, record.ObjectId, (byte)index, EncodeSettle(sync, tick, sync.SelectedMask, position, rotation, scale));
+                    Objects.SendToObservers(transformProtocol.SettleCodec.MessageId, record.ObjectId, (byte)index, EncodeSettle(sync, tick, sync.SelectedMask, position, rotation, scale), settleExcept);
                 }
                 else
                 {
@@ -562,11 +590,11 @@ namespace Fomoxa.Networking.Objects
                         transformUpdate.Mask = mask;
                         transformUpdate.Generation = sync.Generation;
                         SpawnTransform.PackSelected(mask, position, rotation, scale, transformUpdate.Values);
-                        Objects.SendToObservers(transformProtocol.UpdateCodec.MessageId, record.ObjectId, (byte)index, transformProtocol.UpdateCodec.Encode(transformUpdate).Span);
+                        Objects.SendToObservers(transformProtocol.UpdateCodec.MessageId, record.ObjectId, (byte)index, transformProtocol.UpdateCodec.Encode(transformUpdate).Span, forwardExcept);
                     }
                     else if (send == TransformSend.Settle)
                     {
-                        Objects.SendToObservers(transformProtocol.SettleCodec.MessageId, record.ObjectId, (byte)index, EncodeSettle(sync, tick, mask, position, rotation, scale));
+                        Objects.SendToObservers(transformProtocol.SettleCodec.MessageId, record.ObjectId, (byte)index, EncodeSettle(sync, tick, mask, position, rotation, scale), forwardExcept);
                     }
                 }
 
@@ -937,6 +965,7 @@ namespace Fomoxa.Networking.Objects
             }
 
             RemoveOwned(Objects.TryGet(objectId, out ObjectRow row) ? row.OwnerId : 0, record);
+            EndOwnerStreams(record);
             try
             {
                 OnUnspawning?.Invoke(record);
@@ -1038,7 +1067,7 @@ namespace Fomoxa.Networking.Objects
 
             if (rpc.RequireOwnership && record.OwnerId != peerId)
             {
-                log.Warning($"Fomoxa dropped server RPC 0x{messageId:X8} to object {objectId} from peer {peerId}, which does not own the object");
+                OnServerRpcRejected?.Invoke(new ServerRpcRejectedArgs(peerId, objectId, behaviourIndex, messageId));
                 return;
             }
 
@@ -1182,6 +1211,7 @@ namespace Fomoxa.Networking.Objects
 
             RemoveOwned(args.PreviousOwnerId, record);
             AddOwned(args.OwnerId, record);
+            MoveOwnerStreams(record, args.OwnerId);
             bool ownerLeft = args.PreviousOwnerId != 0 && session.PeerState(args.PreviousOwnerId) != ConnectionState.Started;
             try
             {
@@ -1297,6 +1327,440 @@ namespace Fomoxa.Networking.Objects
             }
         }
 
+        public void ApplyOwnerTransforms()
+        {
+            for (int index = 0; index < ownerStreams.Count; index++)
+            {
+                OwnerStream stream = ownerStreams[index];
+                TransformSync sync = stream.Slot.Sync;
+                if (sync.Buffer.IsEmpty)
+                {
+                    continue;
+                }
+
+                TransformSample pose = sync.Buffer.Advance(sync.OwnerInterpolationTicks);
+                if (sync.HasWritten && SamePose(pose, sync.Written))
+                {
+                    continue;
+                }
+
+                try
+                {
+                    WriteOwnerPose(stream.Slot, pose);
+                }
+                catch (Exception exception)
+                {
+                    log.Exception(exception);
+                }
+
+                sync.Written = pose;
+                sync.HasWritten = true;
+                stream.Slot.Signal();
+            }
+        }
+
+        internal void SetOwnerAuthority(EntityRecord record, TransformSlot slot, bool value)
+        {
+            TransformSync sync = slot.Sync;
+            ulong ownerId = Objects.TryGet(record.ObjectId, out ObjectRow row) ? row.OwnerId : 0;
+            if (value)
+            {
+                CheckOwnerAuthority(record, slot);
+                sync.SetOwnerAuthority(true);
+                if (ownerId != 0)
+                {
+                    StartOwnerStream(record, slot, IndexOf(record, slot));
+                }
+
+                return;
+            }
+
+            sync.SetOwnerAuthority(false);
+            if (!sync.OwnerDriven)
+            {
+                return;
+            }
+
+            byte index = IndexOf(record, slot);
+            if (ownerId != 0 && Objects.IsObserver(record.ObjectId, ownerId))
+            {
+                SendAuthority(ownerId, record.ObjectId, index, sync.UpstreamGeneration, false);
+            }
+
+            EndOwnerStream(slot);
+            sync.NextGeneration(true);
+        }
+
+        private void CheckOwnerAuthority(EntityRecord record, IReadOnlyList<EntityBehaviour> behaviours)
+        {
+            foreach (EntityBehaviour behaviour in behaviours)
+            {
+                TransformSlot slot = behaviour.TransformSlot;
+                if (slot != null && slot.Sync.OwnerAuthority)
+                {
+                    CheckOwnerAuthority(record, slot);
+                }
+            }
+        }
+
+        private void CheckOwnerAuthority(EntityRecord record, TransformSlot slot)
+        {
+            IReadOnlyList<EntityBehaviour> behaviours = record.Representation.EntityBehaviours;
+            foreach (EntityBehaviour behaviour in behaviours)
+            {
+                if (behaviour.InputSlot != null)
+                {
+                    throw new InvalidOperationException($"{backend.NameOf(record.Representation)} cannot let its owner decide its transform: {behaviour.DeclaringType.FullName} predicts with [NetworkInput] or [NetworkReconcile]");
+                }
+            }
+
+            if (!Writable(slot.Source))
+            {
+                throw new InvalidOperationException($"{backend.NameOf(record.Representation)} cannot let its owner decide its transform: the transform source {slot.Source.GetType().FullName} does not implement {nameof(ITransformWriter)}");
+            }
+        }
+
+        private static bool Writable(ITransformSource source)
+        {
+            switch (source)
+            {
+                case EntityPoseSource entityPose:
+                    return entityPose.Writable;
+                case ChildBodySource childBody:
+                    return childBody.Writable;
+                default:
+                    return source is ITransformWriter;
+            }
+        }
+
+        private void StartOwnerStreams(EntityRecord record)
+        {
+            IReadOnlyList<EntityBehaviour> behaviours = record.Representation.EntityBehaviours;
+            for (int index = 0; index < behaviours.Count; index++)
+            {
+                TransformSlot slot = behaviours[index].TransformSlot;
+                if (slot != null && slot.Sync.OwnerAuthority)
+                {
+                    StartOwnerStream(record, slot, (byte)index);
+                }
+            }
+        }
+
+        private void StartOwnerStream(EntityRecord record, TransformSlot slot, byte index)
+        {
+            TransformSync sync = slot.Sync;
+            if (!sync.OwnerDriven)
+            {
+                sync.OwnerDriven = true;
+                ownerStreams.Add(new OwnerStream(record, slot, index));
+                MakeKinematic(slot);
+            }
+
+            QueueAuthority(record, slot);
+        }
+
+        private void EndOwnerStreams(EntityRecord record)
+        {
+            foreach (EntityBehaviour behaviour in record.Representation.EntityBehaviours)
+            {
+                TransformSlot slot = behaviour.TransformSlot;
+                if (slot != null && slot.Sync.OwnerDriven)
+                {
+                    EndOwnerStream(slot);
+                }
+            }
+        }
+
+        private void EndOwnerStream(TransformSlot slot)
+        {
+            for (int index = ownerStreams.Count - 1; index >= 0; index--)
+            {
+                if (ownerStreams[index].Slot == slot)
+                {
+                    ownerStreams.RemoveAt(index);
+                }
+            }
+
+            RestoreKinds(slot.Sync);
+            slot.Sync.StopOwnerStream();
+        }
+
+        private void MoveOwnerStreams(EntityRecord record, ulong ownerId)
+        {
+            IReadOnlyList<EntityBehaviour> behaviours = record.Representation.EntityBehaviours;
+            for (int index = 0; index < behaviours.Count; index++)
+            {
+                TransformSlot slot = behaviours[index].TransformSlot;
+                if (slot == null || !slot.Sync.OwnerAuthority)
+                {
+                    continue;
+                }
+
+                TransformSync sync = slot.Sync;
+                if (ownerId == 0)
+                {
+                    if (sync.OwnerDriven)
+                    {
+                        EndOwnerStream(slot);
+                    }
+                }
+                else
+                {
+                    sync.Buffer.Reset();
+                    sync.HasAccepted = false;
+                    sync.AwaitingBreak = false;
+                    sync.HasWritten = false;
+                    StartOwnerStream(record, slot, (byte)index);
+                }
+
+                sync.NextGeneration(true);
+            }
+        }
+
+        private void QueueAuthority(EntityRecord record, TransformSlot slot)
+        {
+            if (slot.Sync.AuthorityPending)
+            {
+                return;
+            }
+
+            slot.Sync.AuthorityPending = true;
+            pendingAuthority.Add(new OwnerStream(record, slot, IndexOf(record, slot)));
+        }
+
+        private void SendPendingAuthority()
+        {
+            foreach (OwnerStream pending in pendingAuthority)
+            {
+                TransformSync sync = pending.Slot.Sync;
+                if (!sync.AuthorityPending)
+                {
+                    continue;
+                }
+
+                sync.AuthorityPending = false;
+                EntityRecord record = pending.Record;
+                if (record.Server != this
+                    || !sync.OwnerDriven
+                    || !Objects.TryGet(record.ObjectId, out ObjectRow row)
+                    || row.OwnerId == 0
+                    || !Objects.IsObserver(record.ObjectId, row.OwnerId))
+                {
+                    continue;
+                }
+
+                sync.UpstreamGeneration++;
+                sync.AwaitingBreak = false;
+                sync.HasAccepted = false;
+                sync.Buffer.Reset();
+                SendAuthority(row.OwnerId, record.ObjectId, pending.Index, sync.UpstreamGeneration, true);
+            }
+
+            pendingAuthority.Clear();
+        }
+
+        private void SendAuthority(ulong ownerId, uint objectId, byte index, byte generation, bool enabled)
+        {
+            transformAuthority.Generation = generation;
+            transformAuthority.Enabled = enabled;
+            session.SendToObject(ownerId, transformProtocol.AuthorityCodec.MessageId, objectId, index, transformProtocol.AuthorityCodec.Encode(transformAuthority).Span);
+        }
+
+        private void ReceiveOwnerTransform(ulong peerId, uint objectId, byte behaviourIndex, ReadOnlyMemory<byte> body, bool settle)
+        {
+            if (!spawned.TryGetValue(objectId, out EntityRecord record))
+            {
+                return;
+            }
+
+            IReadOnlyList<EntityBehaviour> behaviours = record.Representation.EntityBehaviours;
+            if (behaviourIndex >= behaviours.Count)
+            {
+                return;
+            }
+
+            TransformSlot slot = behaviours[behaviourIndex].TransformSlot;
+            if (slot == null || !slot.Sync.OwnerDriven || !Objects.TryGet(objectId, out ObjectRow row) || row.OwnerId != peerId)
+            {
+                return;
+            }
+
+            uint tick;
+            byte mask;
+            byte generation;
+            List<float> values;
+            if (settle)
+            {
+                transformProtocol.SettleCodec.Decode(body, ref ownerSettle);
+                tick = ownerSettle.Tick;
+                mask = ownerSettle.Mask;
+                generation = ownerSettle.Generation;
+                values = ownerSettle.Values;
+            }
+            else
+            {
+                transformProtocol.UpdateCodec.Decode(body, ref ownerUpdate);
+                tick = ownerUpdate.Tick;
+                mask = ownerUpdate.Mask;
+                generation = ownerUpdate.Generation;
+                values = ownerUpdate.Values;
+            }
+
+            if (!SpawnTransform.TryUnpack(mask, values, out Vector3 position, out Quaternion rotation, out Vector3 scale))
+            {
+                throw new MessageDecodeException($"transform mask 0x{mask:X2} does not match its {values.Count} values", null);
+            }
+
+            TransformSync sync = slot.Sync;
+            bool discontinuity;
+            bool ownerTeleport = false;
+            if (generation == sync.UpstreamGeneration && !sync.AwaitingBreak)
+            {
+                discontinuity = !sync.HasAccepted;
+            }
+            else if (generation == (byte)(sync.UpstreamGeneration + 1))
+            {
+                discontinuity = true;
+                ownerTeleport = !sync.AwaitingBreak;
+            }
+            else
+            {
+                return;
+            }
+
+            TransformSample accepted;
+            if (discontinuity)
+            {
+                slot.Source.ReadLocal(out Vector3 currentPosition, out Quaternion currentRotation, out Vector3 currentScale);
+                accepted = new TransformSample(tick, sync.SelectedMask, currentPosition, currentRotation, currentScale, true, sync.UpstreamGeneration);
+            }
+            else
+            {
+                accepted = sync.Accepted;
+            }
+
+            var incoming = new TransformSample(
+                tick,
+                mask,
+                (mask & SpawnTransform.PositionBit) != 0 ? position : accepted.LocalPosition,
+                (mask & SpawnTransform.RotationBit) != 0 ? rotation : accepted.LocalRotation,
+                (mask & SpawnTransform.ScaleBit) != 0 ? scale : accepted.LocalScale,
+                settle,
+                generation);
+            uint ticks = discontinuity || tick <= accepted.Tick ? 0 : tick - accepted.Tick;
+            OwnerSampleFilter filter = sync.OwnerSampleFilter;
+            if (filter != null && !filter(accepted, incoming, ticks))
+            {
+                return;
+            }
+
+            sync.UpstreamGeneration = generation;
+            sync.AwaitingBreak = false;
+            if (discontinuity || tick > accepted.Tick)
+            {
+                sync.Accepted = incoming;
+                sync.HasAccepted = true;
+            }
+
+            sync.Buffer.Receive(incoming, discontinuity);
+            if (ownerTeleport)
+            {
+                sync.NextGeneration(false);
+            }
+        }
+
+        private static void WriteOwnerPose(TransformSlot slot, in TransformSample pose)
+        {
+            byte selected = slot.Sync.SelectedMask;
+            slot.Source.ReadLocal(out Vector3 position, out Quaternion rotation, out Vector3 scale);
+            ((ITransformWriter)slot.Source).WriteLocal(
+                (selected & SpawnTransform.PositionBit) != 0 ? pose.LocalPosition : position,
+                (selected & SpawnTransform.RotationBit) != 0 ? pose.LocalRotation : rotation,
+                (selected & SpawnTransform.ScaleBit) != 0 ? pose.LocalScale : scale);
+        }
+
+        private static bool SamePose(in TransformSample first, in TransformSample second) =>
+            first.LocalPosition.Equals(second.LocalPosition)
+                && first.LocalRotation.Equals(second.LocalRotation)
+                && first.LocalScale.Equals(second.LocalScale);
+
+        private void MakeKinematic(TransformSlot slot)
+        {
+            if (!(slot.Source is IOwnerBodies owned))
+            {
+                return;
+            }
+
+            TransformSync sync = slot.Sync;
+            collectedBodies.Clear();
+            collectedBodies2D.Clear();
+            owned.CollectBodies(collectedBodies, collectedBodies2D);
+            foreach (PhysicsBody body in collectedBodies)
+            {
+                BodyKind kind = body.Kind;
+                if (kind != BodyKind.Kinematic)
+                {
+                    sync.KinematicBodies.Add(body);
+                    sync.KinematicKinds.Add(kind);
+                    body.Kind = BodyKind.Kinematic;
+                }
+            }
+
+            foreach (PhysicsBody2D body in collectedBodies2D)
+            {
+                BodyKind kind = body.Kind;
+                if (kind != BodyKind.Kinematic)
+                {
+                    sync.KinematicBodies2D.Add(body);
+                    sync.KinematicKinds2D.Add(kind);
+                    body.Kind = BodyKind.Kinematic;
+                }
+            }
+
+            collectedBodies.Clear();
+            collectedBodies2D.Clear();
+        }
+
+        private static void RestoreKinds(TransformSync sync)
+        {
+            for (int index = 0; index < sync.KinematicBodies.Count; index++)
+            {
+                PhysicsBody body = sync.KinematicBodies[index];
+                if (body.IsValid)
+                {
+                    body.Kind = sync.KinematicKinds[index];
+                }
+            }
+
+            for (int index = 0; index < sync.KinematicBodies2D.Count; index++)
+            {
+                PhysicsBody2D body = sync.KinematicBodies2D[index];
+                if (body.IsValid)
+                {
+                    body.Kind = sync.KinematicKinds2D[index];
+                }
+            }
+
+            sync.KinematicBodies.Clear();
+            sync.KinematicKinds.Clear();
+            sync.KinematicBodies2D.Clear();
+            sync.KinematicKinds2D.Clear();
+        }
+
+        private static byte IndexOf(EntityRecord record, TransformSlot slot)
+        {
+            IReadOnlyList<EntityBehaviour> behaviours = record.Representation.EntityBehaviours;
+            for (int index = 0; index < behaviours.Count; index++)
+            {
+                if (behaviours[index].TransformSlot == slot)
+                {
+                    return (byte)index;
+                }
+            }
+
+            throw new InvalidOperationException("the transform slot does not belong to its entity");
+        }
+
         private ReadOnlySpan<byte> EncodeSettle(TransformSync sync, uint tick, byte mask, in Vector3 position, in Quaternion rotation, in Vector3 scale)
         {
             transformSettle.Tick = tick;
@@ -1306,9 +1770,20 @@ namespace Fomoxa.Networking.Objects
             return transformProtocol.SettleCodec.Encode(transformSettle).Span;
         }
 
-        private void LogRejectedInput(InputRejectedArgs args)
+        private readonly struct OwnerStream
         {
-            log.Warning($"Fomoxa dropped input to object {args.ObjectId} from peer {args.PeerId}, which does not own the object");
+            public OwnerStream(EntityRecord record, TransformSlot slot, byte index)
+            {
+                Record = record;
+                Slot = slot;
+                Index = index;
+            }
+
+            public EntityRecord Record { get; }
+
+            public TransformSlot Slot { get; }
+
+            public byte Index { get; }
         }
 
         private readonly struct ReconcileSend

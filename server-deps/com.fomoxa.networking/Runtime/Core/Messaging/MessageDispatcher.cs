@@ -40,6 +40,29 @@ namespace Fomoxa.Networking.Messaging
             handlers.Add(messageId, handler);
         }
 
+        public void Register<T>(IMessageCodec<T> codec, Action<ulong, T> handler)
+            where T : new()
+        {
+            if (codec == null)
+            {
+                throw new ArgumentNullException(nameof(codec));
+            }
+
+            if (handler == null)
+            {
+                throw new ArgumentNullException(nameof(handler));
+            }
+
+            var value = new T();
+            Register(codec.MessageId, (peerId, payload) =>
+            {
+                codec.Decode(payload, ref value);
+                handler(peerId, value);
+            });
+        }
+
+        public void Unregister(uint messageId) => handlers.Remove(messageId);
+
         public void RegisterObject(uint messageId, ObjectPayloadHandler handler)
         {
             if (handler == null)

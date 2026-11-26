@@ -56,6 +56,8 @@ namespace Fomoxa.Networking
             Clock = new ServerClock(session, clockProtocol);
             Inputs = new ServerInputs(session, Objects, inputProtocol, Clock);
             Entities = new ServerEntities(this, session, Objects, Inputs, Dispatcher, channels, stateProtocol, inputProtocol, transformProtocol, rpcIds, entityBackend, log);
+            Inputs.OnInputRejected += RaiseInputRejected;
+            Entities.OnServerRpcRejected += RaiseServerRpcRejected;
             Scenes = new NetworkScenes(this);
             SceneContent = new ServerSceneContent(session, Objects.Scenes, Entities, sceneHost, log);
             SceneContent.OnLoaded += sceneId => OnNetworkSceneReady?.Invoke(sceneId);
@@ -90,6 +92,10 @@ namespace Fomoxa.Networking
 
         public event Action<HandlerExceptionArgs> OnHandlerException;
 
+        public event Action<InputRejectedArgs> OnInputRejected;
+
+        public event Action<ServerRpcRejectedArgs> OnServerRpcRejected;
+
         public MessageDispatcher Dispatcher { get; }
 
         public ServerState State => session.State;
@@ -103,6 +109,8 @@ namespace Fomoxa.Networking
         public long DroppedInputs => Inputs.TotalDropped;
 
         public int PeerCount => session.PeerCount;
+
+        public PeerIds StartedPeers => session.StartedPeers;
 
         public ServerTrafficStatistics Statistics => session.Statistics;
 
@@ -221,10 +229,30 @@ namespace Fomoxa.Networking
         public SendResult Send(ulong peerId, uint messageId, ReadOnlySpan<byte> payload) =>
             session.Send(peerId, messageId, payload);
 
+        public SendResult Send<T>(ulong peerId, IMessageCodec<T> codec, T value)
+        {
+            if (codec == null)
+            {
+                throw new ArgumentNullException(nameof(codec));
+            }
+
+            return session.Send(peerId, codec.MessageId, codec.Encode(value).Span);
+        }
+
         public SendResult SendToObject(ulong peerId, uint messageId, uint objectId, byte behaviourIndex, ReadOnlySpan<byte> body) =>
             session.SendToObject(peerId, messageId, objectId, behaviourIndex, body);
 
         public int Broadcast(uint messageId, ReadOnlySpan<byte> payload) => session.Broadcast(messageId, payload);
+
+        public int Broadcast<T>(IMessageCodec<T> codec, T value)
+        {
+            if (codec == null)
+            {
+                throw new ArgumentNullException(nameof(codec));
+            }
+
+            return session.Broadcast(codec.MessageId, codec.Encode(value).Span);
+        }
 
         public void Disconnect(ulong peerId) => session.Disconnect(peerId);
 
@@ -328,12 +356,38 @@ namespace Fomoxa.Networking
 
         internal void SyncTransforms(uint tick) => Entities.SyncTransforms(tick);
 
+        internal void ApplyOwnerTransforms() => Entities.ApplyOwnerTransforms();
+
         private void RaiseHandlerException(HandlerExceptionArgs args)
         {
             Action<HandlerExceptionArgs> handlers = OnHandlerException;
             if (handlers == null)
             {
                 log.Exception(args.Exception);
+                return;
+            }
+
+            handlers(args);
+        }
+
+        private void RaiseInputRejected(InputRejectedArgs args)
+        {
+            Action<InputRejectedArgs> handlers = OnInputRejected;
+            if (handlers == null)
+            {
+                log.Warning($"Fomoxa dropped input to object {args.ObjectId} from peer {args.PeerId}, which does not own the object");
+                return;
+            }
+
+            handlers(args);
+        }
+
+        private void RaiseServerRpcRejected(ServerRpcRejectedArgs args)
+        {
+            Action<ServerRpcRejectedArgs> handlers = OnServerRpcRejected;
+            if (handlers == null)
+            {
+                log.Warning($"Fomoxa dropped server RPC 0x{args.MessageId:X8} to object {args.ObjectId} from peer {args.PeerId}, which does not own the object");
                 return;
             }
 

@@ -238,6 +238,16 @@ namespace Fomoxa.Networking
 
         public SendResult Send(uint messageId, ReadOnlySpan<byte> payload) => session.Send(messageId, payload);
 
+        public SendResult Send<T>(IMessageCodec<T> codec, T value)
+        {
+            if (codec == null)
+            {
+                throw new ArgumentNullException(nameof(codec));
+            }
+
+            return session.Send(codec.MessageId, codec.Encode(value).Span);
+        }
+
         public SendResult SendToObject(uint messageId, uint objectId, byte behaviourIndex, ReadOnlySpan<byte> body) =>
             session.SendToObject(messageId, objectId, behaviourIndex, body);
 
@@ -246,6 +256,8 @@ namespace Fomoxa.Networking
         internal void PlaceProxies() => Prediction.PlaceProxies();
 
         internal void EndProxies() => Prediction.EndProxies();
+
+        internal void SyncOwnerTransforms() => Entities.SyncOwnerTransforms();
 
         internal void Predict(uint predictionTick) => Prediction.Predict(predictionTick, timeManager.ClockSynced, (float)timeManager.TickDelta);
 

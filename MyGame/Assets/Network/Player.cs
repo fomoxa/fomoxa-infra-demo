@@ -9,7 +9,6 @@ namespace MyGame.Network
     [NetworkInputModel("MoveInput")]
     public sealed partial class Player : NetworkBehaviour
     {
-        private NetworkManager manager;
         private float verticalSpeed;
 
         [NetworkInput]
@@ -29,7 +28,6 @@ namespace MyGame.Network
 
         private void Awake()
         {
-            manager = FindAnyObjectByType<NetworkManager>();
             string[] args = Environment.GetCommandLineArgs();
             bot = Array.IndexOf(args, "-bot") >= 0;
             trace = Array.IndexOf(args, "-trace") >= 0;
@@ -76,11 +74,6 @@ namespace MyGame.Network
 
         protected override void OnApplyInput(InputContext context)
         {
-            if (manager == null)
-            {
-                return;
-            }
-
             Vector3 direction = Vector3.ClampMagnitude(new Vector3(x, 0f, z), 1f);
             if (direction.sqrMagnitude > 0.0001f)
             {
@@ -91,7 +84,7 @@ namespace MyGame.Network
             float positionX = position.x;
             float positionZ = position.z;
             float feet = position.y - Course.HalfHeight;
-            Course.Simulate(ref positionX, ref feet, ref positionZ, ref verticalSpeed, direction.x, direction.z, jump, (float)manager.TimeManager.TickDelta);
+            Course.Simulate(ref positionX, ref feet, ref positionZ, ref verticalSpeed, direction.x, direction.z, jump, (float)NetworkManager.TimeManager.TickDelta);
             transform.position = new Vector3(positionX, feet + Course.HalfHeight, positionZ);
 
             if (verticalSpeed == 0f)

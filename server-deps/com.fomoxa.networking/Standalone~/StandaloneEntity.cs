@@ -6,7 +6,7 @@ using Fomoxa.Networking.Simulation;
 
 namespace Fomoxa.Networking.Standalone
 {
-    public class StandaloneEntity : INetworkEntity, IPoseSignals, IChildBodyPoses
+    public class StandaloneEntity : INetworkEntity, IPoseSignals, IChildBodyPoses, IEntityPoseTarget
     {
         private static readonly Dictionary<Type, bool> PoseOverrides = new Dictionary<Type, bool>();
         private readonly EntityBehaviour[] behaviours;
@@ -327,6 +327,79 @@ namespace Fomoxa.Networking.Standalone
             localPosition = childDescs[body.Index].LocalPosition;
             localRotation = childDescs[body.Index].LocalRotation;
         }
+
+        void IEntityPoseTarget.WriteRootPose(in Vector3 worldPosition, in Quaternion worldRotation, in Vector3 localScale)
+        {
+            Position = worldPosition;
+            Rotation = worldRotation;
+            Scale = localScale;
+        }
+
+        void IEntityPoseTarget.WriteChildPose(ChildBody body, in Vector3 localPosition, in Quaternion localRotation)
+        {
+            Quaternion entityRotation = Rotation;
+            Vector3 worldPosition = Position + Vector3.Transform(localPosition, entityRotation);
+            Quaternion worldRotation = Quaternion.Normalize(entityRotation * localRotation);
+            if (body.Is2D)
+            {
+                PhysicsBody2D child = ChildBody2DAt(body);
+                if (child.IsValid)
+                {
+                    child.Position = new Vector2(worldPosition.X, worldPosition.Y);
+                    child.Rotation = AngleOf(worldRotation);
+                }
+            }
+            else
+            {
+                PhysicsBody child = ChildBodyAt(body);
+                if (child.IsValid)
+                {
+                    child.Position = worldPosition;
+                    child.Rotation = worldRotation;
+                }
+            }
+
+            SignalPose();
+        }
+
+        void IEntityPoseTarget.CollectRootBodies(List<PhysicsBody> bodies, List<PhysicsBody2D> bodies2D)
+        {
+            if (Body.IsValid)
+            {
+                bodies.Add(Body);
+            }
+
+            if (Body2D.IsValid)
+            {
+                bodies2D.Add(Body2D);
+            }
+        }
+
+        void IEntityPoseTarget.CollectChildBody(ChildBody body, List<PhysicsBody> bodies, List<PhysicsBody2D> bodies2D)
+        {
+            if (body.Is2D)
+            {
+                PhysicsBody2D child = ChildBody2DAt(body);
+                if (child.IsValid)
+                {
+                    bodies2D.Add(child);
+                }
+            }
+            else
+            {
+                PhysicsBody child = ChildBodyAt(body);
+                if (child.IsValid)
+                {
+                    bodies.Add(child);
+                }
+            }
+        }
+
+        private PhysicsBody ChildBodyAt(ChildBody body) =>
+            body.Index < childBodies.Count ? childBodies[body.Index] : default;
+
+        private PhysicsBody2D ChildBody2DAt(ChildBody body) =>
+            body.Index < childBodies2D.Count ? childBodies2D[body.Index] : default;
 
         private void ReadChildren()
         {

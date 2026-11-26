@@ -20,6 +20,7 @@ namespace Fomoxa.Networking.Sessions
         private readonly SessionInbox inbox;
         private readonly Dictionary<ulong, Peer> peers = new Dictionary<ulong, Peer>();
         private readonly List<ulong> stoppingPeerIds = new List<ulong>();
+        private readonly PeerIds startedPeers = new PeerIds();
         private readonly List<Peer> flushingPeers = new List<Peer>();
         private readonly List<QueuedMessage> heldMessages = new List<QueuedMessage>();
         private readonly SessionClose close = new SessionClose();
@@ -58,6 +59,8 @@ namespace Fomoxa.Networking.Sessions
         internal int LocalListenerIndex { get; set; } = -1;
 
         public int PeerCount => peers.Count;
+
+        public PeerIds StartedPeers => startedPeers;
 
         public ServerTrafficStatistics Statistics { get; }
 
@@ -131,12 +134,16 @@ namespace Fomoxa.Networking.Sessions
             return queued;
         }
 
-        public int BroadcastToObject(IReadOnlyList<ulong> peerIds, uint messageId, uint objectId, byte behaviourIndex, ReadOnlySpan<byte> body)
+        public int BroadcastToObject(IReadOnlyList<ulong> peerIds, uint messageId, uint objectId, byte behaviourIndex, ReadOnlySpan<byte> body) =>
+            BroadcastToObject(peerIds, 0, messageId, objectId, behaviourIndex, body);
+
+        internal int BroadcastToObject(IReadOnlyList<ulong> peerIds, ulong exceptPeerId, uint messageId, uint objectId, byte behaviourIndex, ReadOnlySpan<byte> body)
         {
             int queued = 0;
             for (int index = 0; index < peerIds.Count; index++)
             {
-                if (peers.TryGetValue(peerIds[index], out Peer peer)
+                if (peerIds[index] != exceptPeerId
+                    && peers.TryGetValue(peerIds[index], out Peer peer)
                     && peer.Accepts
                     && peer.Outbox.EnqueueToObject(messageId, objectId, behaviourIndex, body) == EnqueueResult.Queued)
                 {
@@ -501,6 +508,11 @@ namespace Fomoxa.Networking.Sessions
         private bool StartPeer(Peer peer)
         {
             peer.State = ConnectionState.Started;
+            if (!peer.Closing)
+            {
+                startedPeers.Add(peer.Id);
+            }
+
             OutgoingQueue queue = peer.Outbox.Queue;
             queue.MoveAllTo(heldMessages);
             peer.Outbox.OpenGate(true);
@@ -600,6 +612,7 @@ namespace Fomoxa.Networking.Sessions
         private void BeginClose(Peer peer, SessionCloseReason reason, StopReason stopReason)
         {
             peer.Closing = true;
+            startedPeers.Remove(peer.Id);
             peer.CloseStopReason = stopReason;
             peer.CloseDeadline = lastNow + limits.CloseTimeout;
             close.Reason = (byte)reason;
@@ -647,6 +660,7 @@ namespace Fomoxa.Networking.Sessions
         {
             int total = peer.Discarded + peer.Outbox.Clear();
             peers.Remove(peer.Id);
+            startedPeers.Remove(peer.Id);
             Statistics?.RemovePeer(peer.Id);
             RaisePeer(peer.Id, ConnectionState.Stopped, reason, failure, total);
             ReportCancellationFailure(peer);

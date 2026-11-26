@@ -29,5 +29,7 @@ namespace Fomoxa.Networking
 
             return session.SendAuthentication(this, codec.MessageId, codec.Encode(value).Span);
         }
+
+        internal SendResult Send(uint messageId, ReadOnlySpan<byte> payload) => session.SendAuthentication(this, messageId, payload);
     }
 }

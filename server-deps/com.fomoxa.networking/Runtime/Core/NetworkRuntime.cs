@@ -13,7 +13,7 @@ namespace Fomoxa.Networking
 {
     public sealed class NetworkRuntime
     {
-        public const string Version = "0.4.0";
+        public const string Version = "0.5.0";
 
         private readonly FomoxaRegistry registry;
         private readonly NetworkLog log;
@@ -46,7 +46,7 @@ namespace Fomoxa.Networking
                 RequireCodec<ObjectOwnerChange>(),
                 registry.Channels);
             var stateProtocol = new StateProtocol(RequireCodec<StateDelta>(), RequireCodec<StateResync>(), RequireCodec<AnimatorState>(), CollectionProtocol.From(registry), registry.Channels);
-            var transformProtocol = new TransformProtocol(RequireCodec<TransformUpdate>(), RequireCodec<TransformSettle>(), registry.Channels);
+            var transformProtocol = new TransformProtocol(RequireCodec<TransformUpdate>(), RequireCodec<TransformSettle>(), RequireCodec<TransformAuthority>(), registry.Channels);
             var sceneProtocol = new SceneProtocol(RequireCodec<SceneLoad>(), RequireCodec<SceneUnload>(), RequireCodec<SceneLoaded>(), registry.Channels);
             var clockProtocol = new ClockProtocol(RequireCodec<TickPing>(), RequireCodec<TickPong>());
             var inputProtocol = new InputProtocol(RequireCodec<InputFrames>(), RequireCodec<ReconcileState>());
@@ -227,6 +227,8 @@ namespace Fomoxa.Networking
                     ServerManager.ApplyInputs(TimeManager.Tick, ClientManager.ConnectedLocally ? ClientManager.Objects.LocalPeerId : 0);
                 }
 
+                ServerManager.ApplyOwnerTransforms();
+
                 if (worlds != null)
                 {
                     StepWorlds(worlds, (float)TimeManager.TickDelta, TimeManager.PredictionTick, TimeManager.Mode == TimingMode.Tick && ClientManager.RecordsContacts, ClientManager.InputRules.History);
@@ -254,6 +256,7 @@ namespace Fomoxa.Networking
                 }
 
                 ServerManager.SyncTransforms(TimeManager.Tick);
+                ClientManager.SyncOwnerTransforms();
                 if (TimeManager.Mode == TimingMode.Tick)
                 {
                     Send();

@@ -52,7 +52,7 @@ namespace Fomoxa.Networking.Prediction
             clock.InputLeadOf = InputLeadOf;
         }
 
-        public event Action<InputRejectedArgs> OnInputRejected;
+        internal event Action<InputRejectedArgs> OnInputRejected;
 
         public int MaxInputLead
         {

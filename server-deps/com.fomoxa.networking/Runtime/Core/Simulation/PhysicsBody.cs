@@ -66,6 +66,12 @@ namespace Fomoxa.Networking.Simulation
 
         public bool IsKinematic => world.GetKind(handle) == BodyKind.Kinematic;
 
+        internal BodyKind Kind
+        {
+            get => world.GetKind(handle);
+            set => world.SetKind(handle, value);
+        }
+
         public BodyState State
         {
             get => world.GetBody(handle);

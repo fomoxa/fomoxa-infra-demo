@@ -1,6 +1,8 @@
 using System;
+using System.Collections.Generic;
 using System.Numerics;
 using Fomoxa.Networking.Objects;
+using Fomoxa.Networking.Simulation;
 
 namespace Fomoxa.Networking
 {
@@ -18,6 +20,8 @@ namespace Fomoxa.Networking
         private Vector3 sampledScale;
         private bool moving;
         private TransformSyncSettings syncSettings;
+        private bool ownerAuthority;
+        private int ownerInterpolationTicks = 1;
 
         public TransformSync(TransformSyncSettings settings)
         {
@@ -36,7 +40,89 @@ namespace Fomoxa.Networking
 
         public byte Generation { get; private set; }
 
+        public bool OwnerAuthority
+        {
+            get => ownerAuthority;
+            set
+            {
+                EntityRecord record = behaviour?.TransformSlot?.Record;
+                if (record?.Server == null && behaviour != null && behaviour.SpawnedOnClient)
+                {
+                    throw new InvalidOperationException("OwnerAuthority is set on the server");
+                }
+
+                if (value == ownerAuthority)
+                {
+                    return;
+                }
+
+                if (record?.Server != null)
+                {
+                    record.Server.SetOwnerAuthority(record, behaviour.TransformSlot, value);
+                    return;
+                }
+
+                ownerAuthority = value;
+            }
+        }
+
+        public int OwnerInterpolationTicks
+        {
+            get => ownerInterpolationTicks;
+            set
+            {
+                if (value < 0)
+                {
+                    throw new ArgumentOutOfRangeException(nameof(value), value, "OwnerInterpolationTicks cannot be negative");
+                }
+
+                ownerInterpolationTicks = value;
+            }
+        }
+
+        public OwnerSampleFilter OwnerSampleFilter { get; set; }
+
+        public bool IsOwnerSending => OwnerSending;
+
         internal bool SettlePending { get; set; }
+
+        internal bool SettleToOwner { get; set; }
+
+        internal bool OwnerDriven { get; set; }
+
+        internal bool AuthorityPending { get; set; }
+
+        internal byte UpstreamGeneration { get; set; }
+
+        internal bool AwaitingBreak { get; set; }
+
+        internal bool HasAccepted { get; set; }
+
+        internal TransformSample Accepted { get; set; }
+
+        internal OwnerTransformBuffer Buffer { get; } = new OwnerTransformBuffer();
+
+        internal bool HasWritten { get; set; }
+
+        internal TransformSample Written { get; set; }
+
+        internal List<PhysicsBody> KinematicBodies { get; } = new List<PhysicsBody>();
+
+        internal List<BodyKind> KinematicKinds { get; } = new List<BodyKind>();
+
+        internal List<PhysicsBody2D> KinematicBodies2D { get; } = new List<PhysicsBody2D>();
+
+        internal List<BodyKind> KinematicKinds2D { get; } = new List<BodyKind>();
+
+        internal bool OwnerSending { get; set; }
+
+        internal byte OwnerGeneration { get; set; }
+
+        internal bool OwnerSettlePending { get; set; }
+
+        internal bool HasDownstream { get; set; }
+
+        internal byte DownstreamGeneration { get; set; }
 
         internal bool Moving => moving;
 
@@ -47,14 +133,55 @@ namespace Fomoxa.Networking
 
         public void Teleport()
         {
-            if (behaviour == null || !behaviour.SpawnedOnServer)
+            if (behaviour == null)
             {
                 return;
             }
 
+            if (behaviour.SpawnedOnServer)
+            {
+                if (OwnerDriven)
+                {
+                    AwaitingBreak = true;
+                    Buffer.Reset();
+                    HasAccepted = false;
+                }
+
+                NextGeneration(true);
+                return;
+            }
+
+            if (OwnerSending)
+            {
+                OwnerGeneration++;
+                OwnerSettlePending = true;
+            }
+        }
+
+        internal void NextGeneration(bool toOwner)
+        {
             Generation++;
             SettlePending = true;
+            SettleToOwner |= toOwner;
             behaviour.TransformSlot?.Signal();
+        }
+
+        internal void SetOwnerAuthority(bool value) => ownerAuthority = value;
+
+        internal void StopOwnerStream()
+        {
+            OwnerDriven = false;
+            AuthorityPending = false;
+            AwaitingBreak = false;
+            HasAccepted = false;
+            HasWritten = false;
+            Buffer.Reset();
+        }
+
+        internal void StopSending()
+        {
+            OwnerSending = false;
+            OwnerSettlePending = false;
         }
 
         internal void Bind(EntityBehaviour owner)
@@ -71,6 +198,7 @@ namespace Fomoxa.Networking
         {
             MarkSettled(localPosition, localRotation, localScale);
             SettlePending = true;
+            SettleToOwner = true;
         }
 
         internal void MarkSettled(in Vector3 localPosition, in Quaternion localRotation, in Vector3 localScale)

@@ -32,6 +32,8 @@ namespace Fomoxa.Networking.Simulation
 
         BodyKind GetKind(BodyHandle body);
 
+        void SetKind(BodyHandle body, BodyKind kind);
+
         float GetMass(BodyHandle body);
 
         void SetBody(BodyHandle body, in BodyState state);

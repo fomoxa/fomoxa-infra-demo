@@ -100,6 +100,9 @@ namespace Fomoxa.Networking.Objects
         public int SendToObservers(uint messageId, uint objectId, byte behaviourIndex, ReadOnlySpan<byte> body) =>
             observers.TryGetValue(objectId, out ObserverSet peerIds) ? session.BroadcastToObject(peerIds, messageId, objectId, behaviourIndex, body) : 0;
 
+        internal int SendToObservers(uint messageId, uint objectId, byte behaviourIndex, ReadOnlySpan<byte> body, ulong exceptPeerId) =>
+            observers.TryGetValue(objectId, out ObserverSet peerIds) ? session.BroadcastToObject(peerIds, exceptPeerId, messageId, objectId, behaviourIndex, body) : 0;
+
         public SendResult SendToObserver(ulong peerId, uint messageId, uint objectId, byte behaviourIndex, ReadOnlySpan<byte> body)
         {
             if (session.PeerState(peerId) == ConnectionState.Stopped)

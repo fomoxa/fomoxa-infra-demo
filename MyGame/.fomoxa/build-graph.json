@@ -1,7 +1,7 @@
 {
   "schema_version": 1,
   "generator": "fomoxac 0.2.3",
-  "schema_fingerprint": "sha256:509766ed73def5969eff018fac830cae40710d16bfbd7ff900aa47499758383f",
+  "schema_fingerprint": "sha256:ae07362f59c7356b84372043e948eccf04919371687c20f94a101eb2189d5f07",
   "sha256_of": "each file with its `// generated-at:` line emptied, so an unchanged schema keeps an unchanged digest",
   "sources": {
     "Assets/Network/Generated/StateModels/MoveInput.cs": {
@@ -946,6 +946,20 @@
         }
       ]
     },
+    "FomoxaSystemModels/TransformAuthority.cs": {
+      "models": [
+        "TransformAuthority"
+      ],
+      "outputs": [
+        {
+          "path": "Assets/Network/Generated/TransformAuthorityNetCodec.cs",
+          "model": "TransformAuthority",
+          "codec": "net",
+          "fingerprint": "sha256:2e6aca390d4c220fd221f2730a9b70f6ef2ebabceda06cfb19cc87cc95227d9e",
+          "sha256": "dad049702fdf4bab65c7634e8bb5ef1a8a6290a0577be71d56143904fb623167"
+        }
+      ]
+    },
     "FomoxaSystemModels/TransformSettle.cs": {
       "models": [
         "TransformSettle"
@@ -984,12 +998,12 @@
     {
       "path": "Assets/Network/Generated/Handshake.cs",
       "kind": "handshake",
-      "sha256": "4b09d2b51fb9cf3df820203bf92c45e048328d2c3e8b4b9d61779085aaca8462"
+      "sha256": "10ddf51deb744b675436e1f889ac4299cf1d3033ef8dd953af4f4b7650b48e65"
     },
     {
       "path": "Assets/Network/Generated/NetSchema.cs",
       "kind": "net_schema",
-      "sha256": "8a2b5817b12ed7fddca419113219a241db58462630e12d6d6929e0d6c38c4f09"
+      "sha256": "ec3e802371f39712a63120fcb8904588c13e9ea0c10ea9c0175e09efc50ae2e5"
     }
   ]
 }
