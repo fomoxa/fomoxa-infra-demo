@@ -43,13 +43,16 @@ namespace Fomoxa.Networking.Standalone
 
             foreach (SceneFile file in boot)
             {
-                physics?.LoadScene(file);
+                physics?.LoadScene(default, file);
             }
 
             var clientEntities = new StandaloneClientEntityBackend(prefabs, physics);
+            var serverEntities = new StandaloneServerEntityBackend(prefabs, physics);
+            var serverScenes = new StandaloneServerSceneHost(registry, scenes, behaviours, physics, boot);
+            serverEntities.HasScene = serverScenes.Has;
             var backends = new NetworkBackends(
-                new StandaloneServerEntityBackend(prefabs, physics, boot),
-                new StandaloneServerSceneHost(registry, scenes, behaviours, physics, boot),
+                serverEntities,
+                serverScenes,
                 clientEntities,
                 new StandaloneClientSceneHost(registry, scenes, behaviours, clientEntities, log, physics, boot),
                 new StandalonePredictionBackend(physics));

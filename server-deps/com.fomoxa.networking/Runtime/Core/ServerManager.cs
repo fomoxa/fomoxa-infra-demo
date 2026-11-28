@@ -60,10 +60,11 @@ namespace Fomoxa.Networking
             Entities.OnServerRpcRejected += RaiseServerRpcRejected;
             Scenes = new NetworkScenes(this);
             SceneContent = new ServerSceneContent(session, Objects.Scenes, Entities, sceneHost, log);
-            SceneContent.OnLoaded += sceneId => OnNetworkSceneReady?.Invoke(sceneId);
+            SceneContent.OnLoaded += scene => OnNetworkSceneReady?.Invoke(scene);
             SceneContent.OnLoaded += Scenes.RaiseLoaded;
-            SceneContent.OnLoadFailed += (sceneId, exception) => OnNetworkSceneFailed?.Invoke(sceneId);
+            SceneContent.OnLoadFailed += (scene, exception) => OnNetworkSceneFailed?.Invoke(scene);
             SceneContent.OnLoadFailed += Scenes.RaiseLoadFailed;
+            SceneContent.OnUnloaded += Scenes.RaiseUnloaded;
         }
 
         public event Action<ServerConnectionStateArgs> OnServerConnectionState
@@ -197,9 +198,9 @@ namespace Fomoxa.Networking
 
         internal IServerSceneHost SceneHost => sceneHost;
 
-        internal event Action<uint> OnNetworkSceneReady;
+        internal event Action<NetworkScene> OnNetworkSceneReady;
 
-        internal event Action<uint> OnNetworkSceneFailed;
+        internal event Action<NetworkScene> OnNetworkSceneFailed;
 
         public ConnectionState PeerState(ulong peerId) => session.PeerState(peerId);
 
@@ -294,6 +295,16 @@ namespace Fomoxa.Networking
             return Entities.ChangeOwner(networkObject, ownerId);
         }
 
+        public bool MoveToScene(INetworkEntity networkObject, NetworkScene scene)
+        {
+            if (networkObject == null)
+            {
+                throw new ArgumentNullException(nameof(networkObject));
+            }
+
+            return Entities.MoveToScene(networkObject, scene);
+        }
+
         public bool IsObserver(INetworkEntity networkObject, ulong peerId)
         {
             if (networkObject == null)
@@ -326,7 +337,7 @@ namespace Fomoxa.Networking
 
         internal void RebuildObserversRound() => Entities.RebuildObserversRound();
 
-        internal bool IsLoadingNetworkScene(uint sceneId) => SceneContent.IsLoading(sceneId);
+        internal bool IsLoadingNetworkScene(NetworkScene scene) => SceneContent.IsLoading(scene);
 
         internal void Tick(TimeSpan now)
         {

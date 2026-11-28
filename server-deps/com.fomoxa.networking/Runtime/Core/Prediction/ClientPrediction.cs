@@ -197,6 +197,11 @@ namespace Fomoxa.Networking.Prediction
             }
 
             inputProtocol.ReconcileCodec.Decode(body, ref reconcileState);
+            if (reconcileState.Tick < record.ReconcileFrom)
+            {
+                return;
+            }
+
             slot.HoldPending(reconcileState.Tick, reconcileState.Data.Span);
         }
 

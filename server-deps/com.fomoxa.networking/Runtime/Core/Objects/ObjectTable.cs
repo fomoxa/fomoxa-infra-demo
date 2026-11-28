@@ -11,17 +11,17 @@ namespace Fomoxa.Networking.Objects
         }
 
         public ObjectRow(uint objectId, uint prefabId, ulong sceneObjectId, ulong ownerId)
-            : this(objectId, prefabId, sceneObjectId, ownerId, 0)
+            : this(objectId, prefabId, sceneObjectId, ownerId, default)
         {
         }
 
-        public ObjectRow(uint objectId, uint prefabId, ulong sceneObjectId, ulong ownerId, uint sceneId)
+        public ObjectRow(uint objectId, uint prefabId, ulong sceneObjectId, ulong ownerId, NetworkScene scene)
         {
             ObjectId = objectId;
             PrefabId = prefabId;
             SceneObjectId = sceneObjectId;
             OwnerId = ownerId;
-            SceneId = sceneId;
+            Scene = scene;
         }
 
         public uint ObjectId { get; }
@@ -32,7 +32,7 @@ namespace Fomoxa.Networking.Objects
 
         public ulong OwnerId { get; }
 
-        public uint SceneId { get; }
+        public NetworkScene Scene { get; }
     }
 
     public sealed class ObjectTable
@@ -97,7 +97,21 @@ namespace Fomoxa.Networking.Objects
 
             ObjectRow row = node.Value;
             previousOwnerId = row.OwnerId;
-            node.Value = new ObjectRow(row.ObjectId, row.PrefabId, row.SceneObjectId, ownerId, row.SceneId);
+            node.Value = new ObjectRow(row.ObjectId, row.PrefabId, row.SceneObjectId, ownerId, row.Scene);
+            return true;
+        }
+
+        public bool SetScene(uint objectId, NetworkScene scene, out NetworkScene previousScene)
+        {
+            if (!index.TryGetValue(objectId, out LinkedListNode<ObjectRow> node))
+            {
+                previousScene = default;
+                return false;
+            }
+
+            ObjectRow row = node.Value;
+            previousScene = row.Scene;
+            node.Value = new ObjectRow(row.ObjectId, row.PrefabId, row.SceneObjectId, row.OwnerId, scene);
             return true;
         }
 

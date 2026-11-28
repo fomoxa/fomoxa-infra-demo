@@ -18,6 +18,8 @@ namespace Fomoxa.Networking.Standalone
         private readonly List<PhysicsBody2D> childBodies2D = new List<PhysicsBody2D>();
         private readonly List<PhysicsBody> bodies = new List<PhysicsBody>();
         private readonly List<PhysicsBody2D> bodies2D = new List<PhysicsBody2D>();
+        private readonly List<(BodyState State, BodyKind Kind)> movedStates = new List<(BodyState State, BodyKind Kind)>();
+        private readonly List<(BodyState2D State, BodyKind Kind)> movedStates2D = new List<(BodyState2D State, BodyKind Kind)>();
         private bool childrenRead;
         private Vector3 position;
         private Quaternion rotation = Quaternion.Identity;
@@ -57,7 +59,7 @@ namespace Fomoxa.Networking.Standalone
 
         public ulong SceneObjectId { get; }
 
-        public uint SceneId { get; set; }
+        public NetworkScene Scene { get; set; }
 
         public bool DespawnWithOwner { get; set; } = true;
 
@@ -204,13 +206,13 @@ namespace Fomoxa.Networking.Standalone
             ReadChildren();
             if (TryGetBody(out BodyDesc body))
             {
-                Body = physics.AddBody(this, SceneId, new BodyDesc(body.Kind, body.Colliders, at, facing, body.Mass, body.Motion));
+                Body = physics.AddBody(this, Scene, new BodyDesc(body.Kind, body.Colliders, at, facing, body.Mass, body.Motion));
                 bodies.Add(Body);
             }
 
             if (TryGetBody2D(out BodyDesc2D body2D))
             {
-                Body2D = physics.AddBody2D(this, SceneId, new BodyDesc2D(body2D.Kind, body2D.Colliders, new Vector2(at.X, at.Y), angle, body2D.Mass, body2D.Motion));
+                Body2D = physics.AddBody2D(this, Scene, new BodyDesc2D(body2D.Kind, body2D.Colliders, new Vector2(at.X, at.Y), angle, body2D.Mass, body2D.Motion));
                 bodies2D.Add(Body2D);
             }
 
@@ -219,7 +221,7 @@ namespace Fomoxa.Networking.Standalone
                 BodyDesc described = child.Body;
                 Vector3 childPosition = at + Vector3.Transform(child.LocalPosition, facing);
                 Quaternion childRotation = Quaternion.Normalize(facing * child.LocalRotation);
-                PhysicsBody created = physics.AddBody(this, SceneId, new BodyDesc(described.Kind, described.Colliders, childPosition, childRotation, described.Mass, described.Motion));
+                PhysicsBody created = physics.AddBody(this, Scene, new BodyDesc(described.Kind, described.Colliders, childPosition, childRotation, described.Mass, described.Motion));
                 childBodies.Add(created);
                 bodies.Add(created);
             }
@@ -228,7 +230,7 @@ namespace Fomoxa.Networking.Standalone
             {
                 BodyDesc2D described = child.Body;
                 Vector2 childPosition = new Vector2(at.X, at.Y) + Rotate(child.LocalPosition, angle);
-                PhysicsBody2D created = physics.AddBody2D(this, SceneId, new BodyDesc2D(described.Kind, described.Colliders, childPosition, angle + child.LocalRotation, described.Mass, described.Motion));
+                PhysicsBody2D created = physics.AddBody2D(this, Scene, new BodyDesc2D(described.Kind, described.Colliders, childPosition, angle + child.LocalRotation, described.Mass, described.Motion));
                 childBodies2D.Add(created);
                 bodies2D.Add(created);
             }
@@ -253,6 +255,55 @@ namespace Fomoxa.Networking.Standalone
             bodies.Clear();
             bodies2D.Clear();
             attached = false;
+        }
+
+        internal void MoveTo(NetworkScene scene, IPhysicsScenes physics)
+        {
+            if (physics == null || !attached)
+            {
+                Scene = scene;
+                return;
+            }
+
+            movedStates.Clear();
+            movedStates2D.Clear();
+            foreach (PhysicsBody body in bodies)
+            {
+                movedStates.Add((body.State, body.Kind));
+            }
+
+            foreach (PhysicsBody2D body in bodies2D)
+            {
+                movedStates2D.Add((body.State, body.Kind));
+            }
+
+            DetachBodies(physics);
+            Scene = scene;
+            AttachBodies(physics);
+            for (int index = 0; index < bodies.Count && index < movedStates.Count; index++)
+            {
+                PhysicsBody body = bodies[index];
+                if (body.Kind != movedStates[index].Kind)
+                {
+                    body.Kind = movedStates[index].Kind;
+                }
+
+                body.State = movedStates[index].State;
+            }
+
+            for (int index = 0; index < bodies2D.Count && index < movedStates2D.Count; index++)
+            {
+                PhysicsBody2D body = bodies2D[index];
+                if (body.Kind != movedStates2D[index].Kind)
+                {
+                    body.Kind = movedStates2D[index].Kind;
+                }
+
+                body.State = movedStates2D[index].State;
+            }
+
+            movedStates.Clear();
+            movedStates2D.Clear();
         }
 
         internal void PlaceProxies(IPhysicsScenes physics)

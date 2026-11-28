@@ -4,9 +4,9 @@
 // source: FomoxaSystemModels/ObjectSpawn.cs
 // model: ObjectSpawn
 // codec: net
-// fingerprint: sha256:a7c0963e41c8d496747e2e5800fab7f0a4fb6f214bf183fb4853de0c476e67fc
+// fingerprint: sha256:b13fa001f40ffc12fcd8a1177c0325bef4c0a62efa223dccf0245382929d367f
 // fomoxac-version: 0.2.3
-// generated-at: 2026-11-01T10:10:46Z
+// generated-at: 2026-11-28T03:57:53Z
 
 namespace Generated
 {
@@ -22,7 +22,7 @@ namespace Generated
 /// <item><description><c>Mask</c>: <c>u8</c></description></item>
 /// <item><description><c>Values</c>: <c>Array&lt;f32&gt;</c></description></item>
 /// <item><description><c>States</c>: <c>Array&lt;bytes&gt;</c></description></item>
-/// <item><description><c>SceneId</c>: <c>u32</c></description></item>
+/// <item><description><c>Scene</c>: <c>u32</c></description></item>
 /// <item><description><c>Collections</c>: <c>Array&lt;bytes&gt;</c></description></item>
 /// </list>
 /// </remarks>
@@ -36,7 +36,7 @@ public static class ObjectSpawnNetCodec
 
     /// <summary>This message's wire-contract fingerprint - the same value
     /// <c>Handshake.cs</c> publishes, and the one a peer compares against.</summary>
-    public const ulong Fingerprint = 0xA7C0963E41C8D496;
+    public const ulong Fingerprint = 0xB13FA001F40FFC12;
 
     /// <summary>Writes the <c>net</c> fields of <paramref name="value"/>, in declaration order.</summary>
     public static void Encode(Writer writer, Fomoxa.Networking.Messaging.ObjectSpawn value)
@@ -56,7 +56,7 @@ public static class ObjectSpawnNetCodec
         {
             writer.WriteBytes(element);
         }
-        writer.WriteU32(value.SceneId);
+        writer.WriteU32(value.Scene);
         writer.WriteArrayCount(value.Collections.Count);
         foreach (var element in value.Collections)
         {
@@ -113,7 +113,7 @@ public static class ObjectSpawnNetCodec
         }
         ArrayField.Trim(statesValueList, statesValueCount);
         value.States = statesValueList;
-        value.SceneId = reader.FieldAbsent() ? 0 : reader.ReadU32();
+        value.Scene = reader.FieldAbsent() ? 0 : reader.ReadU32();
         int collectionsValueCount = reader.FieldAbsent() ? 0 : reader.ReadArrayCount();
         var collectionsValueList = ArrayField.Reuse(value.Collections, collectionsValueCount);
         for (int i = 0; i < collectionsValueCount; i++)

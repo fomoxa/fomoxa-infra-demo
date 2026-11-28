@@ -5,9 +5,9 @@ namespace Fomoxa.Networking.Objects
 {
     public sealed class TransformProtocol
     {
-        public TransformProtocol(IMessageCodec<TransformUpdate> updateCodec, IMessageCodec<TransformSettle> settleCodec, IMessageCodec<TransformAuthority> authorityCodec, MessageChannels channels)
+        public TransformProtocol(IMessageCodec<TransformFrame> frameCodec, IMessageCodec<TransformSettle> settleCodec, IMessageCodec<TransformAuthority> authorityCodec, MessageChannels channels)
         {
-            UpdateCodec = updateCodec ?? throw new ArgumentNullException(nameof(updateCodec));
+            FrameCodec = frameCodec ?? throw new ArgumentNullException(nameof(frameCodec));
             SettleCodec = settleCodec ?? throw new ArgumentNullException(nameof(settleCodec));
             AuthorityCodec = authorityCodec ?? throw new ArgumentNullException(nameof(authorityCodec));
             if (channels == null)
@@ -19,7 +19,7 @@ namespace Fomoxa.Networking.Objects
             ObjectProtocol.EnsureReliable(channels, authorityCodec.MessageId, nameof(TransformAuthority));
         }
 
-        public IMessageCodec<TransformUpdate> UpdateCodec { get; }
+        public IMessageCodec<TransformFrame> FrameCodec { get; }
 
         public IMessageCodec<TransformSettle> SettleCodec { get; }
 
@@ -32,7 +32,7 @@ namespace Fomoxa.Networking.Objects
                 throw new ArgumentNullException(nameof(registry));
             }
 
-            return new TransformProtocol(registry.Codec<TransformUpdate>(), registry.Codec<TransformSettle>(), registry.Codec<TransformAuthority>(), registry.Channels);
+            return new TransformProtocol(registry.Codec<TransformFrame>(), registry.Codec<TransformSettle>(), registry.Codec<TransformAuthority>(), registry.Channels);
         }
     }
 }

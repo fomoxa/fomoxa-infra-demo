@@ -13,8 +13,25 @@ namespace Fomoxa.Networking.Messaging
         [Codec("net")]
         public bool Full { get; set; }
 
-        [Network("Array<u32>")]
+        [Network("Array<SceneRef>")]
         [Codec("net")]
-        public List<uint> Scenes { get; set; } = new List<uint>();
+        public List<SceneRef> Scenes { get; set; } = new List<SceneRef>();
+    }
+
+    [Network]
+    [Codec("net")]
+    public class SceneRef
+    {
+        [Network("u32")]
+        [Codec("net")]
+        public uint Scene { get; set; }
+
+        [Network("u32")]
+        [Codec("net")]
+        public uint SceneId { get; set; }
+
+        [Network("u8")]
+        [Codec("net")]
+        public byte Physics { get; set; }
     }
 }

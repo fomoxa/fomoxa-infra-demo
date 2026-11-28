@@ -13,45 +13,63 @@ namespace Fomoxa.Networking
             this.server = server;
         }
 
-        public event Action<uint> OnLoaded;
+        public event Action<NetworkScene> OnLoaded;
 
-        public event Action<uint, Exception> OnLoadFailed;
+        public event Action<NetworkScene, Exception> OnLoadFailed;
 
-        public IReadOnlyList<uint> Global => Tier.Global;
+        public event Action<NetworkScene> OnUnloaded;
+
+        public event Action<ulong, NetworkScene> OnPeerLoaded
+        {
+            add => Tier.OnPeerLoaded += value;
+            remove => Tier.OnPeerLoaded -= value;
+        }
+
+        public IReadOnlyList<NetworkScene> Global => Tier.Global;
 
         internal ServerManager Server => server;
 
         private ServerScenes Tier => server.Objects.Scenes;
 
-        public bool Contains(uint sceneId) => Tier.Contains(sceneId);
+        public bool Contains(NetworkScene scene) => Tier.Contains(scene);
 
-        public bool IsGlobal(uint sceneId) => Tier.IsGlobal(sceneId);
+        public bool IsGlobal(NetworkScene scene) => Tier.IsGlobal(scene);
 
-        public bool HasLoaded(ulong peerId, uint sceneId) => Tier.HasLoaded(peerId, sceneId);
+        public bool HasLoaded(ulong peerId, NetworkScene scene) => Tier.HasLoaded(peerId, scene);
 
-        public IReadOnlyCollection<ulong> PeersOf(uint sceneId) => Tier.PeersOf(sceneId);
+        public IReadOnlyCollection<ulong> PeersOf(NetworkScene scene) => Tier.PeersOf(scene);
 
-        public void LoadGlobal(IReadOnlyList<uint> sceneIds, bool replace = false)
+        public IReadOnlyList<NetworkScene> ScenesOf(ulong peerId) => Tier.ScenesOf(peerId);
+
+        public IReadOnlyList<NetworkScene> InstancesOf(uint sceneId) => Tier.InstancesOf(sceneId);
+
+        public uint SceneIdOf(NetworkScene scene) => Tier.SceneIdOf(scene);
+
+        public IReadOnlyList<NetworkScene> LoadGlobal(IReadOnlyList<uint> sceneIds, bool replace = false, ScenePhysics physics = ScenePhysics.Shared)
         {
             EnsureRegistered(sceneIds);
-            Tier.LoadGlobal(sceneIds, replace);
+            return Tier.LoadGlobal(sceneIds, replace, physics);
         }
 
-        public void UnloadGlobal(IReadOnlyList<uint> sceneIds) => Tier.UnloadGlobal(sceneIds);
+        public void UnloadGlobal(IReadOnlyList<NetworkScene> scenes) => Tier.UnloadGlobal(scenes);
 
-        public int LoadForPeers(uint sceneId, IReadOnlyList<ulong> peerIds)
+        public NetworkScene Load(uint sceneId, IReadOnlyList<ulong> peerIds, ScenePhysics physics = ScenePhysics.Shared)
         {
             EnsureRegistered(sceneId);
-            return Tier.LoadForPeers(sceneId, peerIds);
+            return Tier.Load(sceneId, peerIds, physics);
         }
 
-        public int UnloadForPeers(uint sceneId, IReadOnlyList<ulong> peerIds) => Tier.UnloadForPeers(sceneId, peerIds);
+        public int AddPeers(NetworkScene scene, IReadOnlyList<ulong> peerIds) => Tier.AddPeers(scene, peerIds);
 
-        public void Unload(uint sceneId) => Tier.Unload(sceneId);
+        public int RemovePeers(NetworkScene scene, IReadOnlyList<ulong> peerIds) => Tier.RemovePeers(scene, peerIds);
 
-        internal void RaiseLoaded(uint sceneId) => OnLoaded?.Invoke(sceneId);
+        public void Unload(NetworkScene scene) => Tier.Unload(scene);
 
-        internal void RaiseLoadFailed(uint sceneId, Exception exception) => OnLoadFailed?.Invoke(sceneId, exception);
+        internal void RaiseLoaded(NetworkScene scene) => OnLoaded?.Invoke(scene);
+
+        internal void RaiseLoadFailed(NetworkScene scene, Exception exception) => OnLoadFailed?.Invoke(scene, exception);
+
+        internal void RaiseUnloaded(NetworkScene scene) => OnUnloaded?.Invoke(scene);
 
         private void EnsureRegistered(IReadOnlyList<uint> sceneIds)
         {

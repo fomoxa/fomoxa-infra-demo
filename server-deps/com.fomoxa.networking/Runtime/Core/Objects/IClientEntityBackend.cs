@@ -10,6 +10,8 @@ namespace Fomoxa.Networking.Objects
 
         void End(INetworkEntity entity);
 
+        void MoveToScene(INetworkEntity entity, NetworkScene scene);
+
         void HideOnHost(INetworkEntity entity);
 
         void ShowOnHost(INetworkEntity entity);

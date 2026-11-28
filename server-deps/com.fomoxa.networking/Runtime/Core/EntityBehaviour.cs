@@ -70,6 +70,14 @@ namespace Fomoxa.Networking
         {
         }
 
+        public virtual void OnSceneChangedServer(NetworkScene previous, NetworkScene current)
+        {
+        }
+
+        public virtual void OnSceneChangedClient(NetworkScene previous, NetworkScene current)
+        {
+        }
+
         [EditorBrowsable(EditorBrowsableState.Never)]
         protected virtual void OnRegisterGeneratedRpcs(NetworkRpcs rpc)
         {

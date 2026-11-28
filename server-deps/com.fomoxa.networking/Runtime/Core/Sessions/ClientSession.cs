@@ -62,6 +62,8 @@ namespace Fomoxa.Networking.Sessions
 
         internal MessageDispatcher Dispatcher => dispatcher;
 
+        internal int FrameBudget => outbox?.FrameBudget ?? 0;
+
         public void Start(ITransport transport, TimeSpan now)
         {
             if (transport == null)

@@ -13,16 +13,17 @@ namespace Fomoxa.Networking.Objects
         private readonly ObjectProtocol protocol;
         private readonly IObjectSpawner spawner;
         private readonly ObjectTable table = new ObjectTable();
-        private readonly HashSet<ulong> sceneObjectIds = new HashSet<ulong>();
+        private readonly HashSet<(NetworkScene, ulong)> sceneObjectIds = new HashSet<(NetworkScene, ulong)>();
         private readonly List<uint> clearing = new List<uint>();
         private LocalPeer localPeer = new LocalPeer();
         private ObjectSpawn spawn = new ObjectSpawn();
         private ObjectSceneSpawn sceneSpawn = new ObjectSceneSpawn();
         private ObjectDespawn despawn = new ObjectDespawn();
         private ObjectOwnerChange ownerChange = new ObjectOwnerChange();
+        private ObjectSceneMove sceneMove = new ObjectSceneMove();
         private readonly SceneProtocol sceneProtocol;
         private readonly ISceneHost sceneHost;
-        private readonly HashSet<uint> loadedScenes = new HashSet<uint>();
+        private readonly Dictionary<NetworkScene, SceneRef> loadedScenes = new Dictionary<NetworkScene, SceneRef>();
         private readonly List<SceneStep> sceneSteps = new List<SceneStep>();
         private readonly SceneLoaded sceneLoaded = new SceneLoaded();
         private SceneLoad sceneLoad = new SceneLoad();
@@ -54,6 +55,7 @@ namespace Fomoxa.Networking.Objects
             dispatcher.Register(protocol.SceneSpawnCodec.MessageId, OnSceneSpawn);
             dispatcher.Register(protocol.DespawnCodec.MessageId, OnDespawn);
             dispatcher.Register(protocol.OwnerChangeCodec.MessageId, OnOwnerChange);
+            dispatcher.Register(protocol.SceneMoveCodec.MessageId, OnSceneMove);
             if (sceneProtocol != null)
             {
                 dispatcher.Register(sceneProtocol.LoadCodec.MessageId, OnSceneLoad);
@@ -67,7 +69,17 @@ namespace Fomoxa.Networking.Objects
 
         public event Action<ObjectOwnerChangedArgs> OnOwnerChanged;
 
+        public event Action<ObjectSceneMovedArgs> OnSceneMoved;
+
         public event Action<ulong> OnLocalPeerAssigned;
+
+        public event Action<NetworkScene, uint> OnSceneLoadStarted;
+
+        public event Action<NetworkScene, float> OnSceneLoadProgress;
+
+        public event Action<NetworkScene> OnSceneLoaded;
+
+        public event Action<NetworkScene> OnSceneUnloaded;
 
         public ulong LocalPeerId { get; private set; }
 
@@ -79,7 +91,17 @@ namespace Fomoxa.Networking.Objects
 
         public bool TryGet(uint objectId, out ObjectRow row) => table.TryGet(objectId, out row);
 
-        public IReadOnlyCollection<uint> LoadedScenes => loadedScenes;
+        public IReadOnlyCollection<NetworkScene> LoadedScenes => loadedScenes.Keys;
+
+        public uint SceneIdOf(NetworkScene scene)
+        {
+            if (loadedScenes.TryGetValue(scene, out SceneRef loaded))
+            {
+                return loaded.SceneId;
+            }
+
+            return sceneBusy && sceneRunning.Load && sceneRunning.Scene == scene ? sceneRunning.SceneId : 0;
+        }
 
         public bool IsOwner(uint objectId) =>
             LocalPeerId != 0 && table.TryGet(objectId, out ObjectRow row) && row.OwnerId == LocalPeerId;
@@ -126,13 +148,14 @@ namespace Fomoxa.Networking.Objects
                 return;
             }
 
-            if (spawn.SceneId != 0 && !loadedScenes.Contains(spawn.SceneId))
+            var scene = new NetworkScene(spawn.Scene);
+            if (scene != default && !loadedScenes.ContainsKey(scene))
             {
                 Mismatch(ObjectMismatchKind.InvalidSpawn, spawn.ObjectId, spawn.PrefabId, 0);
                 return;
             }
 
-            Spawn(spawn.ObjectId, spawn.PrefabId, 0, spawn.PrefabFingerprint, spawn.OwnerId, spawn.Mask, spawn.Values, spawn.States, spawn.Collections, spawn.SceneId);
+            Spawn(spawn.ObjectId, spawn.PrefabId, 0, spawn.PrefabFingerprint, spawn.OwnerId, spawn.Mask, spawn.Values, spawn.States, spawn.Collections, scene);
         }
 
         private void OnSceneSpawn(ulong peerId, ReadOnlyMemory<byte> payload)
@@ -148,10 +171,17 @@ namespace Fomoxa.Networking.Objects
                 return;
             }
 
-            Spawn(sceneSpawn.ObjectId, 0, sceneSpawn.SceneObjectId, sceneSpawn.Fingerprint, sceneSpawn.OwnerId, sceneSpawn.Mask, sceneSpawn.Values, sceneSpawn.States, sceneSpawn.Collections, 0);
+            var scene = new NetworkScene(sceneSpawn.Scene);
+            if (scene != default && (!loadedScenes.TryGetValue(scene, out SceneRef loaded) || (uint)(sceneSpawn.SceneObjectId >> 32) != loaded.SceneId))
+            {
+                Mismatch(ObjectMismatchKind.InvalidSpawn, sceneSpawn.ObjectId, 0, sceneSpawn.SceneObjectId);
+                return;
+            }
+
+            Spawn(sceneSpawn.ObjectId, 0, sceneSpawn.SceneObjectId, sceneSpawn.Fingerprint, sceneSpawn.OwnerId, sceneSpawn.Mask, sceneSpawn.Values, sceneSpawn.States, sceneSpawn.Collections, scene);
         }
 
-        private void Spawn(uint objectId, uint prefabId, ulong sceneObjectId, uint fingerprint, ulong ownerId, byte mask, List<float> values, List<ReadOnlyMemory<byte>> states, List<ReadOnlyMemory<byte>> collections, uint sceneId)
+        private void Spawn(uint objectId, uint prefabId, ulong sceneObjectId, uint fingerprint, ulong ownerId, byte mask, List<float> values, List<ReadOnlyMemory<byte>> states, List<ReadOnlyMemory<byte>> collections, NetworkScene scene)
         {
             if (objectId == 0 || !SpawnTransform.TryUnpack(mask, values, out Vector3 position, out Quaternion rotation, out Vector3 scale))
             {
@@ -159,7 +189,7 @@ namespace Fomoxa.Networking.Objects
                 return;
             }
 
-            if ((sceneObjectId != 0 && sceneObjectIds.Contains(sceneObjectId)) || !table.TryAdd(new ObjectRow(objectId, prefabId, sceneObjectId, ownerId, sceneId)))
+            if ((sceneObjectId != 0 && sceneObjectIds.Contains((scene, sceneObjectId))) || !table.TryAdd(new ObjectRow(objectId, prefabId, sceneObjectId, ownerId, scene)))
             {
                 Mismatch(ObjectMismatchKind.DuplicateObject, objectId, prefabId, sceneObjectId);
                 return;
@@ -167,17 +197,17 @@ namespace Fomoxa.Networking.Objects
 
             if (sceneObjectId != 0)
             {
-                sceneObjectIds.Add(sceneObjectId);
+                sceneObjectIds.Add((scene, sceneObjectId));
             }
 
             SpawnResult result;
             try
             {
-                result = spawner.Spawn(new SpawnedObject(objectId, prefabId, sceneObjectId, fingerprint, ownerId, position, rotation, scale, states, sceneId, collections));
+                result = spawner.Spawn(new SpawnedObject(objectId, prefabId, sceneObjectId, fingerprint, ownerId, position, rotation, scale, states, scene, collections));
             }
             catch
             {
-                Forget(objectId, sceneObjectId);
+                Forget(objectId, scene, sceneObjectId);
                 throw;
             }
 
@@ -186,7 +216,7 @@ namespace Fomoxa.Networking.Objects
                 return;
             }
 
-            Forget(objectId, sceneObjectId);
+            Forget(objectId, scene, sceneObjectId);
             Mismatch(KindOf(result), objectId, prefabId, sceneObjectId);
         }
 
@@ -210,7 +240,7 @@ namespace Fomoxa.Networking.Objects
             }
             finally
             {
-                Forget(objectId, row.SceneObjectId);
+                Forget(objectId, row.Scene, row.SceneObjectId);
             }
         }
 
@@ -231,6 +261,36 @@ namespace Fomoxa.Networking.Objects
             OnOwnerChanged?.Invoke(new ObjectOwnerChangedArgs(objectId, previousOwnerId, ownerChange.OwnerId));
         }
 
+        private void OnSceneMove(ulong peerId, ReadOnlyMemory<byte> payload)
+        {
+            if (!TryDecode(protocol.SceneMoveCodec, payload, ref sceneMove))
+            {
+                return;
+            }
+
+            uint objectId = sceneMove.ObjectId;
+            if (!table.TryGet(objectId, out ObjectRow row))
+            {
+                Mismatch(ObjectMismatchKind.UnknownObject, objectId, 0, 0);
+                return;
+            }
+
+            var scene = new NetworkScene(sceneMove.Scene);
+            if (row.SceneObjectId != 0 || (scene != default && !loadedScenes.ContainsKey(scene)))
+            {
+                Mismatch(ObjectMismatchKind.InvalidSpawn, objectId, row.PrefabId, row.SceneObjectId);
+                return;
+            }
+
+            if (row.Scene == scene)
+            {
+                return;
+            }
+
+            table.SetScene(objectId, scene, out NetworkScene previousScene);
+            OnSceneMoved?.Invoke(new ObjectSceneMovedArgs(objectId, previousScene, scene, sceneMove.Tick));
+        }
+
         private void OnSceneLoad(ulong peerId, ReadOnlyMemory<byte> payload)
         {
             if (!TryDecode(sceneProtocol.LoadCodec, payload, ref sceneLoad))
@@ -238,27 +298,33 @@ namespace Fomoxa.Networking.Objects
                 return;
             }
 
+            if (!sceneLoad.Scenes.TrueForAll(IsValid))
+            {
+                Mismatch(ObjectMismatchKind.InvalidMessage, 0, 0, 0);
+                return;
+            }
+
             if (sceneLoad.Full)
             {
-                foreach (uint sceneId in loadedScenes)
+                foreach (KeyValuePair<NetworkScene, SceneRef> loaded in loadedScenes)
                 {
-                    if (!sceneLoad.Scenes.Contains(sceneId))
+                    if (!Lists(sceneLoad.Scenes, loaded.Value))
                     {
-                        sceneSteps.Add(new SceneStep(sceneId, false));
+                        sceneSteps.Add(SceneStep.Unloading(loaded.Key));
                     }
                 }
 
-                if (sceneBusy && sceneRunning.Load && !sceneLoad.Scenes.Contains(sceneRunning.SceneId))
+                if (sceneBusy && sceneRunning.Load && !Lists(sceneLoad.Scenes, sceneRunning.Ref))
                 {
-                    sceneSteps.Add(new SceneStep(sceneRunning.SceneId, false));
+                    sceneSteps.Add(SceneStep.Unloading(sceneRunning.Scene));
                 }
             }
 
-            foreach (uint sceneId in sceneLoad.Scenes)
+            foreach (SceneRef sceneRef in sceneLoad.Scenes)
             {
-                if (!IsLoadPending(sceneId))
+                if (!IsLoadPending(new NetworkScene(sceneRef.Scene)))
                 {
-                    sceneSteps.Add(new SceneStep(sceneId, true));
+                    sceneSteps.Add(SceneStep.Loading(sceneRef));
                 }
             }
 
@@ -272,25 +338,32 @@ namespace Fomoxa.Networking.Objects
                 return;
             }
 
-            foreach (uint sceneId in sceneUnload.Scenes)
+            foreach (uint id in sceneUnload.Scenes)
             {
-                int queued = sceneSteps.FindIndex(step => step.Load && step.SceneId == sceneId);
+                var scene = new NetworkScene(id);
+                int queued = sceneSteps.FindIndex(step => step.Load && step.Scene == scene);
                 if (queued >= 0)
                 {
                     sceneSteps.RemoveAt(queued);
                 }
                 else
                 {
-                    sceneSteps.Add(new SceneStep(sceneId, false));
+                    sceneSteps.Add(SceneStep.Unloading(scene));
                 }
             }
 
             RunScenes();
         }
 
-        private bool IsLoadPending(uint sceneId) =>
-            (sceneBusy && sceneRunning.Load && sceneRunning.SceneId == sceneId)
-            || sceneSteps.Exists(step => step.Load && step.SceneId == sceneId);
+        private static bool IsValid(SceneRef sceneRef) =>
+            sceneRef.Scene != 0 && sceneRef.SceneId != 0 && Enum.IsDefined(typeof(ScenePhysics), sceneRef.Physics);
+
+        private static bool Lists(List<SceneRef> scenes, SceneRef wanted) =>
+            scenes.Exists(listed => listed.Scene == wanted.Scene && listed.SceneId == wanted.SceneId && listed.Physics == wanted.Physics);
+
+        private bool IsLoadPending(NetworkScene scene) =>
+            (sceneBusy && sceneRunning.Load && sceneRunning.Scene == scene)
+            || sceneSteps.Exists(step => step.Load && step.Scene == scene);
 
         private void RunScenes()
         {
@@ -298,56 +371,71 @@ namespace Fomoxa.Networking.Objects
             {
                 SceneStep step = sceneSteps[0];
                 sceneSteps.RemoveAt(0);
-                uint sceneId = step.SceneId;
+                NetworkScene scene = step.Scene;
                 if (step.Load)
                 {
-                    if (loadedScenes.Contains(sceneId))
+                    if (loadedScenes.ContainsKey(scene))
                     {
-                        ReportLoaded(sceneId);
+                        ReportLoaded(scene);
                         continue;
                     }
 
                     sceneBusy = true;
                     sceneRunning = step;
-                    if (!sceneHost.TryLoad(sceneId, () => FinishLoad(sceneId), () => FailLoad(sceneId)))
+                    SceneRef sceneRef = step.Ref;
+                    OnSceneLoadStarted?.Invoke(scene, sceneRef.SceneId);
+                    if (!sceneHost.TryLoad(scene, sceneRef.SceneId, (ScenePhysics)sceneRef.Physics, progress => ReportProgress(scene, progress), () => FinishLoad(sceneRef), () => FailLoad(scene)))
                     {
-                        FailLoad(sceneId);
+                        FailLoad(scene);
                         return;
                     }
                 }
-                else if (loadedScenes.Contains(sceneId))
+                else if (loadedScenes.ContainsKey(scene))
                 {
                     sceneBusy = true;
                     sceneRunning = step;
-                    sceneHost.Unload(sceneId, () => FinishUnload(sceneId));
+                    sceneHost.Unload(scene, () => FinishUnload(scene));
                 }
             }
         }
 
-        private void FinishLoad(uint sceneId)
+        private void ReportProgress(NetworkScene scene, float progress)
         {
+            if (!sceneBusy || !sceneRunning.Load || sceneRunning.Scene != scene)
+            {
+                return;
+            }
+
+            OnSceneLoadProgress?.Invoke(scene, float.IsNaN(progress) ? 0f : Math.Clamp(progress, 0f, 1f));
+        }
+
+        private void FinishLoad(SceneRef sceneRef)
+        {
+            var scene = new NetworkScene(sceneRef.Scene);
             sceneBusy = false;
-            loadedScenes.Add(sceneId);
-            ReportLoaded(sceneId);
+            loadedScenes.Add(scene, sceneRef);
+            OnSceneLoaded?.Invoke(scene);
+            ReportLoaded(scene);
             RunScenes();
         }
 
-        private void FailLoad(uint sceneId)
+        private void FailLoad(NetworkScene scene)
         {
             sceneBusy = false;
             sceneSteps.Clear();
-            OnObjectMismatch?.Invoke(new ObjectMismatchArgs(ObjectMismatchKind.UnknownScene, 0, 0, 0, sceneId));
+            OnObjectMismatch?.Invoke(new ObjectMismatchArgs(ObjectMismatchKind.UnknownScene, 0, 0, 0, scene));
             session.Abort(StopReason.PrefabMismatch);
         }
 
-        private void FinishUnload(uint sceneId)
+        private void FinishUnload(NetworkScene scene)
         {
             sceneBusy = false;
-            loadedScenes.Remove(sceneId);
+            loadedScenes.Remove(scene);
+            OnSceneUnloaded?.Invoke(scene);
             RunScenes();
         }
 
-        private void ReportLoaded(uint sceneId)
+        private void ReportLoaded(NetworkScene scene)
         {
             if (session.State != ConnectionState.Started)
             {
@@ -355,7 +443,7 @@ namespace Fomoxa.Networking.Objects
             }
 
             sceneLoaded.Scenes.Clear();
-            sceneLoaded.Scenes.Add(sceneId);
+            sceneLoaded.Scenes.Add(scene.Id);
             session.EnqueueObjectMessage(sceneProtocol.LoadedCodec.MessageId, sceneProtocol.LoadedCodec.Encode(sceneLoaded).Span);
         }
 
@@ -390,10 +478,10 @@ namespace Fomoxa.Networking.Objects
             }
         }
 
-        private void Forget(uint objectId, ulong sceneObjectId)
+        private void Forget(uint objectId, NetworkScene scene, ulong sceneObjectId)
         {
             table.Remove(objectId);
-            sceneObjectIds.Remove(sceneObjectId);
+            sceneObjectIds.Remove((scene, sceneObjectId));
         }
 
         private void Mismatch(ObjectMismatchKind kind, uint objectId, uint prefabId, ulong sceneObjectId)
@@ -423,15 +511,25 @@ namespace Fomoxa.Networking.Objects
 
         private readonly struct SceneStep
         {
-            public SceneStep(uint sceneId, bool load)
+            private SceneStep(NetworkScene scene, SceneRef sceneRef, bool load)
             {
-                SceneId = sceneId;
+                Scene = scene;
+                Ref = sceneRef;
                 Load = load;
             }
 
-            public uint SceneId { get; }
+            public NetworkScene Scene { get; }
+
+            public SceneRef Ref { get; }
+
+            public uint SceneId => Ref.SceneId;
 
             public bool Load { get; }
+
+            public static SceneStep Loading(SceneRef sceneRef) =>
+                new SceneStep(new NetworkScene(sceneRef.Scene), new SceneRef { Scene = sceneRef.Scene, SceneId = sceneRef.SceneId, Physics = sceneRef.Physics }, true);
+
+            public static SceneStep Unloading(NetworkScene scene) => new SceneStep(scene, null, false);
         }
     }
 }

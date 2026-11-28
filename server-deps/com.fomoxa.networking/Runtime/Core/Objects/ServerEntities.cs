@@ -49,16 +49,18 @@ namespace Fomoxa.Networking.Objects
         private CollectionResync collectionResync = new CollectionResync();
         private readonly Dictionary<ulong, AnchorPositions> anchors = new Dictionary<ulong, AnchorPositions>();
         private readonly List<ObserverAddedArgs> enteredObservers = new List<ObserverAddedArgs>();
-        private readonly TransformUpdate transformUpdate = new TransformUpdate();
+        private readonly TransformFrames transformFrames;
         private readonly TransformSettle transformSettle = new TransformSettle();
         private readonly TransformAuthority transformAuthority = new TransformAuthority();
-        private TransformUpdate ownerUpdate = new TransformUpdate();
+        private TransformFrame ownerFrame = new TransformFrame();
         private TransformSettle ownerSettle = new TransformSettle();
         private readonly List<OwnerStream> ownerStreams = new List<OwnerStream>();
         private readonly List<OwnerStream> pendingAuthority = new List<OwnerStream>();
         private readonly List<PhysicsBody> collectedBodies = new List<PhysicsBody>();
         private readonly List<PhysicsBody2D> collectedBodies2D = new List<PhysicsBody2D>();
         private int anchorGeneration = 1;
+        private uint sentReconcileTick;
+        private readonly List<TransformSlot> heldSlots = new List<TransformSlot>();
         private static readonly List<EntityRecord> NoRecords = new List<EntityRecord>();
 
         public ServerEntities(
@@ -92,8 +94,9 @@ namespace Fomoxa.Networking.Objects
             Groups = new ObserverGroups(this);
             dispatcher.RegisterObject(stateProtocol.ResyncCodec.MessageId, Resync);
             dispatcher.RegisterObject(stateProtocol.Collections.ResyncCodec.MessageId, ResyncCollection);
-            dispatcher.RegisterObject(transformProtocol.UpdateCodec.MessageId, (peerId, objectId, behaviourIndex, body) => ReceiveOwnerTransform(peerId, objectId, behaviourIndex, body, false));
-            dispatcher.RegisterObject(transformProtocol.SettleCodec.MessageId, (peerId, objectId, behaviourIndex, body) => ReceiveOwnerTransform(peerId, objectId, behaviourIndex, body, true));
+            transformFrames = new TransformFrames(transformProtocol.FrameCodec, session.FrameBudgetOf, SendFrame);
+            dispatcher.Register(transformProtocol.FrameCodec.MessageId, ReceiveOwnerFrame);
+            dispatcher.RegisterObject(transformProtocol.SettleCodec.MessageId, ReceiveOwnerSettle);
             objects.Observes = DecideObserver;
             objects.CollectCandidates = CollectCandidates;
             objects.OnOwnerChanged += RaiseOwnerChanged;
@@ -221,7 +224,7 @@ namespace Fomoxa.Networking.Objects
             RouteRpcs(behaviours);
             RouteStates(behaviours);
             CaptureStates(behaviours, true);
-            uint sceneId = backend.SceneIdOf(entity);
+            NetworkScene scene = backend.SceneOf(entity);
             uint objectId;
             anchorGeneration++;
             record.GroupIds = Groups.GroupIdsOf(entity);
@@ -229,8 +232,8 @@ namespace Fomoxa.Networking.Objects
             try
             {
                 objectId = isSceneObject
-                    ? Objects.SpawnScene(entity.SceneObjectId, ownerId, sceneId)
-                    : Objects.Spawn(entity.PrefabId, ownerId, sceneId);
+                    ? Objects.SpawnScene(entity.SceneObjectId, ownerId, scene)
+                    : Objects.Spawn(entity.PrefabId, ownerId, scene);
             }
             finally
             {
@@ -329,6 +332,77 @@ namespace Fomoxa.Networking.Objects
             }
 
             return true;
+        }
+
+        public bool MoveToScene(INetworkEntity entity, NetworkScene scene)
+        {
+            if (entity == null)
+            {
+                throw new ArgumentNullException(nameof(entity));
+            }
+
+            EntityRecord record = entity.Record;
+            if (record == null || record.Server != this || !Objects.CanMoveToScene(record.ObjectId, scene, out NetworkScene previousScene))
+            {
+                return false;
+            }
+
+            if (previousScene == scene)
+            {
+                return true;
+            }
+
+            IReadOnlyList<EntityBehaviour> behaviours = record.Representation.EntityBehaviours;
+            ReleaseHeldBodies(behaviours);
+            try
+            {
+                backend.MoveToScene(entity, scene);
+                anchorGeneration++;
+                try
+                {
+                    Objects.MoveToScene(record.ObjectId, scene, sentReconcileTick + 1);
+                }
+                catch
+                {
+                    backend.MoveToScene(entity, previousScene);
+                    throw;
+                }
+            }
+            finally
+            {
+                HoldReleasedBodies();
+            }
+
+            foreach (EntityBehaviour behaviour in behaviours)
+            {
+                behaviour.OnSceneChangedServer(previousScene, scene);
+            }
+
+            return true;
+        }
+
+        private void ReleaseHeldBodies(IReadOnlyList<EntityBehaviour> behaviours)
+        {
+            heldSlots.Clear();
+            foreach (EntityBehaviour behaviour in behaviours)
+            {
+                TransformSlot slot = behaviour.TransformSlot;
+                if (slot != null && (slot.Sync.KinematicBodies.Count > 0 || slot.Sync.KinematicBodies2D.Count > 0))
+                {
+                    RestoreKinds(slot.Sync);
+                    heldSlots.Add(slot);
+                }
+            }
+        }
+
+        private void HoldReleasedBodies()
+        {
+            foreach (TransformSlot slot in heldSlots)
+            {
+                MakeKinematic(slot);
+            }
+
+            heldSlots.Clear();
         }
 
         public bool IsObserver(INetworkEntity entity, ulong peerId)
@@ -436,6 +510,7 @@ namespace Fomoxa.Networking.Objects
 
         public void SyncTransforms(uint tick)
         {
+            transformFrames.Begin(tick);
             foreach (ObserverAddedArgs entered in enteredObservers)
             {
                 if (!spawned.TryGetValue(entered.ObjectId, out EntityRecord enteredRecord) || !Objects.IsObserver(entered.ObjectId, entered.PeerId))
@@ -503,6 +578,7 @@ namespace Fomoxa.Networking.Objects
             }
 
             syncingTransforms.Clear();
+            transformFrames.Flush();
             SendPendingAuthority();
         }
 
@@ -586,11 +662,8 @@ namespace Fomoxa.Networking.Objects
                     TransformSend send = sync.Sample(position, rotation, scale, out byte mask);
                     if (send == TransformSend.Update)
                     {
-                        transformUpdate.Tick = tick;
-                        transformUpdate.Mask = mask;
-                        transformUpdate.Generation = sync.Generation;
-                        SpawnTransform.PackSelected(mask, position, rotation, scale, transformUpdate.Values);
-                        Objects.SendToObservers(transformProtocol.UpdateCodec.MessageId, record.ObjectId, (byte)index, transformProtocol.UpdateCodec.Encode(transformUpdate).Span, forwardExcept);
+                        transformFrames.SetItem(record.ObjectId, (byte)index, sync.Generation, mask, position, rotation, scale);
+                        AddToObserverFrames(record.ObjectId, forwardExcept);
                     }
                     else if (send == TransformSend.Settle)
                     {
@@ -606,6 +679,26 @@ namespace Fomoxa.Networking.Objects
             if (moving && !polled)
             {
                 QueueTransform(record);
+            }
+        }
+
+        private void AddToObserverFrames(uint objectId, ulong exceptPeerId)
+        {
+            IReadOnlyList<ulong> peerIds = Objects.ObserversOf(objectId);
+            for (int index = 0; index < peerIds.Count; index++)
+            {
+                if (peerIds[index] != exceptPeerId)
+                {
+                    transformFrames.AddTo(peerIds[index]);
+                }
+            }
+        }
+
+        private void SendFrame(ulong peerId, ReadOnlySpan<byte> payload)
+        {
+            if (session.PeerState(peerId) == ConnectionState.Started)
+            {
+                session.Send(peerId, transformProtocol.FrameCodec.MessageId, payload);
             }
         }
 
@@ -909,6 +1002,7 @@ namespace Fomoxa.Networking.Objects
 
         public void SendReconcileStates(uint tick)
         {
+            sentReconcileTick = tick;
             foreach (ReconcileSend send in reconciling)
             {
                 EntityRecord record = send.Record;
@@ -1566,7 +1660,34 @@ namespace Fomoxa.Networking.Objects
             session.SendToObject(ownerId, transformProtocol.AuthorityCodec.MessageId, objectId, index, transformProtocol.AuthorityCodec.Encode(transformAuthority).Span);
         }
 
-        private void ReceiveOwnerTransform(ulong peerId, uint objectId, byte behaviourIndex, ReadOnlyMemory<byte> body, bool settle)
+        private void ReceiveOwnerFrame(ulong peerId, ReadOnlyMemory<byte> payload)
+        {
+            transformProtocol.FrameCodec.Decode(payload, ref ownerFrame);
+            ReadOnlySpan<byte> data = ownerFrame.Data.Span;
+            if (!TransformItems.IsWellFormed(data))
+            {
+                throw new MessageDecodeException("a transform frame has a malformed item", null);
+            }
+
+            int offset = 0;
+            while (TransformItems.TryRead(data, ref offset, out TransformItem item))
+            {
+                ReceiveOwnerTransform(peerId, item.ObjectId, item.BehaviourIndex, ownerFrame.Tick, item.Mask, item.Generation, item.Position, item.Rotation, item.Scale, false);
+            }
+        }
+
+        private void ReceiveOwnerSettle(ulong peerId, uint objectId, byte behaviourIndex, ReadOnlyMemory<byte> body)
+        {
+            transformProtocol.SettleCodec.Decode(body, ref ownerSettle);
+            if (!SpawnTransform.TryUnpack(ownerSettle.Mask, ownerSettle.Values, out Vector3 position, out Quaternion rotation, out Vector3 scale))
+            {
+                throw new MessageDecodeException($"transform mask 0x{ownerSettle.Mask:X2} does not match its {ownerSettle.Values.Count} values", null);
+            }
+
+            ReceiveOwnerTransform(peerId, objectId, behaviourIndex, ownerSettle.Tick, ownerSettle.Mask, ownerSettle.Generation, position, rotation, scale, true);
+        }
+
+        private void ReceiveOwnerTransform(ulong peerId, uint objectId, byte behaviourIndex, uint tick, byte mask, byte generation, in Vector3 position, in Quaternion rotation, in Vector3 scale, bool settle)
         {
             if (!spawned.TryGetValue(objectId, out EntityRecord record))
             {
@@ -1583,32 +1704,6 @@ namespace Fomoxa.Networking.Objects
             if (slot == null || !slot.Sync.OwnerDriven || !Objects.TryGet(objectId, out ObjectRow row) || row.OwnerId != peerId)
             {
                 return;
-            }
-
-            uint tick;
-            byte mask;
-            byte generation;
-            List<float> values;
-            if (settle)
-            {
-                transformProtocol.SettleCodec.Decode(body, ref ownerSettle);
-                tick = ownerSettle.Tick;
-                mask = ownerSettle.Mask;
-                generation = ownerSettle.Generation;
-                values = ownerSettle.Values;
-            }
-            else
-            {
-                transformProtocol.UpdateCodec.Decode(body, ref ownerUpdate);
-                tick = ownerUpdate.Tick;
-                mask = ownerUpdate.Mask;
-                generation = ownerUpdate.Generation;
-                values = ownerUpdate.Values;
-            }
-
-            if (!SpawnTransform.TryUnpack(mask, values, out Vector3 position, out Quaternion rotation, out Vector3 scale))
-            {
-                throw new MessageDecodeException($"transform mask 0x{mask:X2} does not match its {values.Count} values", null);
             }
 
             TransformSync sync = slot.Sync;

@@ -10,8 +10,8 @@ namespace Fomoxa.Networking.Standalone
     internal sealed class StandaloneClientEntityBackend : IClientEntityBackend
     {
         private readonly StandalonePrefabs prefabs;
-        private readonly Dictionary<ulong, StandaloneEntity> sceneObjects = new Dictionary<ulong, StandaloneEntity>();
-        private readonly Dictionary<uint, List<StandaloneEntity>> scenes = new Dictionary<uint, List<StandaloneEntity>>();
+        private readonly Dictionary<(NetworkScene, ulong), StandaloneEntity> sceneObjects = new Dictionary<(NetworkScene, ulong), StandaloneEntity>();
+        private readonly Dictionary<NetworkScene, List<StandaloneEntity>> scenes = new Dictionary<NetworkScene, List<StandaloneEntity>>();
 
         private readonly IPhysicsScenes physics;
 
@@ -41,7 +41,7 @@ namespace Fomoxa.Networking.Standalone
                 throw new InvalidOperationException($"the factory of prefab 0x{spawned.PrefabId:X8} returned an entity that is already spawned");
             }
 
-            instance.SceneId = spawned.SceneId;
+            instance.Scene = spawned.Scene;
             Place(instance, spawned);
             Attach(instance);
             return instance;
@@ -49,7 +49,7 @@ namespace Fomoxa.Networking.Standalone
 
         public SpawnResult PlaceSceneObject(in SpawnedObject spawned, out INetworkEntity entity)
         {
-            if (!sceneObjects.TryGetValue(spawned.SceneObjectId, out StandaloneEntity instance))
+            if (!sceneObjects.TryGetValue((spawned.Scene, spawned.SceneObjectId), out StandaloneEntity instance))
             {
                 entity = null;
                 return SpawnResult.UnknownSceneObject;
@@ -86,31 +86,52 @@ namespace Fomoxa.Networking.Standalone
         {
         }
 
-        public void AddScene(uint sceneId, List<StandaloneEntity> loaded)
+        public void AddBootScene(List<StandaloneEntity> loaded)
+        {
+            foreach (StandaloneEntity sceneObject in loaded)
+            {
+                sceneObjects.TryAdd((default, sceneObject.SceneObjectId), sceneObject);
+            }
+        }
+
+        public void MoveToScene(INetworkEntity entity, NetworkScene scene)
+        {
+            if (scene != default && !scenes.ContainsKey(scene))
+            {
+                throw new InvalidOperationException($"{scene} is not loaded on this client");
+            }
+
+            ((StandaloneEntity)entity).MoveTo(scene, physics);
+        }
+
+        public void AddScene(NetworkScene scene, List<StandaloneEntity> loaded)
         {
             var added = new List<StandaloneEntity>(loaded.Count);
             foreach (StandaloneEntity sceneObject in loaded)
             {
-                if (sceneObjects.TryAdd(sceneObject.SceneObjectId, sceneObject))
+                sceneObject.Scene = scene;
+                if (sceneObjects.TryAdd((scene, sceneObject.SceneObjectId), sceneObject))
                 {
                     added.Add(sceneObject);
                 }
             }
 
-            scenes[sceneId] = added;
+            scenes[scene] = added;
         }
 
-        public void RemoveScene(uint sceneId)
+        public bool RemoveScene(NetworkScene scene)
         {
-            if (!scenes.Remove(sceneId, out List<StandaloneEntity> removed))
+            if (!scenes.Remove(scene, out List<StandaloneEntity> removed))
             {
-                return;
+                return false;
             }
 
             foreach (StandaloneEntity sceneObject in removed)
             {
-                sceneObjects.Remove(sceneObject.SceneObjectId);
+                sceneObjects.Remove((scene, sceneObject.SceneObjectId));
             }
+
+            return true;
         }
 
         private void Attach(StandaloneEntity instance)
@@ -149,11 +170,11 @@ namespace Fomoxa.Networking.Standalone
             this.log = log;
             foreach (SceneFile file in bootScenes)
             {
-                entities.AddScene(file.SceneId, StandaloneSceneObjects.Build(file, behaviours));
+                entities.AddBootScene(StandaloneSceneObjects.Build(file, behaviours));
             }
         }
 
-        public bool TryLoad(uint sceneId, Action loaded, Action failed)
+        public bool TryLoad(NetworkScene scene, uint sceneId, ScenePhysics scenePhysics, Action<float> progress, Action loaded, Action failed)
         {
             if (!files.Knows(sceneId))
             {
@@ -174,16 +195,19 @@ namespace Fomoxa.Networking.Standalone
                 return true;
             }
 
-            entities.AddScene(sceneId, sceneObjects);
-            physics?.LoadScene(file);
+            entities.AddScene(scene, sceneObjects);
+            physics?.LoadScene(scene, file);
             loaded();
             return true;
         }
 
-        public void Unload(uint sceneId, Action unloaded)
+        public void Unload(NetworkScene scene, Action unloaded)
         {
-            entities.RemoveScene(sceneId);
-            physics?.UnloadScene(sceneId);
+            if (entities.RemoveScene(scene))
+            {
+                physics?.UnloadScene(scene);
+            }
+
             unloaded();
         }
     }

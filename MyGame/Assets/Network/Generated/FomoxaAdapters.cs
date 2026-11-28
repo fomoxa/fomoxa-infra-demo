@@ -16,9 +16,10 @@ namespace Generated
             registry.SetCodec(ObjectSceneSpawnNetAdapter.Instance);
             registry.SetCodec(ObjectDespawnNetAdapter.Instance);
             registry.SetCodec(ObjectOwnerChangeNetAdapter.Instance);
+            registry.SetCodec(ObjectSceneMoveNetAdapter.Instance);
             registry.SetCodec(StateDeltaNetAdapter.Instance);
             registry.SetCodec(StateResyncNetAdapter.Instance);
-            registry.SetCodec(TransformUpdateNetAdapter.Instance);
+            registry.SetCodec(TransformFrameNetAdapter.Instance);
             registry.SetCodec(TransformSettleNetAdapter.Instance);
             registry.SetCodec(TransformAuthorityNetAdapter.Instance);
             registry.SetCodec(AnimatorStateNetAdapter.Instance);
@@ -64,6 +65,7 @@ namespace Generated
             registry.Channels.Set(LocalPeerNetCodec.MessageId, global::Fomoxa.Networking.Channel.ReliableOrdered);
             registry.Channels.Set(ObjectDespawnNetCodec.MessageId, global::Fomoxa.Networking.Channel.ReliableOrdered);
             registry.Channels.Set(ObjectOwnerChangeNetCodec.MessageId, global::Fomoxa.Networking.Channel.ReliableOrdered);
+            registry.Channels.Set(ObjectSceneMoveNetCodec.MessageId, global::Fomoxa.Networking.Channel.ReliableOrdered);
             registry.Channels.Set(ObjectSceneSpawnNetCodec.MessageId, global::Fomoxa.Networking.Channel.ReliableOrdered);
             registry.Channels.Set(ObjectSpawnNetCodec.MessageId, global::Fomoxa.Networking.Channel.ReliableOrdered);
             registry.Channels.Set(PeerTransferNetCodec.MessageId, global::Fomoxa.Networking.Channel.ReliableOrdered);

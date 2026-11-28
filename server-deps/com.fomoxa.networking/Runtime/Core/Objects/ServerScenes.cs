@@ -10,8 +10,8 @@ namespace Fomoxa.Networking.Objects
         private readonly ServerObjects objects;
         private readonly ServerSession session;
         private readonly SceneProtocol protocol;
-        private readonly List<uint> global = new List<uint>();
-        private readonly Dictionary<uint, HashSet<ulong>> perPeer = new Dictionary<uint, HashSet<ulong>>();
+        private readonly Dictionary<uint, Instance> instances = new Dictionary<uint, Instance>();
+        private readonly List<NetworkScene> global = new List<NetworkScene>();
         private readonly Dictionary<ulong, HashSet<uint>> loadedByPeer = new Dictionary<ulong, HashSet<uint>>();
         private readonly Dictionary<ulong, List<uint>> outgoing = new Dictionary<ulong, List<uint>>();
         private readonly List<ulong> startedPeers = new List<ulong>();
@@ -19,6 +19,7 @@ namespace Fomoxa.Networking.Objects
         private readonly SceneLoad load = new SceneLoad();
         private readonly SceneUnload unload = new SceneUnload();
         private SceneLoaded loaded = new SceneLoaded();
+        private uint nextId = 1;
 
         internal ServerScenes(ServerObjects objects, ServerSession session, SceneProtocol protocol)
         {
@@ -30,108 +31,152 @@ namespace Fomoxa.Networking.Objects
             session.OnRemoteConnectionState += OnPeerState;
         }
 
-        public event Action<uint> OnSceneAdded;
+        public event Action<NetworkScene> OnSceneAdded;
 
-        public event Action<uint> OnSceneRemoved;
+        public event Action<NetworkScene> OnSceneRemoved;
 
-        public IReadOnlyList<uint> Global => global;
+        public event Action<ulong, NetworkScene> OnPeerLoaded;
 
-        public bool Contains(uint sceneId) => global.Contains(sceneId) || perPeer.ContainsKey(sceneId);
+        public IReadOnlyList<NetworkScene> Global => global;
 
-        public bool IsGlobal(uint sceneId) => global.Contains(sceneId);
+        public bool Contains(NetworkScene scene) => instances.ContainsKey(scene.Id);
 
-        public bool HasLoaded(ulong peerId, uint sceneId) =>
-            loadedByPeer.TryGetValue(peerId, out HashSet<uint> scenes) && scenes.Contains(sceneId);
+        public bool IsGlobal(NetworkScene scene) => instances.TryGetValue(scene.Id, out Instance instance) && instance.Global;
 
-        public bool IsAssigned(ulong peerId, uint sceneId) =>
-            global.Contains(sceneId) || (perPeer.TryGetValue(sceneId, out HashSet<ulong> peers) && peers.Contains(peerId));
+        public bool HasLoaded(ulong peerId, NetworkScene scene) =>
+            loadedByPeer.TryGetValue(peerId, out HashSet<uint> scenes) && scenes.Contains(scene.Id);
 
-        public IReadOnlyCollection<ulong> PeersOf(uint sceneId)
+        public bool IsAssigned(ulong peerId, NetworkScene scene) =>
+            instances.TryGetValue(scene.Id, out Instance instance) && (instance.Global || instance.Peers.Contains(peerId));
+
+        public uint SceneIdOf(NetworkScene scene) => instances.TryGetValue(scene.Id, out Instance instance) ? instance.SceneId : 0;
+
+        internal ScenePhysics PhysicsOf(NetworkScene scene) => instances.TryGetValue(scene.Id, out Instance instance) ? instance.Physics : ScenePhysics.Shared;
+
+        public IReadOnlyCollection<ulong> PeersOf(NetworkScene scene)
         {
-            if (perPeer.TryGetValue(sceneId, out HashSet<ulong> peers))
+            if (!instances.TryGetValue(scene.Id, out Instance instance))
             {
-                return new List<ulong>(peers);
+                return new List<ulong>();
+            }
+
+            if (!instance.Global)
+            {
+                return new List<ulong>(instance.Peers);
             }
 
             var started = new List<ulong>();
-            if (global.Contains(sceneId))
-            {
-                session.CopyStartedPeerIds(started);
-            }
-
+            session.CopyStartedPeerIds(started);
             return started;
         }
 
-        public void LoadGlobal(IReadOnlyList<uint> sceneIds, bool replace = false)
+        public IReadOnlyList<NetworkScene> ScenesOf(ulong peerId)
+        {
+            var assigned = new List<NetworkScene>(global);
+            foreach (KeyValuePair<uint, Instance> entry in instances)
+            {
+                if (!entry.Value.Global && entry.Value.Peers.Contains(peerId))
+                {
+                    assigned.Add(new NetworkScene(entry.Key));
+                }
+            }
+
+            return assigned;
+        }
+
+        public IReadOnlyList<NetworkScene> InstancesOf(uint sceneId)
+        {
+            var found = new List<NetworkScene>();
+            foreach (KeyValuePair<uint, Instance> entry in instances)
+            {
+                if (entry.Value.SceneId == sceneId)
+                {
+                    found.Add(new NetworkScene(entry.Key));
+                }
+            }
+
+            return found;
+        }
+
+        public IReadOnlyList<NetworkScene> LoadGlobal(IReadOnlyList<uint> sceneIds, bool replace = false, ScenePhysics physics = ScenePhysics.Shared)
         {
             EnsureStarted();
             EnsureIds(sceneIds);
             if (replace && global.Count > 0)
             {
-                UnloadGlobal(new List<uint>(global));
+                UnloadGlobal(new List<NetworkScene>(global));
+            }
+
+            foreach (uint sceneId in sceneIds)
+            {
+                if (GlobalOf(sceneId) == default)
+                {
+                    EnsurePhysics(sceneId, physics);
+                }
             }
 
             CollectStartedPeers();
+            var scenes = new List<NetworkScene>(sceneIds.Count);
             foreach (uint sceneId in sceneIds)
             {
-                if (global.Contains(sceneId))
+                NetworkScene scene = GlobalOf(sceneId);
+                if (scene == default)
                 {
-                    continue;
-                }
-
-                bool promoted = perPeer.Remove(sceneId, out HashSet<ulong> holders);
-                global.Add(sceneId);
-                if (!promoted)
-                {
-                    OnSceneAdded?.Invoke(sceneId);
-                }
-
-                foreach (ulong peerId in startedPeers)
-                {
-                    if (!promoted || !holders.Contains(peerId))
+                    scene = Add(sceneId, true, physics);
+                    global.Add(scene);
+                    OnSceneAdded?.Invoke(scene);
+                    foreach (ulong peerId in startedPeers)
                     {
-                        Queue(peerId, sceneId);
+                        Queue(peerId, scene.Id);
                     }
                 }
+
+                scenes.Add(scene);
             }
 
             SendLoads();
+            return scenes;
         }
 
-        public void UnloadGlobal(IReadOnlyList<uint> sceneIds)
+        public void UnloadGlobal(IReadOnlyList<NetworkScene> scenes)
         {
             EnsureStarted();
-            EnsureIds(sceneIds);
-            foreach (uint sceneId in sceneIds)
+            if (scenes == null)
             {
-                if (!global.Contains(sceneId))
+                throw new ArgumentNullException(nameof(scenes));
+            }
+
+            foreach (NetworkScene scene in scenes)
+            {
+                if (!IsGlobal(scene))
                 {
-                    throw new ArgumentException($"scene 0x{sceneId:X8} is not a global scene", nameof(sceneIds));
+                    throw new ArgumentException($"{scene} is not a global scene", nameof(scenes));
                 }
             }
 
             CollectStartedPeers();
-            foreach (uint sceneId in sceneIds)
+            foreach (NetworkScene scene in scenes)
             {
-                if (!global.Remove(sceneId))
+                if (!global.Remove(scene))
                 {
                     continue;
                 }
 
-                objects.DespawnScene(sceneId);
+                instances.Remove(scene.Id);
+                objects.DespawnScene(scene);
                 foreach (ulong peerId in startedPeers)
                 {
-                    Forget(peerId, sceneId);
-                    Queue(peerId, sceneId);
+                    Forget(peerId, scene.Id);
+                    Queue(peerId, scene.Id);
                 }
 
-                OnSceneRemoved?.Invoke(sceneId);
+                OnSceneRemoved?.Invoke(scene);
             }
 
             SendUnloads();
         }
 
-        public int LoadForPeers(uint sceneId, IReadOnlyList<ulong> peerIds)
+        public NetworkScene Load(uint sceneId, IReadOnlyList<ulong> peerIds, ScenePhysics physics = ScenePhysics.Shared)
         {
             EnsureStarted();
             EnsureId(sceneId);
@@ -140,36 +185,32 @@ namespace Fomoxa.Networking.Objects
                 throw new ArgumentNullException(nameof(peerIds));
             }
 
-            if (global.Contains(sceneId))
-            {
-                throw new ArgumentException($"scene 0x{sceneId:X8} is a global scene", nameof(sceneId));
-            }
-
-            if (!perPeer.TryGetValue(sceneId, out HashSet<ulong> holders))
-            {
-                holders = new HashSet<ulong>();
-                perPeer.Add(sceneId, holders);
-                OnSceneAdded?.Invoke(sceneId);
-            }
-
-            int changed = 0;
-            foreach (ulong peerId in peerIds)
-            {
-                if (session.PeerState(peerId) == ConnectionState.Started && holders.Add(peerId))
-                {
-                    Queue(peerId, sceneId);
-                    changed++;
-                }
-            }
-
+            EnsurePhysics(sceneId, physics);
+            NetworkScene scene = Add(sceneId, false, physics);
+            OnSceneAdded?.Invoke(scene);
+            AddStartedPeers(instances[scene.Id], scene, peerIds);
             SendLoads();
-            return changed;
+            return scene;
         }
 
-        public int UnloadForPeers(uint sceneId, IReadOnlyList<ulong> peerIds)
+        public int AddPeers(NetworkScene scene, IReadOnlyList<ulong> peerIds)
         {
             EnsureStarted();
-            HashSet<ulong> holders = PerPeerScene(sceneId);
+            Instance instance = PerPeerInstance(scene);
+            if (peerIds == null)
+            {
+                throw new ArgumentNullException(nameof(peerIds));
+            }
+
+            int added = AddStartedPeers(instance, scene, peerIds);
+            SendLoads();
+            return added;
+        }
+
+        public int RemovePeers(NetworkScene scene, IReadOnlyList<ulong> peerIds)
+        {
+            EnsureStarted();
+            Instance instance = PerPeerInstance(scene);
             if (peerIds == null)
             {
                 throw new ArgumentNullException(nameof(peerIds));
@@ -178,9 +219,9 @@ namespace Fomoxa.Networking.Objects
             changedPeers.Clear();
             foreach (ulong peerId in peerIds)
             {
-                if (holders.Remove(peerId))
+                if (instance.Peers.Remove(peerId))
                 {
-                    Forget(peerId, sceneId);
+                    Forget(peerId, scene.Id);
                     changedPeers.Add(peerId);
                 }
             }
@@ -188,34 +229,27 @@ namespace Fomoxa.Networking.Objects
             foreach (ulong peerId in changedPeers)
             {
                 objects.RebuildObserversOfPeer(peerId);
-                Queue(peerId, sceneId);
+                Queue(peerId, scene.Id);
             }
 
             SendUnloads();
-            if (changedPeers.Count > 0 && holders.Count == 0)
-            {
-                perPeer.Remove(sceneId);
-                objects.DespawnScene(sceneId);
-                OnSceneRemoved?.Invoke(sceneId);
-            }
-
             return changedPeers.Count;
         }
 
-        public void Unload(uint sceneId)
+        public void Unload(NetworkScene scene)
         {
             EnsureStarted();
-            HashSet<ulong> holders = PerPeerScene(sceneId);
-            objects.DespawnScene(sceneId);
-            perPeer.Remove(sceneId);
-            foreach (ulong peerId in holders)
+            Instance instance = PerPeerInstance(scene);
+            objects.DespawnScene(scene);
+            instances.Remove(scene.Id);
+            foreach (ulong peerId in instance.Peers)
             {
-                Forget(peerId, sceneId);
-                Queue(peerId, sceneId);
+                Forget(peerId, scene.Id);
+                Queue(peerId, scene.Id);
             }
 
             SendUnloads();
-            OnSceneRemoved?.Invoke(sceneId);
+            OnSceneRemoved?.Invoke(scene);
         }
 
         internal void StartPeer(ulong peerId)
@@ -223,8 +257,69 @@ namespace Fomoxa.Networking.Objects
             loadedByPeer[peerId] = new HashSet<uint>();
             load.Full = true;
             load.Scenes.Clear();
-            load.Scenes.AddRange(global);
+            foreach (NetworkScene scene in global)
+            {
+                load.Scenes.Add(RefOf(scene.Id));
+            }
+
             session.EnqueueObjectMessage(peerId, protocol.LoadCodec.MessageId, protocol.LoadCodec.Encode(load).Span);
+        }
+
+        private int AddStartedPeers(Instance instance, NetworkScene scene, IReadOnlyList<ulong> peerIds)
+        {
+            int added = 0;
+            foreach (ulong peerId in peerIds)
+            {
+                if (session.PeerState(peerId) == ConnectionState.Started && instance.Peers.Add(peerId))
+                {
+                    Queue(peerId, scene.Id);
+                    added++;
+                }
+            }
+
+            return added;
+        }
+
+        private NetworkScene Add(uint sceneId, bool isGlobal, ScenePhysics physics)
+        {
+            if (nextId == 0)
+            {
+                throw new InvalidOperationException("the server ran out of scene instance ids");
+            }
+
+            var scene = new NetworkScene(nextId);
+            nextId++;
+            instances.Add(scene.Id, new Instance(sceneId, isGlobal, physics));
+            return scene;
+        }
+
+        private NetworkScene GlobalOf(uint sceneId)
+        {
+            foreach (NetworkScene scene in global)
+            {
+                if (instances[scene.Id].SceneId == sceneId)
+                {
+                    return scene;
+                }
+            }
+
+            return default;
+        }
+
+        private void EnsurePhysics(uint sceneId, ScenePhysics physics)
+        {
+            if (physics != ScenePhysics.Shared)
+            {
+                return;
+            }
+
+            foreach (Instance instance in instances.Values)
+            {
+                if (instance.SceneId == sceneId)
+                {
+                    throw new ArgumentException($"scene 0x{sceneId:X8} already has an instance, so another one needs ScenePhysics.Own", nameof(physics));
+                }
+            }
         }
 
         private void OnLoaded(ulong peerId, ReadOnlyMemory<byte> payload)
@@ -235,46 +330,58 @@ namespace Fomoxa.Networking.Objects
                 return;
             }
 
-            bool added = false;
-            foreach (uint sceneId in loaded.Scenes)
+            var added = new List<NetworkScene>();
+            foreach (uint id in loaded.Scenes)
             {
-                if (IsAssigned(peerId, sceneId) && scenes.Add(sceneId))
+                var scene = new NetworkScene(id);
+                if (IsAssigned(peerId, scene) && scenes.Add(id))
                 {
-                    added = true;
+                    added.Add(scene);
                 }
             }
 
-            if (added)
+            if (added.Count == 0)
             {
-                objects.RebuildObserversOfPeer(peerId);
+                return;
+            }
+
+            objects.RebuildObserversOfPeer(peerId);
+            foreach (NetworkScene scene in added)
+            {
+                OnPeerLoaded?.Invoke(peerId, scene);
             }
         }
 
-        private HashSet<ulong> PerPeerScene(uint sceneId)
+        private Instance PerPeerInstance(NetworkScene scene)
         {
-            EnsureId(sceneId);
-            if (global.Contains(sceneId))
+            if (!instances.TryGetValue(scene.Id, out Instance instance))
             {
-                throw new ArgumentException($"scene 0x{sceneId:X8} is a global scene", nameof(sceneId));
+                throw new ArgumentException($"{scene} is not loaded", nameof(scene));
             }
 
-            if (!perPeer.TryGetValue(sceneId, out HashSet<ulong> holders))
+            if (instance.Global)
             {
-                throw new ArgumentException($"scene 0x{sceneId:X8} is not loaded", nameof(sceneId));
+                throw new ArgumentException($"{scene} is a global scene", nameof(scene));
             }
 
-            return holders;
+            return instance;
         }
 
-        private void Forget(ulong peerId, uint sceneId)
+        private SceneRef RefOf(uint id)
+        {
+            Instance instance = instances[id];
+            return new SceneRef { Scene = id, SceneId = instance.SceneId, Physics = (byte)instance.Physics };
+        }
+
+        private void Forget(ulong peerId, uint id)
         {
             if (loadedByPeer.TryGetValue(peerId, out HashSet<uint> scenes))
             {
-                scenes.Remove(sceneId);
+                scenes.Remove(id);
             }
         }
 
-        private void Queue(ulong peerId, uint sceneId)
+        private void Queue(ulong peerId, uint id)
         {
             if (!outgoing.TryGetValue(peerId, out List<uint> scenes))
             {
@@ -282,7 +389,7 @@ namespace Fomoxa.Networking.Objects
                 outgoing.Add(peerId, scenes);
             }
 
-            scenes.Add(sceneId);
+            scenes.Add(id);
         }
 
         private void SendLoads()
@@ -296,7 +403,11 @@ namespace Fomoxa.Networking.Objects
                 }
 
                 load.Scenes.Clear();
-                load.Scenes.AddRange(pending.Value);
+                foreach (uint id in pending.Value)
+                {
+                    load.Scenes.Add(RefOf(id));
+                }
+
                 session.EnqueueObjectMessage(pending.Key, protocol.LoadCodec.MessageId, protocol.LoadCodec.Encode(load).Span);
                 pending.Value.Clear();
             }
@@ -363,9 +474,9 @@ namespace Fomoxa.Networking.Objects
 
             loadedByPeer.Remove(args.PeerId);
             outgoing.Remove(args.PeerId);
-            foreach (HashSet<ulong> holders in perPeer.Values)
+            foreach (Instance instance in instances.Values)
             {
-                holders.Remove(args.PeerId);
+                instance.Peers.Remove(args.PeerId);
             }
         }
 
@@ -373,11 +484,30 @@ namespace Fomoxa.Networking.Objects
         {
             if (args.State == ServerState.Stopped)
             {
+                instances.Clear();
                 global.Clear();
-                perPeer.Clear();
                 loadedByPeer.Clear();
                 outgoing.Clear();
+                nextId = 1;
             }
+        }
+
+        private sealed class Instance
+        {
+            public Instance(uint sceneId, bool isGlobal, ScenePhysics physics)
+            {
+                SceneId = sceneId;
+                Global = isGlobal;
+                Physics = physics;
+            }
+
+            public uint SceneId { get; }
+
+            public bool Global { get; }
+
+            public ScenePhysics Physics { get; }
+
+            public HashSet<ulong> Peers { get; } = new HashSet<ulong>();
         }
     }
 }

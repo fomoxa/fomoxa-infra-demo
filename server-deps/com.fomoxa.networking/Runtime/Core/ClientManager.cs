@@ -19,7 +19,7 @@ namespace Fomoxa.Networking
         private readonly ISceneHost sceneHost;
         private readonly Func<TimeSpan> clockSource;
         private readonly NetworkLog log;
-        private readonly Dictionary<uint, HostSceneWait> hostWaits = new Dictionary<uint, HostSceneWait>();
+        private readonly Dictionary<NetworkScene, HostSceneWait> hostWaits = new Dictionary<NetworkScene, HostSceneWait>();
         private readonly MessageChannels channels;
         private readonly StateProtocol stateProtocol;
         private readonly TimeManager timeManager;
@@ -73,14 +73,15 @@ namespace Fomoxa.Networking
             session.SetTransferringHandler(Transfer);
             Objects = new ClientObjects(session, objectProtocol, Entities, sceneProtocol, new HostAwareSceneHost(this));
             Entities.Attach(Objects);
+            Scenes = new ClientScenes(this);
             Objects.OnObjectMismatch += RaiseObjectMismatch;
             Objects.OnLocalPeerAssigned += HideUnobservedOnHost;
             Objects.OnLocalPeerAssigned += FollowServerTickRate;
             clock = new ClientClock(session, clockProtocol, clockSettings);
             session.OnClientConnectionState += RestoreTickRateWhenStopped;
             serverManager.Entities.OnSpawned += HideIfUnobservedOnHost;
-            serverManager.OnNetworkSceneReady += sceneId => FinishHostWait(sceneId, true);
-            serverManager.OnNetworkSceneFailed += sceneId => FinishHostWait(sceneId, false);
+            serverManager.OnNetworkSceneReady += scene => FinishHostWait(scene, true);
+            serverManager.OnNetworkSceneFailed += scene => FinishHostWait(scene, false);
             serverManager.OnServerConnectionState += FailHostWaitsWhenStopped;
         }
 
@@ -157,11 +158,15 @@ namespace Fomoxa.Networking
 
         public IReadOnlyDictionary<uint, INetworkEntity> Spawned => Entities.Representations;
 
+        public ClientScenes Scenes { get; }
+
         internal ClientObjects Objects { get; }
 
         internal ClockEstimator Clock => clock.Estimator;
 
         internal bool ConnectedLocally => connectedLocally;
+
+        internal ServerManager Server => serverManager;
 
         internal ClientEntities Entities { get; }
 
@@ -287,20 +292,20 @@ namespace Fomoxa.Networking
             EntityBackend.PrepareSceneObjects();
         }
 
-        private bool LoadScene(uint sceneId, Action loaded, Action failed)
+        private bool LoadScene(NetworkScene scene, uint sceneId, ScenePhysics physics, Action<float> progress, Action loaded, Action failed)
         {
             if (!connectedLocally)
             {
-                return sceneHost.TryLoad(sceneId, loaded, failed);
+                return sceneHost.TryLoad(scene, sceneId, physics, progress, loaded, failed);
             }
 
-            if (serverManager.SceneContent.IsLoaded(sceneId))
+            if (serverManager.SceneContent.IsLoaded(scene))
             {
                 loaded();
             }
-            else if (serverManager.IsLoadingNetworkScene(sceneId))
+            else if (serverManager.IsLoadingNetworkScene(scene))
             {
-                hostWaits[sceneId] = new HostSceneWait(loaded, failed);
+                hostWaits[scene] = new HostSceneWait(loaded, failed);
             }
             else
             {
@@ -310,7 +315,7 @@ namespace Fomoxa.Networking
             return true;
         }
 
-        private void UnloadScene(uint sceneId, Action unloaded)
+        private void UnloadScene(NetworkScene scene, Action unloaded)
         {
             if (connectedLocally)
             {
@@ -318,12 +323,12 @@ namespace Fomoxa.Networking
                 return;
             }
 
-            sceneHost.Unload(sceneId, unloaded);
+            sceneHost.Unload(scene, unloaded);
         }
 
-        private void FinishHostWait(uint sceneId, bool succeeded)
+        private void FinishHostWait(NetworkScene scene, bool succeeded)
         {
-            if (!hostWaits.Remove(sceneId, out HostSceneWait wait))
+            if (!hostWaits.Remove(scene, out HostSceneWait wait))
             {
                 return;
             }
@@ -490,9 +495,9 @@ namespace Fomoxa.Networking
                 this.owner = owner;
             }
 
-            public bool TryLoad(uint sceneId, Action loaded, Action failed) => owner.LoadScene(sceneId, loaded, failed);
+            public bool TryLoad(NetworkScene scene, uint sceneId, ScenePhysics physics, Action<float> progress, Action loaded, Action failed) => owner.LoadScene(scene, sceneId, physics, progress, loaded, failed);
 
-            public void Unload(uint sceneId, Action unloaded) => owner.UnloadScene(sceneId, unloaded);
+            public void Unload(NetworkScene scene, Action unloaded) => owner.UnloadScene(scene, unloaded);
         }
     }
 }

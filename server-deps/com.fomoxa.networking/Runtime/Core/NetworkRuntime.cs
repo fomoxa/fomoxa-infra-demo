@@ -13,7 +13,7 @@ namespace Fomoxa.Networking
 {
     public sealed class NetworkRuntime
     {
-        public const string Version = "0.5.0";
+        public const string Version = "0.6.0";
 
         private readonly FomoxaRegistry registry;
         private readonly NetworkLog log;
@@ -44,9 +44,10 @@ namespace Fomoxa.Networking
                 RequireCodec<ObjectSceneSpawn>(),
                 RequireCodec<ObjectDespawn>(),
                 RequireCodec<ObjectOwnerChange>(),
+                RequireCodec<ObjectSceneMove>(),
                 registry.Channels);
             var stateProtocol = new StateProtocol(RequireCodec<StateDelta>(), RequireCodec<StateResync>(), RequireCodec<AnimatorState>(), CollectionProtocol.From(registry), registry.Channels);
-            var transformProtocol = new TransformProtocol(RequireCodec<TransformUpdate>(), RequireCodec<TransformSettle>(), RequireCodec<TransformAuthority>(), registry.Channels);
+            var transformProtocol = new TransformProtocol(RequireCodec<TransformFrame>(), RequireCodec<TransformSettle>(), RequireCodec<TransformAuthority>(), registry.Channels);
             var sceneProtocol = new SceneProtocol(RequireCodec<SceneLoad>(), RequireCodec<SceneUnload>(), RequireCodec<SceneLoaded>(), registry.Channels);
             var clockProtocol = new ClockProtocol(RequireCodec<TickPing>(), RequireCodec<TickPong>());
             var inputProtocol = new InputProtocol(RequireCodec<InputFrames>(), RequireCodec<ReconcileState>());

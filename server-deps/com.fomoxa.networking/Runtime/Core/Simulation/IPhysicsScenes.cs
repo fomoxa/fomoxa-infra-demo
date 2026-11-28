@@ -5,25 +5,25 @@ namespace Fomoxa.Networking.Simulation
 {
     public interface IPhysicsScenes : IPhysicsWorlds
     {
-        void LoadScene(SceneFile file);
+        void LoadScene(NetworkScene scene, SceneFile file);
 
-        void UnloadScene(uint sceneId);
+        void UnloadScene(NetworkScene scene);
 
-        PhysicsBody AddBody(INetworkEntity entity, uint sceneId, in BodyDesc body);
+        PhysicsBody AddBody(INetworkEntity entity, NetworkScene scene, in BodyDesc body);
 
-        PhysicsBody2D AddBody2D(INetworkEntity entity, uint sceneId, in BodyDesc2D body);
+        PhysicsBody2D AddBody2D(INetworkEntity entity, NetworkScene scene, in BodyDesc2D body);
 
         void RemoveBodies(INetworkEntity entity);
 
-        StaticGroup AddStatic(uint sceneId, IReadOnlyList<ColliderDesc> colliders);
+        StaticGroup AddStatic(NetworkScene scene, IReadOnlyList<ColliderDesc> colliders);
 
-        StaticGroup AddStatic2D(uint sceneId, IReadOnlyList<ColliderDesc2D> colliders);
+        StaticGroup AddStatic2D(NetworkScene scene, IReadOnlyList<ColliderDesc2D> colliders);
 
         void RemoveStatic(StaticGroup group);
 
-        PhysicsBody AddBody(uint sceneId, in BodyDesc body);
+        PhysicsBody AddBody(NetworkScene scene, in BodyDesc body);
 
-        PhysicsBody2D AddBody2D(uint sceneId, in BodyDesc2D body);
+        PhysicsBody2D AddBody2D(NetworkScene scene, in BodyDesc2D body);
 
         void RemoveBody(PhysicsBody body);
 

@@ -11,16 +11,11 @@ namespace Fomoxa.Networking.Standalone
         private readonly StandalonePrefabs prefabs;
 
         private readonly IPhysicsScenes physics;
-        private readonly HashSet<uint> bootScenes = new HashSet<uint>();
 
-        public StandaloneServerEntityBackend(StandalonePrefabs prefabs, IPhysicsScenes physics, IReadOnlyList<SceneFile> bootScenes)
+        public StandaloneServerEntityBackend(StandalonePrefabs prefabs, IPhysicsScenes physics)
         {
             this.physics = physics;
             this.prefabs = prefabs;
-            foreach (SceneFile file in bootScenes)
-            {
-                this.bootScenes.Add(file.SceneId);
-            }
         }
 
         public string NameOf(INetworkEntity entity) =>
@@ -49,17 +44,26 @@ namespace Fomoxa.Networking.Standalone
             throw new ArgumentException($"prefab id 0x{entity.PrefabId:X8} is not registered with StandalonePrefabs", nameof(entity));
         }
 
-        public uint SceneIdOf(INetworkEntity entity)
+        public NetworkScene SceneOf(INetworkEntity entity) => ((StandaloneEntity)entity).Scene;
+
+        public Func<NetworkScene, bool> HasScene { get; set; }
+
+        public void MoveToScene(INetworkEntity entity, NetworkScene scene)
         {
-            uint sceneId = ((StandaloneEntity)entity).SceneId;
-            return bootScenes.Contains(sceneId) ? 0 : sceneId;
+            if (scene != default && (HasScene == null || !HasScene(scene)))
+            {
+                throw new InvalidOperationException($"{scene} is still loading; move objects into it once it has loaded");
+            }
+
+            ((StandaloneEntity)entity).MoveTo(scene, physics);
         }
 
         public void PrepareSpawn(INetworkEntity entity)
         {
+            var standalone = (StandaloneEntity)entity;
             if (physics != null)
             {
-                ((StandaloneEntity)entity).AttachBodies(physics);
+                standalone.AttachBodies(physics);
             }
         }
 
@@ -81,9 +85,9 @@ namespace Fomoxa.Networking.Standalone
         private readonly FomoxaRegistry registry;
         private readonly ISceneFiles files;
         private readonly StandaloneBehaviours behaviours;
-        private readonly Dictionary<uint, List<StandaloneEntity>> scenes = new Dictionary<uint, List<StandaloneEntity>>();
+        private readonly Dictionary<NetworkScene, List<StandaloneEntity>> scenes = new Dictionary<NetworkScene, List<StandaloneEntity>>();
         private readonly List<SceneFile> bootFiles = new List<SceneFile>();
-        private readonly Dictionary<uint, List<StandaloneEntity>> bootObjects = new Dictionary<uint, List<StandaloneEntity>>();
+        private readonly List<StandaloneEntity> bootObjects = new List<StandaloneEntity>();
 
         private readonly IPhysicsScenes physics;
 
@@ -104,12 +108,14 @@ namespace Fomoxa.Networking.Standalone
             foreach (SceneFile file in bootFiles)
             {
                 List<StandaloneEntity> sceneObjects = StandaloneSceneObjects.Build(file, behaviours);
-                bootObjects.Add(file.SceneId, sceneObjects);
+                bootObjects.AddRange(sceneObjects);
                 found.AddRange(sceneObjects);
             }
         }
 
-        public bool TryLoad(uint sceneId, Func<bool> accept, Action loaded, Action<Exception> failed)
+        public bool Has(NetworkScene scene) => scenes.ContainsKey(scene);
+
+        public bool TryLoad(NetworkScene scene, uint sceneId, ScenePhysics scenePhysics, Func<bool> accept, Action loaded, Action<Exception> failed)
         {
             if (!files.Knows(sceneId))
             {
@@ -129,35 +135,43 @@ namespace Fomoxa.Networking.Standalone
                 return true;
             }
 
+            foreach (StandaloneEntity sceneObject in sceneObjects)
+            {
+                sceneObject.Scene = scene;
+            }
+
             if (!accept())
             {
                 return true;
             }
 
-            scenes.Add(sceneId, sceneObjects);
-            physics?.LoadScene(file);
+            scenes.Add(scene, sceneObjects);
+            physics?.LoadScene(scene, file);
             loaded();
             return true;
         }
 
-        public void Unload(uint sceneId, Action unloaded)
+        public void Unload(NetworkScene scene, Action unloaded)
         {
-            scenes.Remove(sceneId);
-            physics?.UnloadScene(sceneId);
+            if (scenes.Remove(scene))
+            {
+                physics?.UnloadScene(scene);
+            }
+
             unloaded();
         }
 
-        public void SceneObjectsOf(uint sceneId, List<INetworkEntity> found)
+        public void SceneObjectsOf(NetworkScene scene, List<INetworkEntity> found)
         {
-            if (scenes.TryGetValue(sceneId, out List<StandaloneEntity> sceneObjects) || bootObjects.TryGetValue(sceneId, out sceneObjects))
+            if (scenes.TryGetValue(scene, out List<StandaloneEntity> sceneObjects))
             {
                 found.AddRange(sceneObjects);
             }
         }
 
-        public bool Holds(uint sceneId, INetworkEntity entity) =>
+        public bool Holds(NetworkScene scene, INetworkEntity entity) =>
             entity is StandaloneEntity standalone
-            && ((scenes.TryGetValue(sceneId, out List<StandaloneEntity> sceneObjects) && sceneObjects.Contains(standalone))
-                || (bootObjects.TryGetValue(sceneId, out List<StandaloneEntity> bootSceneObjects) && bootSceneObjects.Contains(standalone)));
+            && scenes.TryGetValue(scene, out List<StandaloneEntity> sceneObjects)
+            && sceneObjects.Contains(standalone);
     }
 }

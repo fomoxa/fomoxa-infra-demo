@@ -12,12 +12,13 @@ namespace Fomoxa.Networking.Objects
         private readonly ObjectProtocol protocol;
         private readonly SpawnSource source;
         private readonly ObjectTable table = new ObjectTable();
-        private readonly HashSet<ulong> sceneObjectIds = new HashSet<ulong>();
+        private readonly HashSet<(NetworkScene, ulong)> sceneObjectIds = new HashSet<(NetworkScene, ulong)>();
         private readonly Dictionary<uint, ObserverSet> observers = new Dictionary<uint, ObserverSet>();
         private readonly List<uint> ownedByLeavingPeer = new List<uint>();
         private readonly List<ulong> startedPeers = new List<ulong>();
         private readonly List<ulong> entering = new List<ulong>();
         private readonly List<ulong> leaving = new List<ulong>();
+        private readonly List<ulong> staying = new List<ulong>();
         private readonly List<ObserverAddedArgs> added = new List<ObserverAddedArgs>();
         private readonly List<FailedEntry> failedEntries = new List<FailedEntry>();
         private readonly List<uint> roundObjectIds = new List<uint>();
@@ -30,6 +31,7 @@ namespace Fomoxa.Networking.Objects
         private readonly ObjectSceneSpawn sceneSpawn = new ObjectSceneSpawn();
         private readonly ObjectDespawn despawn = new ObjectDespawn();
         private readonly ObjectOwnerChange ownerChange = new ObjectOwnerChange();
+        private readonly ObjectSceneMove sceneMove = new ObjectSceneMove();
         private int observerInterval = 15;
         private int roundTick;
         private int roundCursor;
@@ -118,9 +120,9 @@ namespace Fomoxa.Networking.Objects
             return session.SendToObject(peerId, messageId, objectId, behaviourIndex, body);
         }
 
-        public uint Spawn(uint prefabId, ulong ownerId) => Spawn(prefabId, ownerId, 0);
+        public uint Spawn(uint prefabId, ulong ownerId) => Spawn(prefabId, ownerId, default);
 
-        public uint Spawn(uint prefabId, ulong ownerId, uint sceneId)
+        public uint Spawn(uint prefabId, ulong ownerId, NetworkScene scene)
         {
             EnsureNotDeciding();
             EnsureStarted();
@@ -130,24 +132,24 @@ namespace Fomoxa.Networking.Objects
             }
 
             EnsureValidOwner(ownerId);
-            EnsureNetworkScene(sceneId);
+            EnsureNetworkScene(scene);
             uint objectId = AllocateObjectId();
-            ObserverSet peerIds = DecideObservers(objectId, ownerId, sceneId);
-            WriteSpawn(objectId, prefabId, ownerId, sceneId);
+            ObserverSet peerIds = DecideObservers(objectId, ownerId, scene);
+            WriteSpawn(objectId, prefabId, ownerId, scene);
             ReadOnlySpan<byte> payload = protocol.SpawnCodec.Encode(spawn).Span;
             foreach (ulong peerId in peerIds)
             {
                 session.EnqueueObjectMessage(peerId, protocol.SpawnCodec.MessageId, payload);
             }
 
-            table.Add(new ObjectRow(objectId, prefabId, 0, ownerId, sceneId));
+            table.Add(new ObjectRow(objectId, prefabId, 0, ownerId, scene));
             observers.Add(objectId, peerIds);
             return objectId;
         }
 
-        public uint SpawnScene(ulong sceneObjectId, ulong ownerId) => SpawnScene(sceneObjectId, ownerId, 0);
+        public uint SpawnScene(ulong sceneObjectId, ulong ownerId) => SpawnScene(sceneObjectId, ownerId, default);
 
-        public uint SpawnScene(ulong sceneObjectId, ulong ownerId, uint sceneId)
+        public uint SpawnScene(ulong sceneObjectId, ulong ownerId, NetworkScene scene)
         {
             EnsureNotDeciding();
             EnsureStarted();
@@ -156,24 +158,24 @@ namespace Fomoxa.Networking.Objects
                 throw new ArgumentException("scene object id 0 means no scene object", nameof(sceneObjectId));
             }
 
-            if (sceneObjectIds.Contains(sceneObjectId))
+            if (sceneObjectIds.Contains((scene, sceneObjectId)))
             {
-                throw new ArgumentException($"scene object 0x{sceneObjectId:X16} is already spawned", nameof(sceneObjectId));
+                throw new ArgumentException($"scene object 0x{sceneObjectId:X16} is already spawned in {scene}", nameof(sceneObjectId));
             }
 
             EnsureValidOwner(ownerId);
-            EnsureNetworkScene(sceneId);
+            EnsureNetworkScene(scene);
             uint objectId = AllocateObjectId();
-            ObserverSet peerIds = DecideObservers(objectId, ownerId, sceneId);
-            WriteSceneSpawn(objectId, sceneObjectId, ownerId);
+            ObserverSet peerIds = DecideObservers(objectId, ownerId, scene);
+            WriteSceneSpawn(objectId, scene, sceneObjectId, ownerId);
             ReadOnlySpan<byte> payload = protocol.SceneSpawnCodec.Encode(sceneSpawn).Span;
             foreach (ulong peerId in peerIds)
             {
                 session.EnqueueObjectMessage(peerId, protocol.SceneSpawnCodec.MessageId, payload);
             }
 
-            table.Add(new ObjectRow(objectId, 0, sceneObjectId, ownerId, sceneId));
-            sceneObjectIds.Add(sceneObjectId);
+            table.Add(new ObjectRow(objectId, 0, sceneObjectId, ownerId, scene));
+            sceneObjectIds.Add((scene, sceneObjectId));
             observers.Add(objectId, peerIds);
             return objectId;
         }
@@ -187,7 +189,7 @@ namespace Fomoxa.Networking.Objects
             }
 
             table.Remove(objectId);
-            sceneObjectIds.Remove(row.SceneObjectId);
+            sceneObjectIds.Remove((row.Scene, row.SceneObjectId));
             observers.Remove(objectId, out ObserverSet peerIds);
             despawn.ObjectId = objectId;
             ReadOnlySpan<byte> payload = protocol.DespawnCodec.Encode(despawn).Span;
@@ -218,7 +220,7 @@ namespace Fomoxa.Networking.Objects
             bool previousLeaves;
             try
             {
-                previousLeaves = previousOwnerId != 0 && peerIds.Contains(previousOwnerId) && (!InScene(changed.SceneId, previousOwnerId) || !Decide(objectId, previousOwnerId));
+                previousLeaves = previousOwnerId != 0 && peerIds.Contains(previousOwnerId) && (!InScene(changed.Scene, previousOwnerId) || !Decide(objectId, previousOwnerId));
             }
             catch
             {
@@ -226,7 +228,7 @@ namespace Fomoxa.Networking.Objects
                 throw;
             }
 
-            bool ownerEnters = ownerId != 0 && !peerIds.Contains(ownerId) && InScene(changed.SceneId, ownerId);
+            bool ownerEnters = ownerId != 0 && !peerIds.Contains(ownerId) && InScene(changed.Scene, ownerId);
             ownerChange.ObjectId = objectId;
             ownerChange.OwnerId = ownerId;
             ReadOnlySpan<byte> payload = protocol.OwnerChangeCodec.Encode(ownerChange).Span;
@@ -253,6 +255,101 @@ namespace Fomoxa.Networking.Objects
 
             OnOwnerChanged?.Invoke(new ObjectOwnerChangedArgs(objectId, previousOwnerId, ownerId));
             FinishEntries();
+            return true;
+        }
+
+        public bool CanMoveToScene(uint objectId, NetworkScene scene, out NetworkScene previousScene)
+        {
+            if (!table.TryGet(objectId, out ObjectRow row))
+            {
+                previousScene = default;
+                return false;
+            }
+
+            if (row.SceneObjectId != 0)
+            {
+                throw new ArgumentException($"scene object 0x{row.SceneObjectId:X16} stays in the scene it belongs to; only prefab objects move between scenes", nameof(objectId));
+            }
+
+            EnsureNetworkScene(scene);
+            previousScene = row.Scene;
+            return true;
+        }
+
+        public bool MoveToScene(uint objectId, NetworkScene scene, uint tick)
+        {
+            EnsureNotDeciding();
+            if (!CanMoveToScene(objectId, scene, out NetworkScene previousScene))
+            {
+                return false;
+            }
+
+            if (previousScene == scene)
+            {
+                return true;
+            }
+
+            table.SetScene(objectId, scene, out _);
+            table.TryGet(objectId, out ObjectRow moved);
+            ObserverSet peerIds = observers[objectId];
+            entering.Clear();
+            leaving.Clear();
+            staying.Clear();
+            if (session.State == ServerState.Started)
+            {
+                CollectStartedPeers();
+                try
+                {
+                    foreach (ulong peerId in CandidatesOf(moved, peerIds))
+                    {
+                        bool observes = InScene(scene, peerId) && (peerId == moved.OwnerId || Decide(objectId, peerId));
+                        bool present = peerIds.Contains(peerId);
+                        if (observes && present)
+                        {
+                            staying.Add(peerId);
+                        }
+                        else if (observes)
+                        {
+                            entering.Add(peerId);
+                        }
+                        else if (present)
+                        {
+                            leaving.Add(peerId);
+                        }
+                    }
+                }
+                catch
+                {
+                    table.SetScene(objectId, previousScene, out _);
+                    throw;
+                }
+            }
+
+            sceneMove.ObjectId = objectId;
+            sceneMove.Scene = scene.Id;
+            sceneMove.Tick = tick;
+            ReadOnlySpan<byte> payload = protocol.SceneMoveCodec.Encode(sceneMove).Span;
+            foreach (ulong peerId in staying)
+            {
+                session.EnqueueObjectMessage(peerId, protocol.SceneMoveCodec.MessageId, payload);
+            }
+
+            foreach (ulong peerId in leaving)
+            {
+                peerIds.Remove(peerId);
+                SendDespawn(objectId, peerId);
+            }
+
+            try
+            {
+                Enter(moved, peerIds, entering);
+            }
+            finally
+            {
+                staying.Clear();
+                FinishEntries();
+            }
+
             return true;
         }
 
@@ -372,12 +469,12 @@ namespace Fomoxa.Networking.Objects
             }
         }
 
-        internal void DespawnScene(uint sceneId)
+        internal void DespawnScene(NetworkScene scene)
         {
             var inScene = new List<uint>();
             foreach (ObjectRow row in table)
             {
-                if (row.SceneId == sceneId)
+                if (row.Scene == scene)
                 {
                     inScene.Add(row.ObjectId);
                 }
@@ -430,7 +527,7 @@ namespace Fomoxa.Networking.Objects
             leaving.Clear();
             foreach (ulong peerId in everyPeer ? CandidatesOf(row, peerIds) : startedPeers)
             {
-                bool observes = InScene(row.SceneId, peerId) && (peerId == row.OwnerId || Decide(row.ObjectId, peerId));
+                bool observes = InScene(row.Scene, peerId) && (peerId == row.OwnerId || Decide(row.ObjectId, peerId));
                 bool present = peerIds.Contains(peerId);
                 if (observes && !present)
                 {
@@ -544,11 +641,11 @@ namespace Fomoxa.Networking.Objects
         {
             if (row.SceneObjectId != 0)
             {
-                WriteSceneSpawn(row.ObjectId, row.SceneObjectId, row.OwnerId);
+                WriteSceneSpawn(row.ObjectId, row.Scene, row.SceneObjectId, row.OwnerId);
                 return protocol.SceneSpawnCodec.Encode(sceneSpawn).Span;
             }
 
-            WriteSpawn(row.ObjectId, row.PrefabId, row.OwnerId, row.SceneId);
+            WriteSpawn(row.ObjectId, row.PrefabId, row.OwnerId, row.Scene);
             return protocol.SpawnCodec.Encode(spawn).Span;
         }
 
@@ -558,13 +655,13 @@ namespace Fomoxa.Networking.Objects
             session.EnqueueObjectMessage(peerId, protocol.DespawnCodec.MessageId, protocol.DespawnCodec.Encode(despawn).Span);
         }
 
-        private ObserverSet DecideObservers(uint objectId, ulong ownerId, uint sceneId)
+        private ObserverSet DecideObservers(uint objectId, ulong ownerId, NetworkScene scene)
         {
             CollectStartedPeers();
             var peerIds = new ObserverSet(startedPeers.Count);
             foreach (ulong peerId in startedPeers)
             {
-                if (InScene(sceneId, peerId) && (peerId == ownerId || Decide(objectId, peerId)))
+                if (InScene(scene, peerId) && (peerId == ownerId || Decide(objectId, peerId)))
                 {
                     peerIds.Add(peerId);
                 }
@@ -573,14 +670,14 @@ namespace Fomoxa.Networking.Objects
             return peerIds;
         }
 
-        private bool InScene(uint sceneId, ulong peerId) =>
-            sceneId == 0 || (Scenes != null && Scenes.HasLoaded(peerId, sceneId));
+        private bool InScene(NetworkScene scene, ulong peerId) =>
+            scene == default || (Scenes != null && Scenes.HasLoaded(peerId, scene));
 
-        private void EnsureNetworkScene(uint sceneId)
+        private void EnsureNetworkScene(NetworkScene scene)
         {
-            if (sceneId != 0 && (Scenes == null || !Scenes.Contains(sceneId)))
+            if (scene != default && (Scenes == null || !Scenes.Contains(scene)))
             {
-                throw new ArgumentException($"scene 0x{sceneId:X8} is not a network scene", nameof(sceneId));
+                throw new ArgumentException($"{scene} is not a network scene", nameof(scene));
             }
         }
 
@@ -622,7 +719,7 @@ namespace Fomoxa.Networking.Objects
                 bool observes;
                 try
                 {
-                    observes = InScene(row.SceneId, peerId) && (row.OwnerId == peerId || Decide(row.ObjectId, peerId));
+                    observes = InScene(row.Scene, peerId) && (row.OwnerId == peerId || Decide(row.ObjectId, peerId));
                 }
                 catch
                 {
@@ -661,21 +758,22 @@ namespace Fomoxa.Networking.Objects
             return true;
         }
 
-        private void WriteSpawn(uint objectId, uint prefabId, ulong ownerId, uint sceneId)
+        private void WriteSpawn(uint objectId, uint prefabId, ulong ownerId, NetworkScene scene)
         {
             SpawnData data = source(objectId);
             spawn.ObjectId = objectId;
             spawn.PrefabId = prefabId;
             spawn.PrefabFingerprint = data.PrefabFingerprint;
             spawn.OwnerId = ownerId;
-            spawn.SceneId = sceneId;
+            spawn.Scene = scene.Id;
             SpawnTransform.Pack(data, spawn);
         }
 
-        private void WriteSceneSpawn(uint objectId, ulong sceneObjectId, ulong ownerId)
+        private void WriteSceneSpawn(uint objectId, NetworkScene scene, ulong sceneObjectId, ulong ownerId)
         {
             SpawnData data = source(objectId);
             sceneSpawn.ObjectId = objectId;
+            sceneSpawn.Scene = scene.Id;
             sceneSpawn.SceneObjectId = sceneObjectId;
             sceneSpawn.Fingerprint = data.PrefabFingerprint;
             sceneSpawn.OwnerId = ownerId;

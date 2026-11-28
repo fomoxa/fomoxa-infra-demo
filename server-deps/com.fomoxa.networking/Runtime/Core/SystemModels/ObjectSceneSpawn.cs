@@ -13,6 +13,10 @@ namespace Fomoxa.Networking.Messaging
         [Codec("net")]
         public uint ObjectId { get; set; }
 
+        [Network("u32")]
+        [Codec("net")]
+        public uint Scene { get; set; }
+
         [Network("u64")]
         [Codec("net")]
         public ulong SceneObjectId { get; set; }

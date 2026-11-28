@@ -26,10 +26,10 @@ namespace Fomoxa.Networking.Objects
         private CollectionContent collectionContent = new CollectionContent();
         private CollectionContents spawnContents = new CollectionContents();
         private readonly CollectionResync collectionResync = new CollectionResync();
-        private TransformUpdate transformUpdate = new TransformUpdate();
+        private TransformFrame transformFrame = new TransformFrame();
         private TransformSettle transformSettle = new TransformSettle();
         private TransformAuthority transformAuthority = new TransformAuthority();
-        private readonly TransformUpdate ownerUpdate = new TransformUpdate();
+        private readonly TransformFrames ownerFrames;
         private readonly TransformSettle ownerSettle = new TransformSettle();
         private readonly List<OwnerSend> ownerSends = new List<OwnerSend>();
         private uint ownerTicks;
@@ -60,8 +60,9 @@ namespace Fomoxa.Networking.Objects
             dispatcher.RegisterObject(stateProtocol.DeltaCodec.MessageId, (peerId, objectId, behaviourIndex, body) => DeliverDelta(objectId, behaviourIndex, body));
             dispatcher.RegisterObject(stateProtocol.Collections.ChangesCodec.MessageId, (peerId, objectId, behaviourIndex, body) => DeliverChanges(objectId, behaviourIndex, body));
             dispatcher.RegisterObject(stateProtocol.Collections.ContentCodec.MessageId, (peerId, objectId, behaviourIndex, body) => DeliverContent(objectId, behaviourIndex, body));
-            dispatcher.RegisterObject(transformProtocol.UpdateCodec.MessageId, (peerId, objectId, behaviourIndex, body) => DeliverTransform(objectId, behaviourIndex, body, false));
-            dispatcher.RegisterObject(transformProtocol.SettleCodec.MessageId, (peerId, objectId, behaviourIndex, body) => DeliverTransform(objectId, behaviourIndex, body, true));
+            ownerFrames = new TransformFrames(transformProtocol.FrameCodec, peerId => session.FrameBudget, (peerId, payload) => session.Send(transformProtocol.FrameCodec.MessageId, payload));
+            dispatcher.Register(transformProtocol.FrameCodec.MessageId, (peerId, payload) => DeliverFrame(payload));
+            dispatcher.RegisterObject(transformProtocol.SettleCodec.MessageId, (peerId, objectId, behaviourIndex, body) => DeliverSettle(objectId, behaviourIndex, body));
             dispatcher.RegisterObject(transformProtocol.AuthorityCodec.MessageId, (peerId, objectId, behaviourIndex, body) => DeliverAuthority(objectId, behaviourIndex, body));
         }
 
@@ -85,6 +86,7 @@ namespace Fomoxa.Networking.Objects
         {
             Objects = objects;
             objects.OnOwnerChanged += RaiseOwnerChanged;
+            objects.OnSceneMoved += RaiseSceneMoved;
         }
 
         public SpawnResult Spawn(in SpawnedObject spawnedObject)
@@ -490,7 +492,34 @@ namespace Fomoxa.Networking.Objects
             return false;
         }
 
-        private void DeliverTransform(uint objectId, byte behaviourIndex, ReadOnlyMemory<byte> body, bool settle)
+        private void DeliverFrame(ReadOnlyMemory<byte> payload)
+        {
+            transformProtocol.FrameCodec.Decode(payload, ref transformFrame);
+            ReadOnlySpan<byte> data = transformFrame.Data.Span;
+            if (!TransformItems.IsWellFormed(data))
+            {
+                throw new MessageDecodeException("a transform frame has a malformed item", null);
+            }
+
+            int offset = 0;
+            while (TransformItems.TryRead(data, ref offset, out TransformItem item))
+            {
+                DeliverTransform(item.ObjectId, item.BehaviourIndex, transformFrame.Tick, item.Mask, item.Generation, item.Position, item.Rotation, item.Scale, false);
+            }
+        }
+
+        private void DeliverSettle(uint objectId, byte behaviourIndex, ReadOnlyMemory<byte> body)
+        {
+            transformProtocol.SettleCodec.Decode(body, ref transformSettle);
+            if (!SpawnTransform.TryUnpack(transformSettle.Mask, transformSettle.Values, out Vector3 position, out Quaternion rotation, out Vector3 scale))
+            {
+                throw new MessageDecodeException($"transform mask 0x{transformSettle.Mask:X2} does not match its {transformSettle.Values.Count} values", null);
+            }
+
+            DeliverTransform(objectId, behaviourIndex, transformSettle.Tick, transformSettle.Mask, transformSettle.Generation, position, rotation, scale, true);
+        }
+
+        private void DeliverTransform(uint objectId, byte behaviourIndex, uint tick, byte mask, byte generation, in Vector3 position, in Quaternion rotation, in Vector3 scale, bool settle)
         {
             if (!spawned.TryGetValue(objectId, out EntityRecord record) || record.Server != null)
             {
@@ -507,32 +536,6 @@ namespace Fomoxa.Networking.Objects
             if (slot == null)
             {
                 return;
-            }
-
-            uint tick;
-            byte mask;
-            byte generation;
-            List<float> values;
-            if (settle)
-            {
-                transformProtocol.SettleCodec.Decode(body, ref transformSettle);
-                tick = transformSettle.Tick;
-                mask = transformSettle.Mask;
-                generation = transformSettle.Generation;
-                values = transformSettle.Values;
-            }
-            else
-            {
-                transformProtocol.UpdateCodec.Decode(body, ref transformUpdate);
-                tick = transformUpdate.Tick;
-                mask = transformUpdate.Mask;
-                generation = transformUpdate.Generation;
-                values = transformUpdate.Values;
-            }
-
-            if (!SpawnTransform.TryUnpack(mask, values, out Vector3 position, out Quaternion rotation, out Vector3 scale))
-            {
-                throw new MessageDecodeException($"transform mask 0x{mask:X2} does not match its {values.Count} values", null);
             }
 
             TransformSync sync = slot.Sync;
@@ -554,6 +557,7 @@ namespace Fomoxa.Networking.Objects
         public void SyncOwnerTransforms()
         {
             ownerTicks++;
+            ownerFrames.Begin(ownerTicks);
             for (int index = ownerSends.Count - 1; index >= 0; index--)
             {
                 OwnerSend send = ownerSends[index];
@@ -579,17 +583,16 @@ namespace Fomoxa.Networking.Objects
                 TransformSend sample = sync.Sample(position, rotation, scale, out byte mask);
                 if (sample == TransformSend.Update)
                 {
-                    ownerUpdate.Tick = ownerTicks;
-                    ownerUpdate.Mask = mask;
-                    ownerUpdate.Generation = sync.OwnerGeneration;
-                    SpawnTransform.PackSelected(mask, position, rotation, scale, ownerUpdate.Values);
-                    session.SendToObject(transformProtocol.UpdateCodec.MessageId, record.ObjectId, send.Index, transformProtocol.UpdateCodec.Encode(ownerUpdate).Span);
+                    ownerFrames.SetItem(record.ObjectId, send.Index, sync.OwnerGeneration, mask, position, rotation, scale);
+                    ownerFrames.AddTo(0);
                 }
                 else if (sample == TransformSend.Settle)
                 {
                     SendOwnerSettle(record.ObjectId, send.Index, sync, mask, position, rotation, scale);
                 }
             }
+
+            ownerFrames.Flush();
         }
 
         private void SendOwnerSettle(uint objectId, byte behaviourIndex, TransformSync sync, byte mask, in Vector3 position, in Quaternion rotation, in Vector3 scale)
@@ -765,6 +768,42 @@ namespace Fomoxa.Networking.Objects
             foreach (EntityBehaviour behaviour in record.Representation.EntityBehaviours)
             {
                 behaviour.OnOwnerChangedClient(args.PreviousOwnerId);
+            }
+        }
+
+        private void RaiseSceneMoved(ObjectSceneMovedArgs args)
+        {
+            if (!spawned.TryGetValue(args.ObjectId, out EntityRecord record))
+            {
+                return;
+            }
+
+            IReadOnlyList<EntityBehaviour> behaviours = record.Representation.EntityBehaviours;
+            if (!ConnectedLocally)
+            {
+                backend.MoveToScene(record.Representation, args.Scene);
+            }
+
+            record.ReconcileFrom = args.Tick;
+            bool wasPredicting = IsPredicting(behaviours);
+            foreach (EntityBehaviour behaviour in behaviours)
+            {
+                InputSlot slot = behaviour.InputSlot;
+                if (slot?.Reconcile != null)
+                {
+                    slot.ClearHistory();
+                    slot.Predicting = false;
+                }
+            }
+
+            if (wasPredicting)
+            {
+                ResetReceive(behaviours);
+            }
+
+            foreach (EntityBehaviour behaviour in behaviours)
+            {
+                behaviour.OnSceneChangedClient(args.PreviousScene, args.Scene);
             }
         }
 

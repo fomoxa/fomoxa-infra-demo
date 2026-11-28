@@ -39,7 +39,7 @@ namespace Fomoxa.Networking.Messaging
 
         [Network("u32")]
         [Codec("net")]
-        public uint SceneId { get; set; }
+        public uint Scene { get; set; }
 
         [Network("Array<bytes>")]
         [Codec("net")]

@@ -4,9 +4,9 @@
 // source: FomoxaSystemModels/SceneLoad.cs
 // model: SceneLoad
 // codec: net
-// fingerprint: sha256:0061dc248bd029c7cda79bba1ca10d3a7a22d17b4209c989257d80c9ae3c60dd
+// fingerprint: sha256:758cad5cb719fd5944a0f4d06b7c70911441d4e624072ec13ba216d77ad201b9
 // fomoxac-version: 0.2.3
-// generated-at: 2026-11-01T10:10:46Z
+// generated-at: 2026-11-28T03:57:53Z
 
 namespace Generated
 {
@@ -16,7 +16,7 @@ namespace Generated
 /// The wire layout, in declaration order (RFC-0002 §5.1):
 /// <list type="number">
 /// <item><description><c>Full</c>: <c>bool</c></description></item>
-/// <item><description><c>Scenes</c>: <c>Array&lt;u32&gt;</c></description></item>
+/// <item><description><c>Scenes</c>: <c>Array&lt;SceneRef&gt;</c></description></item>
 /// </list>
 /// </remarks>
 public static class SceneLoadNetCodec
@@ -29,7 +29,7 @@ public static class SceneLoadNetCodec
 
     /// <summary>This message's wire-contract fingerprint - the same value
     /// <c>Handshake.cs</c> publishes, and the one a peer compares against.</summary>
-    public const ulong Fingerprint = 0x0061DC248BD029C7;
+    public const ulong Fingerprint = 0x758CAD5CB719FD59;
 
     /// <summary>Writes the <c>net</c> fields of <paramref name="value"/>, in declaration order.</summary>
     public static void Encode(Writer writer, Fomoxa.Networking.Messaging.SceneLoad value)
@@ -38,7 +38,7 @@ public static class SceneLoadNetCodec
         writer.WriteArrayCount(value.Scenes.Count);
         foreach (var element in value.Scenes)
         {
-            writer.WriteU32(element);
+            SceneRefNetCodec.Encode(writer, element);
         }
     }
 
@@ -58,7 +58,8 @@ public static class SceneLoadNetCodec
         var scenesValueList = ArrayField.Reuse(value.Scenes, scenesValueCount);
         for (int i = 0; i < scenesValueCount; i++)
         {
-            var element = reader.ReadU32();
+            var element = i < scenesValueList.Count ? scenesValueList[i] : new Fomoxa.Networking.Messaging.SceneRef();
+            SceneRefNetCodec.Decode(ref reader, ref element);
             if (i < scenesValueList.Count)
             {
                 scenesValueList[i] = element;

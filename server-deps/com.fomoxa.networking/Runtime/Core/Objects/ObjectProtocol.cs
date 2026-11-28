@@ -11,6 +11,7 @@ namespace Fomoxa.Networking.Objects
             IMessageCodec<ObjectSceneSpawn> sceneSpawnCodec,
             IMessageCodec<ObjectDespawn> despawnCodec,
             IMessageCodec<ObjectOwnerChange> ownerChangeCodec,
+            IMessageCodec<ObjectSceneMove> sceneMoveCodec,
             MessageChannels channels)
         {
             LocalPeerCodec = localPeerCodec ?? throw new ArgumentNullException(nameof(localPeerCodec));
@@ -18,6 +19,7 @@ namespace Fomoxa.Networking.Objects
             SceneSpawnCodec = sceneSpawnCodec ?? throw new ArgumentNullException(nameof(sceneSpawnCodec));
             DespawnCodec = despawnCodec ?? throw new ArgumentNullException(nameof(despawnCodec));
             OwnerChangeCodec = ownerChangeCodec ?? throw new ArgumentNullException(nameof(ownerChangeCodec));
+            SceneMoveCodec = sceneMoveCodec ?? throw new ArgumentNullException(nameof(sceneMoveCodec));
             if (channels == null)
             {
                 throw new ArgumentNullException(nameof(channels));
@@ -28,6 +30,7 @@ namespace Fomoxa.Networking.Objects
             EnsureReliable(channels, sceneSpawnCodec.MessageId, nameof(ObjectSceneSpawn));
             EnsureReliable(channels, despawnCodec.MessageId, nameof(ObjectDespawn));
             EnsureReliable(channels, ownerChangeCodec.MessageId, nameof(ObjectOwnerChange));
+            EnsureReliable(channels, sceneMoveCodec.MessageId, nameof(ObjectSceneMove));
         }
 
         public IMessageCodec<LocalPeer> LocalPeerCodec { get; }
@@ -39,6 +42,8 @@ namespace Fomoxa.Networking.Objects
         public IMessageCodec<ObjectDespawn> DespawnCodec { get; }
 
         public IMessageCodec<ObjectOwnerChange> OwnerChangeCodec { get; }
+
+        public IMessageCodec<ObjectSceneMove> SceneMoveCodec { get; }
 
         public static ObjectProtocol From(FomoxaRegistry registry)
         {
@@ -53,6 +58,7 @@ namespace Fomoxa.Networking.Objects
                 registry.Codec<ObjectSceneSpawn>(),
                 registry.Codec<ObjectDespawn>(),
                 registry.Codec<ObjectOwnerChange>(),
+                registry.Codec<ObjectSceneMove>(),
                 registry.Channels);
         }
 

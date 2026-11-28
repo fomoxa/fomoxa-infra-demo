@@ -16,9 +16,9 @@ namespace Fomoxa.Networking.Objects
 
     public interface ISceneHost
     {
-        bool TryLoad(uint sceneId, Action loaded, Action failed);
+        bool TryLoad(NetworkScene scene, uint sceneId, ScenePhysics physics, Action<float> progress, Action loaded, Action failed);
 
-        void Unload(uint sceneId, Action unloaded);
+        void Unload(NetworkScene scene, Action unloaded);
     }
 
     public enum ObjectMismatchKind
@@ -56,19 +56,19 @@ namespace Fomoxa.Networking.Objects
     public readonly struct SpawnedObject
     {
         public SpawnedObject(uint objectId, uint prefabId, ulong sceneObjectId, uint prefabFingerprint, ulong ownerId, Vector3 position, Quaternion rotation, Vector3 scale, IReadOnlyList<ReadOnlyMemory<byte>> states)
-            : this(objectId, prefabId, sceneObjectId, prefabFingerprint, ownerId, position, rotation, scale, states, 0)
+            : this(objectId, prefabId, sceneObjectId, prefabFingerprint, ownerId, position, rotation, scale, states, default)
         {
         }
 
-        public SpawnedObject(uint objectId, uint prefabId, ulong sceneObjectId, uint prefabFingerprint, ulong ownerId, Vector3 position, Quaternion rotation, Vector3 scale, IReadOnlyList<ReadOnlyMemory<byte>> states, uint sceneId)
-            : this(objectId, prefabId, sceneObjectId, prefabFingerprint, ownerId, position, rotation, scale, states, sceneId, null)
+        public SpawnedObject(uint objectId, uint prefabId, ulong sceneObjectId, uint prefabFingerprint, ulong ownerId, Vector3 position, Quaternion rotation, Vector3 scale, IReadOnlyList<ReadOnlyMemory<byte>> states, NetworkScene scene)
+            : this(objectId, prefabId, sceneObjectId, prefabFingerprint, ownerId, position, rotation, scale, states, scene, null)
         {
         }
 
-        public SpawnedObject(uint objectId, uint prefabId, ulong sceneObjectId, uint prefabFingerprint, ulong ownerId, Vector3 position, Quaternion rotation, Vector3 scale, IReadOnlyList<ReadOnlyMemory<byte>> states, uint sceneId, IReadOnlyList<ReadOnlyMemory<byte>> collections)
+        public SpawnedObject(uint objectId, uint prefabId, ulong sceneObjectId, uint prefabFingerprint, ulong ownerId, Vector3 position, Quaternion rotation, Vector3 scale, IReadOnlyList<ReadOnlyMemory<byte>> states, NetworkScene scene, IReadOnlyList<ReadOnlyMemory<byte>> collections)
         {
             Collections = collections ?? Array.Empty<ReadOnlyMemory<byte>>();
-            SceneId = sceneId;
+            Scene = scene;
             ObjectId = objectId;
             PrefabId = prefabId;
             SceneObjectId = sceneObjectId;
@@ -100,7 +100,7 @@ namespace Fomoxa.Networking.Objects
 
         public IReadOnlyList<ReadOnlyMemory<byte>> Collections { get; }
 
-        public uint SceneId { get; }
+        public NetworkScene Scene { get; }
     }
 
     public interface IObjectSpawner
@@ -126,6 +126,25 @@ namespace Fomoxa.Networking.Objects
         public ulong OwnerId { get; }
     }
 
+    public readonly struct ObjectSceneMovedArgs
+    {
+        public ObjectSceneMovedArgs(uint objectId, NetworkScene previousScene, NetworkScene scene, uint tick)
+        {
+            ObjectId = objectId;
+            PreviousScene = previousScene;
+            Scene = scene;
+            Tick = tick;
+        }
+
+        public uint ObjectId { get; }
+
+        public NetworkScene PreviousScene { get; }
+
+        public NetworkScene Scene { get; }
+
+        public uint Tick { get; }
+    }
+
     public readonly struct ObserverAddedArgs
     {
         public ObserverAddedArgs(uint objectId, ulong peerId)
@@ -142,17 +161,17 @@ namespace Fomoxa.Networking.Objects
     public readonly struct ObjectMismatchArgs
     {
         public ObjectMismatchArgs(ObjectMismatchKind kind, uint objectId, uint prefabId, ulong sceneObjectId)
-            : this(kind, objectId, prefabId, sceneObjectId, 0)
+            : this(kind, objectId, prefabId, sceneObjectId, default)
         {
         }
 
-        public ObjectMismatchArgs(ObjectMismatchKind kind, uint objectId, uint prefabId, ulong sceneObjectId, uint sceneId)
+        public ObjectMismatchArgs(ObjectMismatchKind kind, uint objectId, uint prefabId, ulong sceneObjectId, NetworkScene scene)
         {
             Kind = kind;
             ObjectId = objectId;
             PrefabId = prefabId;
             SceneObjectId = sceneObjectId;
-            SceneId = sceneId;
+            Scene = scene;
         }
 
         public ObjectMismatchKind Kind { get; }
@@ -163,6 +182,6 @@ namespace Fomoxa.Networking.Objects
 
         public ulong SceneObjectId { get; }
 
-        public uint SceneId { get; }
+        public NetworkScene Scene { get; }
     }
 }

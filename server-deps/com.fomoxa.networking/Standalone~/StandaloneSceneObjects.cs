@@ -44,7 +44,6 @@ namespace Fomoxa.Networking.Standalone
                 SceneFilePose pose = sceneObject.Pose;
                 var entity = new StandaloneEntity(0, sceneObject.SceneObjectId, sceneObject.Fingerprint, sceneBehaviours)
                 {
-                    SceneId = sceneId,
                     Position = new Vector3(pose.PositionX, pose.PositionY, pose.PositionZ),
                     Rotation = new Quaternion(pose.RotationX, pose.RotationY, pose.RotationZ, pose.RotationW),
                     Scale = new Vector3(pose.ScaleX, pose.ScaleY, pose.ScaleZ),

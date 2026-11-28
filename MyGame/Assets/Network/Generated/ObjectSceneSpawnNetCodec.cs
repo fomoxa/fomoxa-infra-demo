@@ -4,9 +4,9 @@
 // source: FomoxaSystemModels/ObjectSceneSpawn.cs
 // model: ObjectSceneSpawn
 // codec: net
-// fingerprint: sha256:387c4247a3e10d645d3a90238afe11af414fb52fb349a9886ad7cedc6f38ae2d
+// fingerprint: sha256:816fc7cd147b9b2c508fcbc85ac1f3e8d4ec5a6903496b07089f9a6c5f216bbb
 // fomoxac-version: 0.2.3
-// generated-at: 2026-11-01T10:10:46Z
+// generated-at: 2026-11-28T03:57:53Z
 
 namespace Generated
 {
@@ -16,6 +16,7 @@ namespace Generated
 /// The wire layout, in declaration order (RFC-0002 §5.1):
 /// <list type="number">
 /// <item><description><c>ObjectId</c>: <c>u32</c></description></item>
+/// <item><description><c>Scene</c>: <c>u32</c></description></item>
 /// <item><description><c>SceneObjectId</c>: <c>u64</c></description></item>
 /// <item><description><c>Fingerprint</c>: <c>u32</c></description></item>
 /// <item><description><c>OwnerId</c>: <c>u64</c></description></item>
@@ -35,12 +36,13 @@ public static class ObjectSceneSpawnNetCodec
 
     /// <summary>This message's wire-contract fingerprint - the same value
     /// <c>Handshake.cs</c> publishes, and the one a peer compares against.</summary>
-    public const ulong Fingerprint = 0x387C4247A3E10D64;
+    public const ulong Fingerprint = 0x816FC7CD147B9B2C;
 
     /// <summary>Writes the <c>net</c> fields of <paramref name="value"/>, in declaration order.</summary>
     public static void Encode(Writer writer, Fomoxa.Networking.Messaging.ObjectSceneSpawn value)
     {
         writer.WriteU32(value.ObjectId);
+        writer.WriteU32(value.Scene);
         writer.WriteU64(value.SceneObjectId);
         writer.WriteU32(value.Fingerprint);
         writer.WriteU64(value.OwnerId);
@@ -74,6 +76,7 @@ public static class ObjectSceneSpawnNetCodec
     public static void Decode(ref Reader reader, ref Fomoxa.Networking.Messaging.ObjectSceneSpawn value)
     {
         value.ObjectId = reader.FieldAbsent() ? 0 : reader.ReadU32();
+        value.Scene = reader.FieldAbsent() ? 0 : reader.ReadU32();
         value.SceneObjectId = reader.FieldAbsent() ? 0 : reader.ReadU64();
         value.Fingerprint = reader.FieldAbsent() ? 0 : reader.ReadU32();
         value.OwnerId = reader.FieldAbsent() ? 0 : reader.ReadU64();

@@ -5,13 +5,13 @@ namespace Fomoxa.Networking.Objects
 {
     public interface IServerSceneHost
     {
-        bool TryLoad(uint sceneId, Func<bool> accept, Action loaded, Action<Exception> failed);
+        bool TryLoad(NetworkScene scene, uint sceneId, ScenePhysics physics, Func<bool> accept, Action loaded, Action<Exception> failed);
 
-        void Unload(uint sceneId, Action unloaded);
+        void Unload(NetworkScene scene, Action unloaded);
 
-        void SceneObjectsOf(uint sceneId, List<INetworkEntity> found);
+        void SceneObjectsOf(NetworkScene scene, List<INetworkEntity> found);
 
-        bool Holds(uint sceneId, INetworkEntity entity);
+        bool Holds(NetworkScene scene, INetworkEntity entity);
 
         bool Knows(uint sceneId);
 

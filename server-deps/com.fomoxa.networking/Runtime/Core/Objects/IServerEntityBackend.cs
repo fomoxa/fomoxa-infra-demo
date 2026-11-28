@@ -8,7 +8,9 @@ namespace Fomoxa.Networking.Objects
 
         uint FingerprintOf(INetworkEntity entity, bool isSceneObject);
 
-        uint SceneIdOf(INetworkEntity entity);
+        NetworkScene SceneOf(INetworkEntity entity);
+
+        void MoveToScene(INetworkEntity entity, NetworkScene scene);
 
         void PrepareSpawn(INetworkEntity entity);
 

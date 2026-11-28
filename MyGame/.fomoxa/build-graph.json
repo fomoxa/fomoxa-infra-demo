@@ -1,7 +1,7 @@
 {
   "schema_version": 1,
   "generator": "fomoxac 0.2.3",
-  "schema_fingerprint": "sha256:ae07362f59c7356b84372043e948eccf04919371687c20f94a101eb2189d5f07",
+  "schema_fingerprint": "sha256:ab3dfc35e86010b624cfaf022b6677c457ca0e1db1c633355717133183c2e617",
   "sha256_of": "each file with its `// generated-at:` line emptied, so an unchanged schema keeps an unchanged digest",
   "sources": {
     "Assets/Network/Generated/StateModels/MoveInput.cs": {
@@ -642,6 +642,20 @@
         }
       ]
     },
+    "FomoxaSystemModels/ObjectSceneMove.cs": {
+      "models": [
+        "ObjectSceneMove"
+      ],
+      "outputs": [
+        {
+          "path": "Assets/Network/Generated/ObjectSceneMoveNetCodec.cs",
+          "model": "ObjectSceneMove",
+          "codec": "net",
+          "fingerprint": "sha256:8948d8ee1bae70db403c5ca940e01fa517b9ca5fe49dd65ff6a7c8a5ab16ee11",
+          "sha256": "247c91783132fd92dabc749883934b1991ccf75180dac1ef32c1544b5830c6fd"
+        }
+      ]
+    },
     "FomoxaSystemModels/ObjectSceneSpawn.cs": {
       "models": [
         "ObjectSceneSpawn"
@@ -651,8 +665,8 @@
           "path": "Assets/Network/Generated/ObjectSceneSpawnNetCodec.cs",
           "model": "ObjectSceneSpawn",
           "codec": "net",
-          "fingerprint": "sha256:387c4247a3e10d645d3a90238afe11af414fb52fb349a9886ad7cedc6f38ae2d",
-          "sha256": "8637873c9a9b9637fe30b00d77a1b616450afeb9bd1a97c5497327ee7767c820"
+          "fingerprint": "sha256:816fc7cd147b9b2c508fcbc85ac1f3e8d4ec5a6903496b07089f9a6c5f216bbb",
+          "sha256": "13b5f77ec7d937b49da81442aadee011ac9bd9b831c79f0f4193aaf0b5819c1f"
         }
       ]
     },
@@ -665,8 +679,8 @@
           "path": "Assets/Network/Generated/ObjectSpawnNetCodec.cs",
           "model": "ObjectSpawn",
           "codec": "net",
-          "fingerprint": "sha256:a7c0963e41c8d496747e2e5800fab7f0a4fb6f214bf183fb4853de0c476e67fc",
-          "sha256": "62c16dcb3fc6e8e21b1546aed3d80a4bb0625b6488287dc92af47754134418b5"
+          "fingerprint": "sha256:b13fa001f40ffc12fcd8a1177c0325bef4c0a62efa223dccf0245382929d367f",
+          "sha256": "cbb3f3ba73869704b5ff943f9006333b157c31e5a7e134c9210fc0defd42d8e6"
         }
       ]
     },
@@ -822,15 +836,23 @@
     },
     "FomoxaSystemModels/SceneLoad.cs": {
       "models": [
-        "SceneLoad"
+        "SceneLoad",
+        "SceneRef"
       ],
       "outputs": [
         {
           "path": "Assets/Network/Generated/SceneLoadNetCodec.cs",
           "model": "SceneLoad",
           "codec": "net",
-          "fingerprint": "sha256:0061dc248bd029c7cda79bba1ca10d3a7a22d17b4209c989257d80c9ae3c60dd",
-          "sha256": "33637f99ed3d72c2c70e09b54b4440a33968507eafbbe5302debc0cf63f548a9"
+          "fingerprint": "sha256:758cad5cb719fd5944a0f4d06b7c70911441d4e624072ec13ba216d77ad201b9",
+          "sha256": "877bfd2a9b51130e4594d82225beec11445425d59b5cfcd4860092093e0b004e"
+        },
+        {
+          "path": "Assets/Network/Generated/SceneRefNetCodec.cs",
+          "model": "SceneRef",
+          "codec": "net",
+          "fingerprint": "sha256:1e64f55467f3fcf1b04c9f49864be204a5f689ccde4b45cf77f206e2faba6d2e",
+          "sha256": "06404eb9a93dd1b2cec51ee21799728cec0ffff4e2ba10e73424b612522844ef"
         }
       ]
     },
@@ -960,6 +982,20 @@
         }
       ]
     },
+    "FomoxaSystemModels/TransformFrame.cs": {
+      "models": [
+        "TransformFrame"
+      ],
+      "outputs": [
+        {
+          "path": "Assets/Network/Generated/TransformFrameNetCodec.cs",
+          "model": "TransformFrame",
+          "codec": "net",
+          "fingerprint": "sha256:ad0672be554870461817388ab96a10718381f1b2d19d00fbd460fb9415906bf8",
+          "sha256": "57a66d499abf9d3e1b1290ab5de5707bd3842022b88469411f8082e35fcd37b5"
+        }
+      ]
+    },
     "FomoxaSystemModels/TransformSettle.cs": {
       "models": [
         "TransformSettle"
@@ -973,20 +1009,6 @@
           "sha256": "8c9799f242091aee44fc4b01975defe7fb2bef5cb4d701dce677940f5ac0b6fe"
         }
       ]
-    },
-    "FomoxaSystemModels/TransformUpdate.cs": {
-      "models": [
-        "TransformUpdate"
-      ],
-      "outputs": [
-        {
-          "path": "Assets/Network/Generated/TransformUpdateNetCodec.cs",
-          "model": "TransformUpdate",
-          "codec": "net",
-          "fingerprint": "sha256:62cfa8a4088d2d776e87accf044b28b6baf3ff086bef1d73c9ecfc3034a8a68a",
-          "sha256": "37cad5a5356e5aa5e2d215e4507587c0e5bb7a2187e8dfcd7eaad5e242b4fe95"
-        }
-      ]
     }
   },
   "shared": [
@@ -998,12 +1020,12 @@
     {
       "path": "Assets/Network/Generated/Handshake.cs",
       "kind": "handshake",
-      "sha256": "10ddf51deb744b675436e1f889ac4299cf1d3033ef8dd953af4f4b7650b48e65"
+      "sha256": "966694d9807ff330e13c47b94ec707e02458321b63f3193339d4159472f5383f"
     },
     {
       "path": "Assets/Network/Generated/NetSchema.cs",
       "kind": "net_schema",
-      "sha256": "ec3e802371f39712a63120fcb8904588c13e9ea0c10ea9c0175e09efc50ae2e5"
+      "sha256": "9079f58d08c42bd807cd36c905eda92c0562e79a6fc2392261fd6bb877644016"
     }
   ]
 }

@@ -13,6 +13,8 @@ namespace Fomoxa.Networking
 
         public uint ObjectId { get; internal set; }
 
+        internal uint ReconcileFrom { get; set; }
+
         public INetworkEntity Representation { get; }
 
         public ulong OwnerId
